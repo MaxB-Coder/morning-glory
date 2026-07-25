@@ -21,6 +21,7 @@ let state = {
 
 // ---- lifecycle -------------------------------------------------------------
 export function isSyncAvailable() { return isConfigured(); }
+export function lastAuthError() { return state.lastAuthError || null; }
 export function currentUser() { return state.user; }
 export function householdId() { return state.householdId; }
 
@@ -46,6 +47,15 @@ export async function initSync({ onChange = () => {}, onData = () => {} } = {}) 
   window.addEventListener("online", () => { state.online = true; onChange(status()); flush(); });
   window.addEventListener("offline", () => { state.online = false; onChange(status()); });
 
+  // Complete a redirect sign-in if we're coming back from Google.
+  try {
+    const res = await auth.getRedirectResult(authInstance);
+    if (res && res.user) console.info("[sync] redirect sign-in complete");
+  } catch (e) {
+    console.error("[sync] redirect result error", e.code || e.message);
+    state.lastAuthError = e.code || e.message;
+  }
+
   auth.onAuthStateChanged(authInstance, async (user) => {
     state.user = user ? { uid: user.uid, name: user.displayName, email: user.email } : null;
     if (user) await resolveHousehold();
@@ -65,10 +75,37 @@ export function status() {
 }
 
 // ---- auth ------------------------------------------------------------------
-export async function signIn() {
+// Installed PWAs (iOS especially) and some mobile browsers can't open the popup
+// window — it appears blank or is blocked. Redirect works everywhere, so use it
+// on standalone/mobile and keep the popup for desktop browsers where it's nicer.
+function prefersRedirect() {
+  const standalone = window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+  const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  return standalone || mobile;
+}
+
+export async function signIn({ forceRedirect = false } = {}) {
   if (!fb) throw new Error("sync not initialized");
-  const { signInWithPopup } = fb.authMod;
-  await signInWithPopup(fb.auth, fb.provider);
+  const { signInWithPopup, signInWithRedirect } = fb.authMod;
+
+  if (forceRedirect || prefersRedirect()) {
+    await signInWithRedirect(fb.auth, fb.provider);   // navigates away; returns on load
+    return;
+  }
+  try {
+    await signInWithPopup(fb.auth, fb.provider);
+  } catch (e) {
+    // popup blocked / blank / closed — fall back to redirect
+    const fallback = ["auth/popup-blocked", "auth/popup-closed-by-user",
+                      "auth/cancelled-popup-request", "auth/operation-not-supported-in-this-environment"];
+    if (fallback.includes(e.code)) {
+      console.warn("[sync] popup failed (", e.code, ") → redirecting");
+      await signInWithRedirect(fb.auth, fb.provider);
+      return;
+    }
+    throw e;
+  }
 }
 export async function signOutUser() {
   if (!fb) return;

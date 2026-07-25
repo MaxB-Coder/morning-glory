@@ -51,7 +51,12 @@ async function main() {
   // Start sync in the background (no-op if Firebase isn't configured).
   // When remote data merges in, re-render the current screen.
   sync.initSync({
-    onChange: renderSyncBadge,
+    onChange: (st) => {
+      renderSyncBadge(st);
+      // If the Sharing panel is on screen, re-render it so sign-in / household
+      // state appears immediately instead of after a manual navigation.
+      if (document.getElementById("sync-panel")) renderSyncPanel();
+    },
     onData: () => route(),
   }).catch((e) => console.warn("[sync]", e));
 }
@@ -379,9 +384,19 @@ async function renderSyncPanel() {
     panel.innerHTML = `<strong>Sharing</strong>
       <p><small>Sign in to sync your coffees and brews across devices and share
       with someone.</small></p>
-      <button id="signin">Sign in with Google</button>`;
-    panel.querySelector("#signin").addEventListener("click", () =>
-      sync.signIn().catch((e) => alert("Sign-in failed: " + e.message)));
+      <button id="signin">Sign in with Google</button>
+      <p><a href="#" id="signin-redirect"><small>Trouble signing in? Use redirect instead</small></a></p>
+      <p id="auth-err" class="explain"></p>`;
+    const errBox = panel.querySelector("#auth-err");
+    if (sync.lastAuthError()) errBox.textContent = "Last error: " + sync.lastAuthError();
+    const go = (opts) => sync.signIn(opts).catch((e) => {
+      console.error("[signin]", e);
+      errBox.textContent = "Sign-in failed: " + (e.code || e.message);
+    });
+    panel.querySelector("#signin").addEventListener("click", () => go({}));
+    panel.querySelector("#signin-redirect").addEventListener("click", (ev) => {
+      ev.preventDefault(); go({ forceRedirect: true });
+    });
     return;
   }
 
