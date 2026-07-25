@@ -58,9 +58,19 @@ export async function initSync({ onChange = () => {}, onData = () => {} } = {}) 
 
   auth.onAuthStateChanged(authInstance, async (user) => {
     state.user = user ? { uid: user.uid, name: user.displayName, email: user.email } : null;
-    if (user) await resolveHousehold();
+    // Tell the UI we're signed in FIRST — a failing household lookup (offline,
+    // rules, missing doc) must not prevent the signed-in state from showing.
     onChange(status());
-    if (state.householdId) startSubscriptions();
+    if (user) {
+      try {
+        await resolveHousehold();
+      } catch (e) {
+        console.error("[sync] household lookup failed", e.code || e.message);
+        state.lastAuthError = "household lookup: " + (e.code || e.message);
+      }
+      onChange(status());
+      if (state.householdId) startSubscriptions();
+    }
   });
 }
 
