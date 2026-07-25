@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v8";
+export const APP_VERSION = "v9";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -279,7 +279,7 @@ async function renderBrew(coffeeId, method) {
     grinder: g,
     coffees: await db.allCoffees(),
     brews: await db.allBrews(),
-    request: { coffeeId: Number(coffeeId), method },
+    request: { coffeeId: String(coffeeId), method },
   };
   let rec, recError = null;
   try { rec = await recommend(payload); }
@@ -313,7 +313,7 @@ async function renderBrew(coffeeId, method) {
       const grind = parseFloat(view.querySelector("#grind").value);
       if (isNaN(grind)) { view.querySelector("#grind").focus(); return; }
       const extra = collectExtras(method);
-      await db.addBrew({ coffeeId: Number(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
+      await db.addBrew({ coffeeId: String(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
       location.hash = `#/coffee/${coffeeId}`;
     }));
 }

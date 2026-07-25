@@ -146,6 +146,25 @@ def test_calibration_ignored_once_method_has_logs():
     assert rec([_coffee()], brews, 1, "v60", grinder=g)["setting"] > 12
 
 
+def test_uuid_string_ids_work():
+    # real app uses client-generated UUID strings, not ints
+    c = [_coffee(id="4f0a-uuid")]
+    brews = [{"coffeeId": "4f0a-uuid", "method": "v60", "grindSetting": 18,
+              "verdict": "good", "createdAt": "2026-07-20"}]
+    r = rec(c, brews, "4f0a-uuid", "v60")
+    assert isinstance(r["setting"], float)
+
+
+def test_missing_coffee_id_raises_clearly():
+    with pytest.raises(ValueError, match="no coffeeId"):
+        rec([_coffee()], [], None, "v60")
+
+
+def test_unknown_coffee_id_raises_clearly():
+    with pytest.raises(ValueError, match="not found"):
+        rec([_coffee(id="a")], [], "does-not-exist", "v60")
+
+
 def test_run_is_json_roundtrip():
     out = R.run(json.dumps(_payload([_coffee()], [], 1, "v60")))
     parsed = json.loads(out)

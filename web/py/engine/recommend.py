@@ -190,24 +190,34 @@ def _explanation(beta, x, grinder):
 def recommend(payload: dict) -> dict:
     grinder = payload["grinder"]
     req = payload["request"]
-    coffee_by_id = {c["id"]: c for c in payload["coffees"]}
-    coffee = coffee_by_id[req["coffeeId"]]
+    # ids are client-generated UUID strings; normalise so a numeric-looking id
+    # from an older record still matches.
+    coffee_by_id = {str(c["id"]): c for c in payload["coffees"]}
+    requested_id = req.get("coffeeId")
+    if requested_id is None:
+        raise ValueError("no coffeeId in request")
+    coffee = coffee_by_id.get(str(requested_id))
+    if coffee is None:
+        raise ValueError(f"coffee {requested_id!r} not found in payload")
     method = req["method"]
 
-    # attach the coffee record to each brew for encoding convenience
+    # attach the coffee record to each brew for encoding convenience.
+    # coffeeId is normalised to str to match coffee_by_id's keys.
     brews = []
     for b in payload.get("brews", []):
-        c = coffee_by_id.get(b["coffeeId"])
+        cid = str(b.get("coffeeId"))
+        c = coffee_by_id.get(cid)
         if c is None:
             continue
         b = dict(b)
+        b["coffeeId"] = cid
         b["_coffee"] = c
         brews.append(b)
 
     X, y, w = _build_training_set(grinder, coffee, brews, method)
     beta = ridge.fit(X, y, w)
 
-    coffee_brews = [b for b in brews if b["coffeeId"] == coffee["id"]]
+    coffee_brews = [b for b in brews if b["coffeeId"] == str(coffee["id"])]
     bias = _per_coffee_bias(beta, grinder, coffee_brews)
 
     has_logs_for_method = any(b["method"] == method for b in coffee_brews)
