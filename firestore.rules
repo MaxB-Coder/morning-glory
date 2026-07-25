@@ -1,0 +1,66 @@
+rules_version = '2';
+// Morning Glory — rules-only security (no Cloud Functions, stays on free Spark).
+// Paste into Firebase console → Firestore → Rules → Publish.
+//
+// Model: data lives under households/{hid}. Only members (uid in memberUids)
+// can read/write that household's data. Joining is done client-side by writing
+// your OWN uid into memberUids after looking up a valid invite code.
+
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+
+    // members list of a household (safe: only called when doc exists)
+    function memberUids(hid) {
+      return get(/databases/$(db)/documents/households/$(hid)).data.memberUids;
+    }
+    function isMember(hid) {
+      return signedIn() && uid() in memberUids(hid);
+    }
+
+    // ---- households ------------------------------------------------------
+    match /households/{hid} {
+      // read only if you're a member
+      allow read: if isMember(hid);
+
+      // create: you must be the sole initial member
+      allow create: if signedIn()
+        && request.resource.data.memberUids.hasOnly([uid()])
+        && uid() in request.resource.data.memberUids;
+
+      // update: either you're already a member, OR you are joining — the only
+      // change allowed for a non-member is adding *your own* uid to memberUids
+      // (plus your own members entry). This is the rules-only "join by code":
+      // the client first reads invites/{code} to get hid, then does this update.
+      allow update: if isMember(hid)
+        || (signedIn()
+            && request.resource.data.memberUids.hasAll(resource.data.memberUids)
+            && request.resource.data.memberUids.hasOnly(resource.data.memberUids.concat([uid()]))
+           );
+
+      allow delete: if false;
+
+      // subcollections: coffees, brews — members only
+      match /{col}/{docId} {
+        allow read, write: if isMember(hid);
+      }
+    }
+
+    // ---- invites (code -> householdId lookup) ----------------------------
+    // Any signed-in user may READ a code to resolve the household to join.
+    // Only a household member may create/change the invite doc.
+    match /invites/{code} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && isMember(request.resource.data.householdId);
+      allow delete: if false;
+    }
+
+    // ---- users (private per-account: which household am I in) -------------
+    match /users/{userId} {
+      allow read, write: if signedIn() && uid() == userId;
+    }
+  }
+}

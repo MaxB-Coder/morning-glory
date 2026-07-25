@@ -1,0 +1,5546 @@
+[
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.40932
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.80688
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.65873
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.34192
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.76647
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.83074
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.58171
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.89622
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.41208
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.82967
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.56879
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.58869
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.90236
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.61583
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.43156
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.62583
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.22634
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.15328
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.59245
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.38263
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.59113
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.68119
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.1754
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.54169
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.15568
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.61815
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.1635
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.86208
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.45544
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.54834
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.8467
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.86233
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.13692
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.59101
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.58306
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.14003
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.10047
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.45217
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.58858
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.74185
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.16086
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.87624
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.8832
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.44965
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.20708
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.58889
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.1337
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.56238
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.62605
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.36888
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.5088
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.57793
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.36546
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.38226
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.53231
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.43331
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.21904
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.18857
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.83763
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.79244
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.86742
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.65928
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.82976
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.10418
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.72653
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.9322
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.26509
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.36499
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.09599
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.81215
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.57195
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.77226
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.90685
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.90774
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.55981
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.50531
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.74569
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.58385
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.50107
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.40269
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.58316
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.14833
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.56706
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.58021
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.8379
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.18785
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.34388
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.62184
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.14007
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.07466
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.76505
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.38408
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.78162
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.83178
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.42462
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.24396
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.45561
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.39065
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.13934
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.76606
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.16178
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.17133
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.17004
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.82028
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.64533
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.601
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.45083
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.82764
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.15021
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.15214
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.49573
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.0191
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.8768
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.64057
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.23375
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.14634
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.22321
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.85807
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.64405
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.878
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.0649
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.10471
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.63163
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.58029
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.21299
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.71717
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.41688
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.75877
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.39351
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.56695
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.09787
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.47758
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.78159
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.85116
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.82063
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.54769
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.39945
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.76433
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.60283
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.14421
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.59257
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.43906
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.1007
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.43273
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.14291
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.47018
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.63037
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.89186
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.12042
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.43195
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.09285
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.85753
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.12669
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.6309
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.15646
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.20912
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.66515
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.59921
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.81791
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.3967
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.81606
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.49999
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.12428
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.88277
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.0919
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.89249
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.82368
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.82808
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.15255
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.11702
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.08365
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.4652
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.8171
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.77359
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.15355
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.27039
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.78228
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.21961
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.82108
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.55267
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.47751
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.46011
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.63375
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.52509
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.81335
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.26838
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.4098
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.09528
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.85258
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.51944
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.91122
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.7665
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.37504
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.40834
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.20499
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.70225
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.24337
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.38019
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.23752
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.91669
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.22911
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.21124
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.57101
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.41262
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.57972
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.80124
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.12331
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.13437
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.77483
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.66081
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.44346
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.72663
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.67196
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.36834
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.25854
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.158
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.53142
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.20747
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.8682
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.51804
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.86835
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.16712
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.21292
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.85237
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.90227
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.84008
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.1293
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.78191
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.55185
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.783
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.08815
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.41006
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.50599
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.12346
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.64259
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.4068
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.12899
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.53189
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.21509
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.69863
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.38997
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.19868
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.82747
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.36631
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.04283
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.74882
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.75718
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.39178
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.05833
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.87364
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.40305
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.20213
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.91041
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.2233
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.53029
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.47142
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.21748
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.22379
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.11739
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.85458
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.4487
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.18039
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.87234
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.39242
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.87058
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.55571
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.50522
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.86722
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.64767
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.17946
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.85815
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.5094
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.11526
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.84239
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.5627
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.12188
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.53826
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.92375
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.62164
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.3821
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.23042
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.87268
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.40925
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.09705
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.83602
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.86826
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.88269
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.36607
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.61605
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.83608
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.10828
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.8215
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.6324
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.22673
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.07693
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.19396
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.21858
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.59126
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.10317
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.37029
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.73414
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.58179
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.10765
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.81481
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.75259
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.59112
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.76229
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.54879
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.54637
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.20651
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.17444
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.74597
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.16905
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.14589
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.40231
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.54471
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.12822
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.83096
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.09412
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.14295
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.47739
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.82527
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.79988
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.56926
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.55288
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.75086
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.46524
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.2271
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.85393
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.51782
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.33805
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.61325
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.82613
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.16362
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.59916
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.76166
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.82789
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.60978
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.91106
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.9017
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.7873
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.12867
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.72991
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.8662
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.78001
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.08958
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.64687
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.46758
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.84879
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.20164
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.46058
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.4827
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.62804
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.54334
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.56366
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.50734
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.04879
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.46941
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.58163
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.39672
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.64612
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.84538
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.87841
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.76245
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.15107
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.85337
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.89958
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.56276
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.8241
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.88419
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.55453
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.65576
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.77957
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.53771
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.60001
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.52716
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.78818
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.60599
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.55328
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.66137
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.56506
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.18059
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.41868
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.40186
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.34615
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.57001
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": true
+},
+"y": 0.40708
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": true
+},
+"y": 0.78775
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.78693
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.60909
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.55835
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.83166
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.57251
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.40692
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.231
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.52157
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.47079
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.54344
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.39107
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.82564
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.58248
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.14041
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.80065
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.361
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.79804
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.92029
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.03131
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.53547
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.56327
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.2367
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.85098
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.60162
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.43134
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.22916
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.18741
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.37906
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.61401
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.38831
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.58588
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.50838
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.59978
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.83627
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.24922
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.15376
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.23259
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.10118
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.7916
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.72118
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.63199
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.15416
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.44564
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.54166
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.63152
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.62283
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.37174
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.24881
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.03904
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.36475
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.81583
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.11189
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.12578
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.58276
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.08531
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.91646
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.92563
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.87127
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.18606
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.13053
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.6009
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.09841
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.83594
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.44862
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.44841
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.37207
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.44896
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.45323
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.06429
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.82957
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.1929
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.24994
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.18493
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.75761
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.78979
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.19837
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.51578
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.22804
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.64768
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "coldbrew",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.82451
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.52967
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.65949
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.58723
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.80489
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.58273
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.09346
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.385
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.08508
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.81145
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.11815
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.79041
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.19581
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.61571
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.08147
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "chemex",
+"altitudeMasl": 1200,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.56428
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.85931
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.56541
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 1900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.83707
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.17656
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.91389
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "v60",
+"altitudeMasl": 1900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.5584
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "espresso",
+"altitudeMasl": 1200,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.11096
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": 900,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.84944
+},
+{
+"features": {
+"roast": "medium",
+"process": "natural",
+"method": "chemex",
+"altitudeMasl": 1600,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.55698
+},
+{
+"features": {
+"roast": "light",
+"process": "washed",
+"method": "moka",
+"altitudeMasl": 1200,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.26582
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "v60",
+"altitudeMasl": null,
+"ageDays": 2,
+"decaf": false
+},
+"y": 0.57076
+},
+{
+"features": {
+"roast": "light",
+"process": "honey",
+"method": "frenchpress",
+"altitudeMasl": null,
+"ageDays": 20,
+"decaf": false
+},
+"y": 0.79874
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.10425
+},
+{
+"features": {
+"roast": "dark",
+"process": "natural",
+"method": "espresso",
+"altitudeMasl": 1600,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.06848
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "coldbrew",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.84321
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": 900,
+"ageDays": 7,
+"decaf": false
+},
+"y": 0.23312
+},
+{
+"features": {
+"roast": "medium",
+"process": "honey",
+"method": "moka",
+"altitudeMasl": null,
+"ageDays": 45,
+"decaf": false
+},
+"y": 0.18795
+},
+{
+"features": {
+"roast": "light",
+"process": "natural",
+"method": "frenchpress",
+"altitudeMasl": 1600,
+"ageDays": 20,
+"decaf": true
+},
+"y": 0.80201
+},
+{
+"features": {
+"roast": "dark",
+"process": "honey",
+"method": "aeropress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": true
+},
+"y": 0.43748
+},
+{
+"features": {
+"roast": "medium",
+"process": "washed",
+"method": "v60",
+"altitudeMasl": 900,
+"ageDays": 45,
+"decaf": true
+},
+"y": 0.58599
+},
+{
+"features": {
+"roast": "dark",
+"process": "washed",
+"method": "frenchpress",
+"altitudeMasl": 1200,
+"ageDays": null,
+"decaf": false
+},
+"y": 0.80678
+}
+]

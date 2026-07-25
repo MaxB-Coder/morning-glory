@@ -1,0 +1,37 @@
+/* Minimal self-contained base styles (Pico-compatible variable names).
+   Swap in the real PicoCSS (https://picocss.com) later if you want its full
+   look — app.css only depends on these variables + a few classes. */
+:root{
+  --pico-background-color:#fbf7f2; --pico-color:#2b2320;
+  --pico-muted-color:#7a6f66; --pico-muted-border-color:#e3d8cc;
+  --pico-primary:#b5651d; --pico-spacing:1rem;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --pico-background-color:#1c1714; --pico-color:#ece3da;
+    --pico-muted-color:#a89a8d; --pico-muted-border-color:#3a2f28; }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--pico-background-color);color:var(--pico-color);line-height:1.5}
+h2{margin:.2rem 0 1rem}
+article{background:rgba(0,0,0,.03);border:1px solid var(--pico-muted-border-color);
+  border-radius:.6rem;padding:1rem;margin:.6rem 0}
+@media (prefers-color-scheme: dark){article{background:rgba(255,255,255,.04)}}
+label{display:block;margin:.5rem 0;font-size:.9rem}
+input,select,textarea{width:100%;padding:.55rem;border-radius:.5rem;
+  border:1px solid var(--pico-muted-border-color);
+  background:var(--pico-background-color);color:var(--pico-color);font-size:1rem}
+input[type=checkbox]{width:auto}
+button{width:100%;padding:.7rem 1rem;border:1px solid var(--pico-primary);
+  background:var(--pico-primary);color:#fff;border-radius:.5rem;font-size:1rem;
+  cursor:pointer;margin:.3rem 0}
+button.secondary,button[aria-current]{filter:brightness(1.05)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.grid:has(>*:nth-child(3)){grid-template-columns:1fr 1fr 1fr}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.5rem}
+th,td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--pico-muted-border-color)}
+details{margin:.5rem 0}
+summary{cursor:pointer;padding:.3rem 0}
+a{color:var(--pico-primary)}
+progress{width:100%;height:.4rem}
+small{color:var(--pico-muted-color)}

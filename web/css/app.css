@@ -1,0 +1,72 @@
+:root { --gw-accent: #b5651d; }
+body { padding-bottom: 4.5rem; }
+
+/* [hidden] must win over the flex display below, or the overlay never hides */
+[hidden] { display: none !important; }
+.boot {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: .5rem;
+  background: var(--pico-background-color); z-index: 50; text-align: center;
+}
+.boot-logo { font-size: 3rem; }
+.boot progress { width: 12rem; }
+
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .6rem 1rem; border-bottom: 1px solid var(--pico-muted-border-color);
+  position: sticky; top: 0; background: var(--pico-background-color); z-index: 10;
+}
+.badge {
+  font-size: .7rem; padding: .15rem .5rem; border-radius: 1rem;
+  background: var(--pico-muted-border-color);
+}
+.badge.ok { background: #2e7d32; color: #fff; }
+
+main { padding: 1rem; max-width: 34rem; margin: 0 auto; }
+
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; display: flex;
+  border-top: 1px solid var(--pico-muted-border-color);
+  background: var(--pico-background-color);
+}
+.bottom-nav a {
+  flex: 1; text-align: center; padding: .9rem 0; text-decoration: none;
+  color: var(--pico-color); font-size: .9rem;
+}
+.bottom-nav a.active { color: var(--gw-accent); font-weight: 700; }
+
+.coffee-card { cursor: pointer; }
+.coffee-card small { color: var(--pico-muted-color); }
+
+.rec-number {
+  font-size: 3.5rem; font-weight: 800; text-align: center; line-height: 1;
+  color: var(--gw-accent);
+}
+.rec-wrap { text-align: center; margin: 1rem 0; }
+.conf { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+.conf.low { color: #b71c1c; } .conf.med { color: #ef6c00; } .conf.high { color: #2e7d32; }
+.nudge { font-size: .85rem; color: var(--pico-muted-color); margin-top: .3rem; }
+
+.method-pills { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+.method-pills button {
+  width: auto; padding: .35rem .8rem; margin: 0; font-size: .85rem;
+  border-radius: 1.2rem;
+}
+.method-pills button[aria-current="true"] { background: var(--gw-accent); border-color: var(--gw-accent); }
+
+.verdict-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-top: 1rem; }
+.verdict-row button { margin: 0; }
+.v-good { background: #2e7d32; border-color: #2e7d32; }
+.v-under { background: #ef6c00; border-color: #ef6c00; }
+.v-over { background: #b71c1c; border-color: #b71c1c; }
+
+.dial-strip { display: flex; align-items: flex-end; gap: 3px; height: 60px; margin: .5rem 0; }
+.dial-bar { flex: 1; min-width: 6px; border-radius: 2px 2px 0 0; }
+.dial-bar.good { background: #2e7d32; } .dial-bar.under { background: #ef6c00; } .dial-bar.over { background: #b71c1c; }
+
+.explain { font-size: .8rem; color: var(--pico-muted-color); }
+.fab {
+  position: fixed; right: 1rem; bottom: 5rem; width: 3.2rem; height: 3.2rem;
+  border-radius: 50%; font-size: 1.6rem; display: flex; align-items: center;
+  justify-content: center; padding: 0; z-index: 20;
+}
