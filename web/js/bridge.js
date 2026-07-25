@@ -40,9 +40,18 @@ export function initEngine(onStatus = () => {}) {
 }
 
 export async function recommend(payload) {
+  // If the engine was never started (or is still starting), start/await it here
+  // rather than failing — the brew screen can be reached before warm-up ends.
+  if (!ready) initEngine();
   await ready;
+  if (!py) throw new Error("Python runtime not loaded");
+
   const run = py.globals.get("_run");
-  const out = run(JSON.stringify(payload));  // JSON string in
-  run.destroy();
-  return JSON.parse(out);                     // JSON string out
+  if (!run) throw new Error("engine entry point missing (engine files not loaded)");
+  try {
+    const out = run(JSON.stringify(payload));  // JSON string in
+    return JSON.parse(out);                    // JSON string out
+  } finally {
+    if (run.destroy) run.destroy();
+  }
 }

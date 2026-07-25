@@ -1,5 +1,5 @@
 :root { --gw-accent: #b5651d; }
-body { padding-bottom: 4.5rem; }
+body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
 
 /* [hidden] must win over the flex display below, or the overlay never hides */
 [hidden] { display: none !important; }
@@ -11,9 +11,15 @@ body { padding-bottom: 4.5rem; }
 .boot-logo { font-size: 3rem; }
 .boot progress { width: 12rem; }
 
+/* iOS: keep the header clear of the notch / Dynamic Island. Requires
+   viewport-fit=cover in the meta tag (already set). */
 .app-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: .6rem 1rem; border-bottom: 1px solid var(--pico-muted-border-color);
+  padding: .6rem 1rem;
+  padding-top: calc(.6rem + env(safe-area-inset-top, 0px));
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--pico-muted-border-color);
   position: sticky; top: 0; background: var(--pico-background-color); z-index: 10;
 }
 .badge {
@@ -28,6 +34,7 @@ main { padding: 1rem; max-width: 34rem; margin: 0 auto; }
   position: fixed; bottom: 0; left: 0; right: 0; display: flex;
   border-top: 1px solid var(--pico-muted-border-color);
   background: var(--pico-background-color);
+  padding-bottom: env(safe-area-inset-bottom, 0px);  /* clear the home indicator */
 }
 .bottom-nav a {
   flex: 1; text-align: center; padding: .9rem 0; text-decoration: none;
@@ -47,12 +54,30 @@ main { padding: 1rem; max-width: 34rem; margin: 0 auto; }
 .conf.low { color: #b71c1c; } .conf.med { color: #ef6c00; } .conf.high { color: #2e7d32; }
 .nudge { font-size: .85rem; color: var(--pico-muted-color); margin-top: .3rem; }
 
-.method-pills { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
-.method-pills button {
-  width: auto; padding: .35rem .8rem; margin: 0; font-size: .85rem;
-  border-radius: 1.2rem;
+/* Step sections give the brew screen an obvious top-to-bottom order */
+.step { margin: 1.25rem 0; }
+.step-title {
+  font-size: .95rem; margin: 0 0 .4rem; display: flex; align-items: center;
+  gap: .5rem; color: var(--pico-color);
 }
-.method-pills button[aria-current="true"] { background: var(--gw-accent); border-color: var(--gw-accent); }
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.4rem; height: 1.4rem; border-radius: 50%; font-size: .8rem;
+  background: var(--gw-accent); color: #fff; flex: none;
+}
+
+/* Unselected pills read as OUTLINED (choose me), selected is filled. */
+.method-pills { display: flex; flex-wrap: wrap; gap: .45rem; margin: .5rem 0; }
+.method-pills button {
+  width: auto; padding: .5rem .9rem; margin: 0; font-size: .9rem;
+  border-radius: 1.4rem;
+  background: transparent; color: var(--pico-color);
+  border: 1.5px solid var(--pico-muted-border-color);
+}
+.method-pills button[aria-current="true"] {
+  background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
+  font-weight: 600;
+}
 
 .verdict-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-top: 1rem; }
 .verdict-row button { margin: 0; }

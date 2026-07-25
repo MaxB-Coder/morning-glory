@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v7";
+export const APP_VERSION = "v8";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -217,6 +217,7 @@ async function renderCoffee(id) {
     <div>
       <h2>${esc(c.name)}</h2>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
+      <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
       <div class="method-pills">${METHODS.map((m) =>
         `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
       <p><small>Dial-in history:</small></p>${strip || "<p><small>No brews logged yet.</small></p>"}
@@ -236,18 +237,35 @@ async function renderBrew(coffeeId, method) {
   view.replaceChildren(el(`
     <div>
       <h2>${esc(c.name)}</h2>
-      <div class="method-pills" id="pills">${METHODS.map((m) =>
-        `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
-      <div class="rec-wrap" id="rec"><progress></progress></div>
-      <label>Grind setting used
-        <input id="grind" type="number" step="${g.step}" value="">
-      </label>
-      <details id="extras"></details>
-      <div class="verdict-row">
-        <button class="v-good" data-v="good">🟢 Good</button>
-        <button class="v-under" data-v="under">🟠 Sour / weak</button>
-        <button class="v-over" data-v="over">🔴 Bitter / harsh</button>
-      </div>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">1</span> How are you brewing it?</h3>
+        <div class="method-pills" id="pills">${METHODS.map((m) =>
+          `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">2</span> Suggested grind</h3>
+        <div class="rec-wrap" id="rec"><progress></progress></div>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">3</span> What did you actually use?</h3>
+        <label>Grind setting
+          <input id="grind" type="number" step="${g.step}" inputmode="decimal" value="">
+        </label>
+        <details id="extras"></details>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">4</span> How did it taste?</h3>
+        <p><small>Tap one — this trains the recommendation.</small></p>
+        <div class="verdict-row">
+          <button class="v-good" data-v="good">🟢<br>Good</button>
+          <button class="v-under" data-v="under">🟠<br>Sour / weak</button>
+          <button class="v-over" data-v="over">🔴<br>Bitter / harsh</button>
+        </div>
+      </section>
     </div>`));
 
   renderExtras(method);
@@ -263,9 +281,9 @@ async function renderBrew(coffeeId, method) {
     brews: await db.allBrews(),
     request: { coffeeId: Number(coffeeId), method },
   };
-  let rec;
+  let rec, recError = null;
   try { rec = await recommend(payload); }
-  catch (e) { console.error(e); rec = null; }
+  catch (e) { console.error("[recommend]", e); rec = null; recError = e.message || String(e); }
 
   const recEl = view.querySelector("#rec");
   if (rec) {
@@ -280,7 +298,14 @@ async function renderBrew(coffeeId, method) {
       </div>`));
     view.querySelector("#grind").value = rec.setting;
   } else {
-    recEl.innerHTML = `<p><small>Engine unavailable. Log your brew and the recommendation returns when the engine loads.</small></p>`;
+    recEl.innerHTML = `<p><small>No recommendation yet — you can still log this brew
+      and it will be used for training.</small></p>
+      <details><summary class="explain">why?</summary>
+        <p class="explain">${esc(recError || "engine not ready")}</p>
+        <button id="retry-engine" class="secondary">Retry engine</button>
+      </details>`;
+    const rb = recEl.querySelector("#retry-engine");
+    if (rb) rb.addEventListener("click", () => route());
   }
 
   view.querySelectorAll(".verdict-row button").forEach((btn) =>
