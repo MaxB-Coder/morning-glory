@@ -25,7 +25,7 @@ input[type=checkbox]{width:auto}
 button{width:100%;padding:.7rem 1rem;border:1px solid var(--pico-primary);
   background:var(--pico-primary);color:#fff;border-radius:.5rem;font-size:1rem;
   cursor:pointer;margin:.3rem 0}
-button.secondary,button[aria-current]{filter:brightness(1.05)}
+button.secondary{filter:brightness(1.05)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
 .grid:has(>*:nth-child(3)){grid-template-columns:1fr 1fr 1fr}
 table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.5rem}
