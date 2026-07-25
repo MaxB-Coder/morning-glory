@@ -10,6 +10,10 @@ const METHOD_LABEL = {
   espresso: "Espresso", moka: "Moka", aeropress: "AeroPress", v60: "V60",
   chemex: "Chemex", frenchpress: "French press", coldbrew: "Cold brew",
 };
+// Bump this with every deploy — shown in Settings so you can confirm which
+// build the browser/service worker is actually running.
+export const APP_VERSION = "v6";
+
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
 const bootStatus = document.getElementById("boot-status");
@@ -341,6 +345,8 @@ async function renderSettings() {
         <br><a href="#/setup">Edit grinder</a>
       </article>
       <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
+      <article><small>App version ${APP_VERSION}</small>
+        <button id="force-update" class="secondary">Force update</button></article>
       <article>
         <strong>Backup</strong>
         <p><small>IndexedDB can be cleared by the browser. Export a JSON backup regularly.</small></p>
@@ -362,6 +368,20 @@ async function renderSettings() {
     await db.importAll(data);
     alert("Backup imported.");
     location.hash = "#/";
+  });
+
+  const fu = view.querySelector("#force-update");
+  if (fu) fu.addEventListener("click", async () => {
+    // Nuke caches + service worker so the next load is guaranteed fresh.
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    location.reload(true);
   });
 
   await renderSyncPanel();
