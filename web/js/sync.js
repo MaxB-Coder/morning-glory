@@ -94,20 +94,33 @@ export function status() {
 // closes and nothing happens" symptom). Redirect has none of those failure
 // modes; the only cost is a page navigation, and getRedirectResult() in
 // initSync() picks the session back up on return.
-export async function signIn({ usePopup = false } = {}) {
+// Popup first (it keeps you on the page and works well on desktop), with an
+// automatic redirect fallback for environments that can't open one — notably
+// installed PWAs on iOS, where popups are blocked outright.
+export async function signIn({ useRedirect = false } = {}) {
   if (!fb) throw new Error("sync not initialized");
   const { signInWithPopup, signInWithRedirect } = fb.authMod;
 
-  if (!usePopup) {
-    await signInWithRedirect(fb.auth, fb.provider);   // navigates away
+  if (useRedirect) {
+    await signInWithRedirect(fb.auth, fb.provider);
     return;
   }
-  // opt-in popup path, with redirect as a safety net
   try {
     await signInWithPopup(fb.auth, fb.provider);
   } catch (e) {
-    console.warn("[sync] popup failed (", e.code, ") → redirecting");
-    await signInWithRedirect(fb.auth, fb.provider);
+    const code = e.code || "";
+    const cannotPopup = [
+      "auth/popup-blocked",
+      "auth/operation-not-supported-in-this-environment",
+      "auth/web-storage-unsupported",
+    ].includes(code);
+    if (cannotPopup) {
+      console.warn("[sync] popup unavailable (", code, ") → redirecting");
+      await signInWithRedirect(fb.auth, fb.provider);
+      return;
+    }
+    // popup-closed-by-user / cancelled: user's choice, don't hijack the page
+    throw e;
   }
 }
 export async function signOutUser() {

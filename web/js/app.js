@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v6";
+export const APP_VERSION = "v7";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -405,19 +405,16 @@ async function renderSyncPanel() {
       <p><small>Sign in to sync your coffees and brews across devices and share
       with someone.</small></p>
       <button id="signin">Sign in with Google</button>
-      <p><small>You'll be taken to Google and returned here.</small></p>
-      <p><a href="#" id="signin-popup"><small>Use popup instead</small></a></p>
       <p id="auth-err" class="explain"></p>`;
     const errBox = panel.querySelector("#auth-err");
     if (sync.lastAuthError()) errBox.textContent = "Last error: " + sync.lastAuthError();
-    const go = (opts) => sync.signIn(opts).catch((e) => {
-      console.error("[signin]", e);
-      errBox.textContent = "Sign-in failed: " + (e.code || e.message);
-    });
-    panel.querySelector("#signin").addEventListener("click", () => go({}));
-    panel.querySelector("#signin-popup").addEventListener("click", (ev) => {
-      ev.preventDefault(); go({ usePopup: true });
-    });
+    panel.querySelector("#signin").addEventListener("click", () =>
+      sync.signIn().catch((e) => {
+        console.error("[signin]", e);
+        // user closing the popup isn't an error worth shouting about
+        if ((e.code || "").includes("popup-closed") || (e.code || "").includes("cancelled")) return;
+        errBox.textContent = "Sign-in failed: " + (e.code || e.message);
+      }));
     return;
   }
 
