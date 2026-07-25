@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v13";
+export const APP_VERSION = "v14";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -319,7 +319,9 @@ async function renderCoffee(id) {
         <table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table>` : ""}
 
-      <p style="margin-top:2rem"><button id="archive-coffee" class="danger-link">Archive this coffee</button></p>
+      <div class="center-row" style="margin-top:2rem">
+        <button id="archive-coffee" class="danger-link">Archive this coffee</button>
+      </div>
     </div>`));
 
   view.querySelectorAll(".method-pills button").forEach((btn) =>
@@ -377,14 +379,16 @@ function openPhotoLightbox(coffee) {
           <button type="button" id="lb-replace">Replace photo</button>
           <button type="button" id="lb-remove" class="danger-link">Remove photo</button>
         </div>
+        <p class="lightbox-hint">Tap anywhere to close</p>
       </div>
     </div>`);
   document.body.appendChild(overlay);
 
   const close = () => overlay.remove();
-  // backdrop click closes; clicks inside the panel don't bubble out
+  // Tapping ANYWHERE closes — including the photo itself. Only the action
+  // buttons swallow the tap, so they don't dismiss before they run.
   overlay.addEventListener("click", close);
-  overlay.querySelector(".lightbox-inner")
+  overlay.querySelector(".lightbox-actions")
     .addEventListener("click", (e) => e.stopPropagation());
 
   overlay.querySelector("#lb-replace").addEventListener("click", () => {

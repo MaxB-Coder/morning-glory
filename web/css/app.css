@@ -59,7 +59,10 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   flex: none;                        /* pinned by layout, not by position:fixed */
   border-top: 1px solid var(--pico-muted-border-color);
   background: var(--pico-background-color);
-  padding-bottom: env(safe-area-inset-bottom, 0px);  /* clear the home indicator */
+  /* Sit flush with the bottom edge. iOS reports ~34px of inset for the home
+     indicator; reserving all of it left a visible empty band, so only a small
+     slice is kept to stop the labels touching the very edge. */
+  padding-bottom: min(env(safe-area-inset-bottom, 0px), .35rem);
 }
 .bottom-nav a {
   flex: 1; text-align: center; padding: .6rem 0 .5rem; text-decoration: none;
@@ -139,9 +142,9 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   border-radius: 1.4rem; white-space: nowrap;
   background: transparent; color: var(--pico-color);
   border: 1.5px solid var(--pico-muted-border-color);
-  /* font-weight is FIXED for every state: changing it on selection re-measured
-     the text and made the whole row of pills shift/reflow. Only colours change. */
-  font-weight: 600;
+  /* font-weight is FIXED (and light) for every state: changing it on selection
+     re-measured the text and made the whole row shift. Only colours change. */
+  font-weight: 400;
   transition: background .12s, border-color .12s, color .12s;
 }
 .method-pills button[aria-current="true"] {
@@ -161,7 +164,7 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   width: auto; margin: 0; padding: .55rem 1.4rem; font-size: .9rem;
   border-radius: 1.4rem; background: transparent; color: var(--pico-color);
   border: 1.5px solid var(--pico-muted-border-color);
-  font-weight: 600;   /* fixed, same reason as the method pills */
+  font-weight: 400;   /* fixed, same reason as the method pills */
 }
 .toggle-pill[aria-pressed="true"] {
   background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
@@ -213,6 +216,12 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
 }
 .lightbox-actions { display: flex; flex-direction: column; gap: .5rem; align-items: center; }
 .lightbox-actions button { width: auto; min-width: 12rem; margin: 0; }
+.lightbox-hint {
+  color: rgba(255,255,255,.65); font-size: .75rem; margin: 1rem 0 0;
+}
+
+/* generic centring helper */
+.center-row { display: flex; justify-content: center; }
 .card-thumb {
   width: 3rem; height: 3rem; object-fit: cover; border-radius: .45rem; flex: none;
 }
