@@ -1,5 +1,16 @@
 :root { --gw-accent: #b5651d; }
-body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+/* App-shell layout: header and bottom nav are flex children that never move;
+   only <main> scrolls. Using position:fixed for the nav made it drift on iOS,
+   because Safari's dynamic viewport (URL bar / keyboard) changes what "bottom"
+   means as you scroll. 100dvh + flex avoids that entirely. */
+html { height: 100%; }
+body {
+  height: 100vh;      /* fallback for older iOS */
+  height: 100dvh;     /* dynamic viewport — tracks Safari's changing chrome */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;   /* the body itself never scrolls */
+}
 
 /* [hidden] must win over the flex display below, or the overlay never hides */
 [hidden] { display: none !important; }
@@ -20,7 +31,9 @@ body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
   padding-left: calc(1rem + env(safe-area-inset-left, 0px));
   padding-right: calc(1rem + env(safe-area-inset-right, 0px));
   border-bottom: 1px solid var(--pico-muted-border-color);
-  position: sticky; top: 0; background: var(--pico-background-color); z-index: 10;
+  background: var(--pico-background-color);
+  flex: none;              /* never shrinks, never scrolls away */
+  z-index: 10;
 }
 .badge {
   font-size: .7rem; padding: .15rem .5rem; border-radius: 1rem;
@@ -28,10 +41,22 @@ body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
 }
 .badge.ok { background: #2e7d32; color: #fff; }
 
-main { padding: 1rem; max-width: 34rem; margin: 0 auto; }
+main {
+  flex: 1 1 auto;                    /* takes the space between header and nav */
+  overflow-y: auto;                  /* the only scrolling region */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;      /* no rubber-band bleeding to the page */
+  padding: 1rem;
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+  padding-bottom: 2rem;              /* breathing room above the nav */
+}
+/* centre the content column without breaking the flex scroll container */
+main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
 
 .bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; display: flex;
+  display: flex;
+  flex: none;                        /* pinned by layout, not by position:fixed */
   border-top: 1px solid var(--pico-muted-border-color);
   background: var(--pico-background-color);
   padding-bottom: env(safe-area-inset-bottom, 0px);  /* clear the home indicator */
