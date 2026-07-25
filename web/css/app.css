@@ -127,18 +127,76 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   background: var(--gw-accent); color: #fff; flex: none;
 }
 
-/* Unselected pills read as OUTLINED (choose me), selected is filled. */
-.method-pills { display: flex; flex-wrap: wrap; gap: .45rem; margin: .5rem 0; }
+/* Unselected pills read as OUTLINED (choose me), selected is filled.
+   Centred so the wrapped rows look deliberate instead of ragged. */
+.method-pills {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  justify-content: center;
+  margin: .75rem 0 .25rem;
+}
 .method-pills button {
-  width: auto; padding: .5rem .9rem; margin: 0; font-size: .9rem;
-  border-radius: 1.4rem;
+  width: auto; padding: .55rem 1rem; margin: 0; font-size: .9rem;
+  border-radius: 1.4rem; white-space: nowrap;
   background: transparent; color: var(--pico-color);
   border: 1.5px solid var(--pico-muted-border-color);
+  transition: background .12s, border-color .12s, color .12s;
 }
 .method-pills button[aria-current="true"] {
   background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
   font-weight: 600;
 }
+/* the method chooser reads as one tidy card */
+.step.method-step {
+  background: rgba(0,0,0,.03); border: 1px solid var(--pico-muted-border-color);
+  border-radius: .7rem; padding: .85rem .75rem 1rem; text-align: center;
+}
+@media (prefers-color-scheme: dark) { .step.method-step { background: rgba(255,255,255,.04); } }
+.step.method-step .step-title { justify-content: center; }
+
+/* --- centred toggle pill (Decaf) --- */
+.toggle-row { display: flex; justify-content: center; margin: 1rem 0 .5rem; }
+.toggle-pill {
+  width: auto; margin: 0; padding: .55rem 1.4rem; font-size: .9rem;
+  border-radius: 1.4rem; background: transparent; color: var(--pico-color);
+  border: 1.5px solid var(--pico-muted-border-color);
+}
+.toggle-pill[aria-pressed="true"] {
+  background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
+  font-weight: 600;
+}
+.toggle-pill[aria-pressed="true"]::before { content: "✓ "; }
+
+/* --- date & number inputs: stop iOS giving them an intrinsic width that
+       overflows the container --- */
+input[type="date"], input[type="number"], input[type="file"] {
+  width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+  -webkit-appearance: none; appearance: none;
+}
+input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
+.full-width { display: block; width: 100%; }
+
+/* --- photo of the bag --- */
+.title-row {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+}
+.title-row h2 { margin: 0; }
+.icon-btn {
+  width: auto; flex: none; margin: 0; padding: .45rem .7rem; font-size: 1.2rem;
+  line-height: 1; border-radius: .6rem;
+}
+.photo-preview { text-align: center; margin: .75rem 0; }
+.photo-preview img {
+  max-width: 100%; max-height: 14rem; border-radius: .6rem; display: block;
+  margin: 0 auto .5rem;
+}
+.bag-photo {
+  display: block; width: 100%; max-height: 15rem; object-fit: cover;
+  border-radius: .7rem; margin: 0 0 .75rem;
+}
+.card-thumb {
+  width: 3rem; height: 3rem; object-fit: cover; border-radius: .45rem; flex: none;
+}
+.card-body { flex: 1 1 auto; min-width: 0; }
 
 .verdict-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-top: 1rem; }
 .verdict-row button {

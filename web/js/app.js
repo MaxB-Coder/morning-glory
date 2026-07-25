@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v11";
+export const APP_VERSION = "v12";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -148,7 +148,8 @@ async function renderHome() {
   const list = coffees.length
     ? coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
-          <div>
+          ${c.photo ? `<img class="card-thumb" src="${c.photo}" alt="">` : ""}
+          <div class="card-body">
             <strong>${esc(c.name)}</strong><br>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
@@ -169,9 +170,20 @@ async function renderHome() {
 
 // --- coffee form ------------------------------------------------------------
 function renderCoffeeForm() {
+  let photoData = null;   // resized JPEG data URL, set when a photo is chosen
+
   view.replaceChildren(el(`
     <article>
-      <h2>Register coffee</h2>
+      <div class="title-row">
+        <h2>Register coffee</h2>
+        <button type="button" id="photo-btn" class="icon-btn" title="Add a photo of the bag">📷</button>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" hidden>
+      <div id="photo-preview" class="photo-preview" hidden>
+        <img id="photo-img" alt="Coffee bag">
+        <button type="button" id="photo-remove" class="link-btn">Remove photo</button>
+      </div>
+
       <form id="coffee-form">
         <label>Name <input name="name" required placeholder="Roaster — Origin"></label>
         <div class="grid">
@@ -184,16 +196,49 @@ function renderCoffeeForm() {
         </div>
         <details>
           <summary>More detail (optional)</summary>
-          <label>Roast date <input name="roastDate" type="date"></label>
+          <label>Roast date <input name="roastDate" type="date" class="full-width"></label>
           <label>Origin <input name="origin"></label>
           <label>Variety <input name="variety"></label>
-          <label>Altitude (masl) <input name="altitudeMasl" type="number"></label>
-          <label><input name="decaf" type="checkbox"> Decaf</label>
-          <label>Notes <textarea name="notes"></textarea></label>
+          <label>Altitude (masl) <input name="altitudeMasl" type="number" inputmode="numeric"></label>
+
+          <div class="toggle-row">
+            <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="false">Decaf</button>
+          </div>
+
+          <label>Notes <textarea name="notes" rows="3"></textarea></label>
         </details>
         <button type="submit">Save coffee</button>
       </form>
     </article>`));
+
+  // --- photo -------------------------------------------------------------
+  const input = view.querySelector("#photo-input");
+  const preview = view.querySelector("#photo-preview");
+  const img = view.querySelector("#photo-img");
+  view.querySelector("#photo-btn").addEventListener("click", () => input.click());
+  view.querySelector("#photo-remove").addEventListener("click", () => {
+    photoData = null; input.value = ""; preview.hidden = true;
+  });
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    try {
+      photoData = await resizeImage(file, 700, 0.65);
+      img.src = photoData;
+      preview.hidden = false;
+    } catch (err) {
+      console.error("[photo]", err);
+      toast("Couldn't read that image");
+    }
+  });
+
+  // --- decaf toggle pill --------------------------------------------------
+  const decafPill = view.querySelector("#decaf-pill");
+  decafPill.addEventListener("click", () => {
+    const on = decafPill.getAttribute("aria-pressed") === "true";
+    decafPill.setAttribute("aria-pressed", String(!on));
+  });
+
   view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -202,9 +247,35 @@ function renderCoffeeForm() {
       roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
       variety: f.get("variety") || null,
       altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
-      decaf: f.get("decaf") ? 1 : 0, notes: f.get("notes") || null,
+      decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
+      notes: f.get("notes") || null,
+      photo: photoData,
     });
     location.hash = `#/coffee/${c.id}`;
+  });
+}
+
+// Downscale + JPEG-compress a chosen image so it stays small enough for
+// IndexedDB and for a Firestore document (well under the 1 MB doc limit).
+function resizeImage(file, maxSide = 700, quality = 0.65) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("bad image"));
+      image.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+        const w = Math.round(image.width * scale);
+        const h = Math.round(image.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(image, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
 }
 
@@ -229,6 +300,7 @@ async function renderCoffee(id) {
   view.replaceChildren(el(`
     <div>
       <p><a href="#/" class="back">← All coffees</a></p>
+      ${c.photo ? `<img class="bag-photo" src="${c.photo}" alt="${esc(c.name)}">` : ""}
       <h2>${esc(c.name)}</h2>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
       <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
@@ -274,7 +346,7 @@ async function renderBrew(coffeeId, method) {
       <p><a href="#/coffee/${c.id}" class="back">← ${esc(c.name)}</a></p>
       <h2>Log a brew</h2>
 
-      <section class="step">
+      <section class="step method-step">
         <h3 class="step-title"><span class="step-num">1</span> How are you brewing it?</h3>
         <div class="method-pills" id="pills">${METHODS.map((m) =>
           `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
@@ -314,10 +386,15 @@ async function renderBrew(coffeeId, method) {
     b.addEventListener("click", () => location.hash = `#/brew?coffee=${coffeeId}&method=${b.dataset.m}`));
 
   // fetch recommendation from the Python engine
+  // Strip photos: the engine never uses them, and base64 images would make the
+  // JSON crossing into Python needlessly huge on every recommendation.
+  const coffeesForEngine = (await db.allCoffeesIncludingArchived())
+    .map(({ photo, ...rest }) => rest);
+
   const payload = {
     grinder: g,
     // include archived coffees: their brews are still valid training data
-    coffees: await db.allCoffeesIncludingArchived(),
+    coffees: coffeesForEngine,
     brews: await db.allBrews(),
     request: { coffeeId: String(coffeeId), method },
   };
