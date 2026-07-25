@@ -9,13 +9,15 @@
    only <main> scrolls. Using position:fixed for the nav made it drift on iOS,
    because Safari's dynamic viewport (URL bar / keyboard) changes what "bottom"
    means as you scroll. 100dvh + flex avoids that entirely. */
-html { height: 100%; }
+html, body { height: 100%; overflow: hidden; }
 body {
-  height: 100vh;      /* fallback for older iOS */
-  height: 100dvh;     /* dynamic viewport — tracks Safari's changing chrome */
+  /* position:fixed + inset:0 pins the shell to the VISIBLE viewport exactly.
+     100dvh was leaving a dead band at the bottom in the installed iOS app,
+     because standalone iOS reports a viewport taller than what you can see. */
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;   /* the body itself never scrolls */
 }
 
 /* [hidden] must win over the flex display below, or the overlay never hides */
@@ -205,8 +207,9 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
 }
 .title-row h2 { margin: 0; }
 .icon-btn {
-  width: auto; flex: none; margin: 0; padding: .45rem .7rem; font-size: 1.2rem;
+  width: 3rem; height: 3rem; flex: none; margin: 0; padding: 0; font-size: 1.2rem;
   line-height: 1; border-radius: .6rem;
+  display: flex; align-items: center; justify-content: center;
 }
 .photo-preview { text-align: center; margin: .75rem 0; }
 .photo-preview img {
@@ -220,6 +223,9 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   background: transparent;
 }
 .thumb-btn img { width: 3rem; height: 3rem; object-fit: cover; display: block; }
+/* keeps the title row the same height on the brew screen when there's no photo,
+   so the layout doesn't shift between the coffee page and the brew page */
+.thumb-spacer { display: block; width: 3rem; height: 3rem; flex: none; }
 
 /* tap-to-enlarge overlay */
 .lightbox {

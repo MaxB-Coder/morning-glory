@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v15";
+export const APP_VERSION = "v16";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -309,9 +309,12 @@ async function renderCoffee(id) {
           : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
-      <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
-      <div class="method-pills">${METHODS.map((m) =>
-        `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
+
+      <section class="step method-step">
+        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
+        <div class="method-pills">${METHODS.map((m) =>
+          `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
+      </section>
 
       <h3 class="step-title" style="margin-top:1.5rem"><span class="step-num">📈</span> Dial-in history</h3>
       ${strip || "<p><small>No brews logged yet.</small></p>"}
@@ -408,13 +411,24 @@ async function renderBrew(coffeeId, method) {
   const g = await db.getGrinder();
   if (!c) { location.hash = "#/"; return; }
 
+  // NOTE: this header block deliberately mirrors renderCoffee() exactly — same
+  // back link, title row, subtitle and method section — so navigating from the
+  // coffee page to here doesn't visually shift the pills.
   view.replaceChildren(el(`
     <div>
-      <p><a href="#/coffee/${c.id}" class="back">← ${esc(c.name)}</a></p>
-      <h2>Log a brew</h2>
+      <p><a href="#/coffee/${c.id}" class="back">← All coffees</a></p>
+      <div class="title-row">
+        <h2>${esc(c.name)}</h2>
+        ${c.photo
+          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+               <img src="${c.photo}" alt="${esc(c.name)}">
+             </button>`
+          : `<span class="thumb-spacer"></span>`}
+      </div>
+      <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
 
       <section class="step method-step">
-        <h3 class="step-title"><span class="step-num">1</span> How are you brewing it?</h3>
+        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
         <div class="method-pills" id="pills">${METHODS.map((m) =>
           `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
       </section>
@@ -451,6 +465,9 @@ async function renderBrew(coffeeId, method) {
   const pills = view.querySelector("#pills");
   pills.querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => location.hash = `#/brew?coffee=${coffeeId}&method=${b.dataset.m}`));
+
+  const brewThumb = view.querySelector("#photo-thumb");
+  if (brewThumb) brewThumb.addEventListener("click", () => openPhotoLightbox(c));
 
   // fetch recommendation from the Python engine
   // Strip photos: the engine never uses them, and base64 images would make the
