@@ -248,6 +248,14 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
 
 /* generic centring helper */
 .center-row { display: flex; justify-content: center; }
+
+.diag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .7rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word;
+  background: rgba(0,0,0,.06); padding: .6rem; border-radius: .4rem;
+  margin: .5rem 0; color: var(--pico-color);
+}
+@media (prefers-color-scheme: dark) { .diag { background: rgba(255,255,255,.06); } }
 .card-thumb {
   width: 3rem; height: 3rem; object-fit: cover; border-radius: .45rem; flex: none;
 }

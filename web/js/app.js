@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v16";
+export const APP_VERSION = "v17";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -583,6 +583,11 @@ async function renderSettings() {
       <article><small>App version ${APP_VERSION}</small>
         <button id="force-update" class="secondary">Force update</button></article>
       <article>
+        <strong>Layout diagnostics</strong>
+        <pre id="diag" class="diag">measuring…</pre>
+        <button id="copy-diag" class="secondary">Copy diagnostics</button>
+      </article>
+      <article>
         <strong>Backup</strong>
         <p><small>IndexedDB can be cleared by the browser. Export a JSON backup regularly.</small></p>
         <button id="export">Export backup</button>
@@ -619,7 +624,47 @@ async function renderSettings() {
     location.reload(true);
   });
 
+  renderDiagnostics();
   await renderSyncPanel();
+}
+
+// Prints the real geometry from the device so layout gaps can be measured
+// rather than guessed at.
+function renderDiagnostics() {
+  const box = document.getElementById("diag");
+  if (!box) return;
+  const nav = document.querySelector(".bottom-nav");
+  const bodyRect = document.body.getBoundingClientRect();
+  const navRect = nav.getBoundingClientRect();
+  const cs = getComputedStyle(nav);
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);width:0;";
+  document.body.appendChild(probe);
+  const safeBottom = probe.getBoundingClientRect().height;
+  probe.remove();
+
+  const lines = [
+    `standalone      : ${window.navigator.standalone === true}`,
+    `display-mode    : ${window.matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser"}`,
+    `screen.height   : ${window.screen.height}`,
+    `innerHeight     : ${window.innerHeight}`,
+    `visualViewport  : ${window.visualViewport ? Math.round(window.visualViewport.height) : "n/a"}`,
+    `body height     : ${Math.round(bodyRect.height)}  (bottom ${Math.round(bodyRect.bottom)})`,
+    `nav top/bottom  : ${Math.round(navRect.top)} / ${Math.round(navRect.bottom)}`,
+    `nav height      : ${Math.round(navRect.height)}`,
+    `nav pad-bottom  : ${cs.paddingBottom}`,
+    `safe-inset-bot  : ${Math.round(safeBottom)}`,
+    `GAP below nav   : ${Math.round(window.innerHeight - navRect.bottom)}`,
+    `devicePixelRatio: ${window.devicePixelRatio}`,
+  ];
+  box.textContent = lines.join("\n");
+
+  const copy = document.getElementById("copy-diag");
+  if (copy) copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(box.textContent); toast("Copied"); }
+    catch { toast("Select the text to copy"); }
+  });
 }
 
 async function renderSyncPanel() {
