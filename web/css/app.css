@@ -49,7 +49,7 @@ main {
   padding: 1rem;
   padding-left: calc(1rem + env(safe-area-inset-left, 0px));
   padding-right: calc(1rem + env(safe-area-inset-right, 0px));
-  padding-bottom: 2rem;              /* breathing room above the nav */
+  padding-bottom: 1rem;
 }
 /* centre the content column without breaking the flex scroll container */
 main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
@@ -62,7 +62,7 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   padding-bottom: env(safe-area-inset-bottom, 0px);  /* clear the home indicator */
 }
 .bottom-nav a {
-  flex: 1; text-align: center; padding: .9rem 0; text-decoration: none;
+  flex: 1; text-align: center; padding: .6rem 0 .5rem; text-decoration: none;
   color: var(--pico-color); font-size: .9rem;
 }
 .bottom-nav a.active { color: var(--gw-accent); font-weight: 700; }
@@ -139,11 +139,13 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   border-radius: 1.4rem; white-space: nowrap;
   background: transparent; color: var(--pico-color);
   border: 1.5px solid var(--pico-muted-border-color);
+  /* font-weight is FIXED for every state: changing it on selection re-measured
+     the text and made the whole row of pills shift/reflow. Only colours change. */
+  font-weight: 600;
   transition: background .12s, border-color .12s, color .12s;
 }
 .method-pills button[aria-current="true"] {
   background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
-  font-weight: 600;
 }
 /* the method chooser reads as one tidy card */
 .step.method-step {
@@ -159,12 +161,11 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   width: auto; margin: 0; padding: .55rem 1.4rem; font-size: .9rem;
   border-radius: 1.4rem; background: transparent; color: var(--pico-color);
   border: 1.5px solid var(--pico-muted-border-color);
+  font-weight: 600;   /* fixed, same reason as the method pills */
 }
 .toggle-pill[aria-pressed="true"] {
   background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
-  font-weight: 600;
 }
-.toggle-pill[aria-pressed="true"]::before { content: "✓ "; }
 
 /* --- date & number inputs: stop iOS giving them an intrinsic width that
        overflows the container --- */
@@ -189,10 +190,29 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   max-width: 100%; max-height: 14rem; border-radius: .6rem; display: block;
   margin: 0 auto .5rem;
 }
-.bag-photo {
-  display: block; width: 100%; max-height: 15rem; object-fit: cover;
-  border-radius: .7rem; margin: 0 0 .75rem;
+/* mini preview in the title row — same slot as the 📷 button */
+.thumb-btn {
+  width: auto; flex: none; margin: 0; padding: 0; border-radius: .5rem;
+  overflow: hidden; line-height: 0; border: 1.5px solid var(--pico-muted-border-color);
+  background: transparent;
 }
+.thumb-btn img { width: 3rem; height: 3rem; object-fit: cover; display: block; }
+
+/* tap-to-enlarge overlay */
+.lightbox {
+  position: fixed; inset: 0; z-index: 80; display: flex;
+  align-items: center; justify-content: center; padding: 1.25rem;
+  background: rgba(0, 0, 0, .72);
+  padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
+.lightbox-inner { max-width: 100%; text-align: center; }
+.lightbox-inner img {
+  max-width: 100%; max-height: 60vh; border-radius: .7rem; display: block;
+  margin: 0 auto 1rem;
+}
+.lightbox-actions { display: flex; flex-direction: column; gap: .5rem; align-items: center; }
+.lightbox-actions button { width: auto; min-width: 12rem; margin: 0; }
 .card-thumb {
   width: 3rem; height: 3rem; object-fit: cover; border-radius: .45rem; flex: none;
 }

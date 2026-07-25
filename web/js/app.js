@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v12";
+export const APP_VERSION = "v13";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -300,8 +300,14 @@ async function renderCoffee(id) {
   view.replaceChildren(el(`
     <div>
       <p><a href="#/" class="back">← All coffees</a></p>
-      ${c.photo ? `<img class="bag-photo" src="${c.photo}" alt="${esc(c.name)}">` : ""}
-      <h2>${esc(c.name)}</h2>
+      <div class="title-row">
+        <h2>${esc(c.name)}</h2>
+        ${c.photo
+          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+               <img src="${c.photo}" alt="${esc(c.name)}">
+             </button>`
+          : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
+      </div>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
       <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
       <div class="method-pills">${METHODS.map((m) =>
@@ -331,6 +337,63 @@ async function renderCoffee(id) {
     if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;
     await db.updateCoffee({ ...c, archived: 1 });
     location.hash = "#/";
+  });
+
+  // photo: thumbnail opens the lightbox; camera button adds one
+  const thumb = view.querySelector("#photo-thumb");
+  if (thumb) thumb.addEventListener("click", () => openPhotoLightbox(c));
+  const addBtn = view.querySelector("#photo-add");
+  if (addBtn) addBtn.addEventListener("click", () => pickPhoto(c));
+}
+
+// Open the file picker, resize, and save onto the coffee.
+function pickPhoto(coffee) {
+  const input = el(`<input type="file" accept="image/*" hidden>`);
+  document.body.appendChild(input);
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    input.remove();
+    if (!file) return;
+    try {
+      const photo = await resizeImage(file, 700, 0.65);
+      await db.updateCoffee({ ...coffee, photo });
+      toast("Photo saved");
+      route();
+    } catch (err) {
+      console.error("[photo]", err);
+      toast("Couldn't read that image");
+    }
+  });
+  input.click();
+}
+
+// Tap-to-enlarge overlay with Replace / Remove. Tapping the backdrop closes it.
+function openPhotoLightbox(coffee) {
+  const overlay = el(`
+    <div class="lightbox" id="lightbox">
+      <div class="lightbox-inner">
+        <img src="${coffee.photo}" alt="${esc(coffee.name)}">
+        <div class="lightbox-actions">
+          <button type="button" id="lb-replace">Replace photo</button>
+          <button type="button" id="lb-remove" class="danger-link">Remove photo</button>
+        </div>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  // backdrop click closes; clicks inside the panel don't bubble out
+  overlay.addEventListener("click", close);
+  overlay.querySelector(".lightbox-inner")
+    .addEventListener("click", (e) => e.stopPropagation());
+
+  overlay.querySelector("#lb-replace").addEventListener("click", () => {
+    close(); pickPhoto(coffee);
+  });
+  overlay.querySelector("#lb-remove").addEventListener("click", async () => {
+    if (!confirm("Remove this photo?")) return;
+    await db.updateCoffee({ ...coffee, photo: null });
+    close(); toast("Photo removed"); route();
   });
 }
 
