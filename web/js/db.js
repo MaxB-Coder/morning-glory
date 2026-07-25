@@ -85,6 +85,12 @@ export async function allCoffees() {
   const all = await p((await store("coffee")).getAll());
   return all.filter((c) => !c.deleted && !c.archived);
 }
+// Archived coffees are hidden from the list but their brews still appear in
+// history — so history needs to resolve their names too.
+export async function allCoffeesIncludingArchived() {
+  const all = await p((await store("coffee")).getAll());
+  return all.filter((c) => !c.deleted);
+}
 
 // --- brew ------------------------------------------------------------------
 export async function addBrew(b) {

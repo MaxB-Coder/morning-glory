@@ -12,7 +12,7 @@ const METHOD_LABEL = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v9";
+export const APP_VERSION = "v10";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -86,6 +86,8 @@ async function route() {
   document.querySelectorAll("[data-nav]").forEach((a) =>
     a.classList.toggle("active", a.getAttribute("href") === `#/${parts[0] || ""}`));
 
+  removeFab();   // only Home re-adds it
+
   // gate on setup
   const grinder = await db.getGrinder();
   if (!grinder && parts[0] !== "setup") { location.hash = "#/setup"; return; }
@@ -146,11 +148,20 @@ async function renderHome() {
   const list = coffees.length
     ? coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
-          <strong>${esc(c.name)}</strong><br>
-          <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
+          <div>
+            <strong>${esc(c.name)}</strong><br>
+            <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
+          </div>
+          <span class="chev">›</span>
         </article>`).join("")
-    : `<p><small>No coffees yet. Add your first bag.</small></p>`;
+    : `<article class="empty">
+         <p><strong>No coffees yet.</strong></p>
+         <p><small>Add a bag to get your first grind recommendation.</small></p>
+         <button id="add-first">Add your first coffee</button>
+       </article>`;
   view.replaceChildren(el(`<div><h2>Your coffees</h2>${list}</div>`));
+  const first = view.querySelector("#add-first");
+  if (first) first.addEventListener("click", () => (location.hash = "#/coffee/new"));
   view.querySelectorAll(".coffee-card").forEach((c) =>
     c.addEventListener("click", () => (location.hash = `#/coffee/${c.dataset.id}`)));
   addFab("#/coffee/new", "+");
@@ -210,21 +221,45 @@ async function renderCoffee(id) {
   }).join("")}</div>` : "";
 
   const rows = brews.slice().reverse().map((b) =>
-    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td><td>${verdictLabel(b.verdict)}</td></tr>`
+    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td>
+     <td>${verdictLabel(b.verdict)}</td>
+     <td><button class="link-btn del-brew" data-id="${b.id}" title="Delete this brew">✕</button></td></tr>`
   ).join("");
 
   view.replaceChildren(el(`
     <div>
+      <p><a href="#/" class="back">← All coffees</a></p>
       <h2>${esc(c.name)}</h2>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
       <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
       <div class="method-pills">${METHODS.map((m) =>
         `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
-      <p><small>Dial-in history:</small></p>${strip || "<p><small>No brews logged yet.</small></p>"}
-      ${brews.length ? `<table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
+
+      <h3 class="step-title" style="margin-top:1.5rem"><span class="step-num">📈</span> Dial-in history</h3>
+      ${strip || "<p><small>No brews logged yet.</small></p>"}
+      ${brews.length ? `<p class="scale-hint"><span>taller bar = coarser grind</span></p>
+        <table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table>` : ""}
+
+      <p style="margin-top:2rem"><button id="archive-coffee" class="danger-link">Archive this coffee</button></p>
     </div>`));
+
   view.querySelectorAll(".method-pills button").forEach((btn) =>
     btn.addEventListener("click", () => location.hash = `#/brew?coffee=${id}&method=${btn.dataset.m}`));
+
+  // Delete a mis-logged brew — it would otherwise keep training the model wrong.
+  view.querySelectorAll(".del-brew").forEach((btn) =>
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this brew? It will stop influencing recommendations.")) return;
+      await db.softDelete("brew", btn.dataset.id);
+      route();
+    }));
+
+  view.querySelector("#archive-coffee").addEventListener("click", async () => {
+    if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;
+    await db.updateCoffee({ ...c, archived: 1 });
+    location.hash = "#/";
+  });
 }
 
 // --- brew (the core screen) -------------------------------------------------
@@ -236,7 +271,8 @@ async function renderBrew(coffeeId, method) {
 
   view.replaceChildren(el(`
     <div>
-      <h2>${esc(c.name)}</h2>
+      <p><a href="#/coffee/${c.id}" class="back">← ${esc(c.name)}</a></p>
+      <h2>Log a brew</h2>
 
       <section class="step">
         <h3 class="step-title"><span class="step-num">1</span> How are you brewing it?</h3>
@@ -252,7 +288,9 @@ async function renderBrew(coffeeId, method) {
       <section class="step">
         <h3 class="step-title"><span class="step-num">3</span> What did you actually use?</h3>
         <label>Grind setting
-          <input id="grind" type="number" step="${g.step}" inputmode="decimal" value="">
+          <input id="grind" type="number" step="${g.step}" min="${g.min}" max="${g.max}"
+                 inputmode="decimal" value="">
+          <small class="explain">${g.min}–${g.max} on your ${esc(g.name)}</small>
         </label>
         <details id="extras"></details>
       </section>
@@ -261,10 +299,11 @@ async function renderBrew(coffeeId, method) {
         <h3 class="step-title"><span class="step-num">4</span> How did it taste?</h3>
         <p><small>Tap one — this trains the recommendation.</small></p>
         <div class="verdict-row">
-          <button class="v-good" data-v="good">🟢<br>Good</button>
           <button class="v-under" data-v="under">🟠<br>Sour / weak</button>
+          <button class="v-good" data-v="good">🟢<br>Good</button>
           <button class="v-over" data-v="over">🔴<br>Bitter / harsh</button>
         </div>
+        <p class="scale-hint"><span>← grind finer</span><span>grind coarser →</span></p>
       </section>
     </div>`));
 
@@ -277,7 +316,8 @@ async function renderBrew(coffeeId, method) {
   // fetch recommendation from the Python engine
   const payload = {
     grinder: g,
-    coffees: await db.allCoffees(),
+    // include archived coffees: their brews are still valid training data
+    coffees: await db.allCoffeesIncludingArchived(),
     brews: await db.allBrews(),
     request: { coffeeId: String(coffeeId), method },
   };
@@ -310,10 +350,17 @@ async function renderBrew(coffeeId, method) {
 
   view.querySelectorAll(".verdict-row button").forEach((btn) =>
     btn.addEventListener("click", async () => {
-      const grind = parseFloat(view.querySelector("#grind").value);
-      if (isNaN(grind)) { view.querySelector("#grind").focus(); return; }
+      const input = view.querySelector("#grind");
+      const grind = parseFloat(input.value);
+      if (isNaN(grind)) {
+        input.focus();
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+        toast("Enter the grind setting you used");
+        return;
+      }
       const extra = collectExtras(method);
       await db.addBrew({ coffeeId: String(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
+      toast(`Logged ${grind} · ${verdictLabel(btn.dataset.v)}`);
       location.hash = `#/coffee/${coffeeId}`;
     }));
 }
@@ -349,9 +396,11 @@ function collectExtras(method) {
 // --- history ----------------------------------------------------------------
 async function renderHistory() {
   const brews = (await db.allBrews()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const coffees = Object.fromEntries((await db.allCoffees()).map((c) => [c.id, c]));
+  // include archived coffees here so old brews still show a name, not "?"
+  const all = await db.allCoffeesIncludingArchived();
+  const coffees = Object.fromEntries(all.map((c) => [String(c.id), c]));
   const rows = brews.map((b) =>
-    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${esc(coffees[b.coffeeId]?.name || "?")}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td><td>${verdictLabel(b.verdict)}</td></tr>`
+    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${esc(coffees[String(b.coffeeId)]?.name || "—")}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td><td>${verdictLabel(b.verdict)}</td></tr>`
   ).join("");
   view.replaceChildren(el(`<div><h2>History</h2>${brews.length
     ? `<table><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`
@@ -482,12 +531,30 @@ async function renderSyncPanel() {
 
 // --- helpers ----------------------------------------------------------------
 function verdictLabel(v) { return { good: "🟢 Good", under: "🟠 Sour", over: "🔴 Bitter" }[v] || v; }
+
+let toastTimer = null;
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = el(`<div id="toast" class="toast" role="status" aria-live="polite"></div>`);
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+// Single FAB, replaced in place. (Previously each render appended another one,
+// so a sync-triggered re-render stacked duplicate + buttons on top of each other.)
 function addFab(hash, label) {
-  const f = el(`<button class="fab" title="Add">${label}</button>`);
+  removeFab();
+  const f = el(`<button class="fab" id="fab" title="Add">${label}</button>`);
   f.addEventListener("click", () => (location.hash = hash));
   document.body.appendChild(f);
-  const clean = () => { f.remove(); window.removeEventListener("hashchange", clean); };
-  window.addEventListener("hashchange", clean);
+}
+function removeFab() {
+  const existing = document.getElementById("fab");
+  if (existing) existing.remove();
 }
 
 main();
