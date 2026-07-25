@@ -88,33 +88,26 @@ export function status() {
 // Installed PWAs (iOS especially) and some mobile browsers can't open the popup
 // window — it appears blank or is blocked. Redirect works everywhere, so use it
 // on standalone/mobile and keep the popup for desktop browsers where it's nicer.
-function prefersRedirect() {
-  const standalone = window.matchMedia("(display-mode: standalone)").matches
-    || window.navigator.standalone === true;
-  const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  return standalone || mobile;
-}
-
-export async function signIn({ forceRedirect = false } = {}) {
+// Redirect is the default for EVERY platform. Popup sign-in is fragile:
+// installed PWAs on iOS can't open it, and Chrome's Cross-Origin-Opener-Policy
+// can close the popup without ever resolving the promise (the "opens then
+// closes and nothing happens" symptom). Redirect has none of those failure
+// modes; the only cost is a page navigation, and getRedirectResult() in
+// initSync() picks the session back up on return.
+export async function signIn({ usePopup = false } = {}) {
   if (!fb) throw new Error("sync not initialized");
   const { signInWithPopup, signInWithRedirect } = fb.authMod;
 
-  if (forceRedirect || prefersRedirect()) {
-    await signInWithRedirect(fb.auth, fb.provider);   // navigates away; returns on load
+  if (!usePopup) {
+    await signInWithRedirect(fb.auth, fb.provider);   // navigates away
     return;
   }
+  // opt-in popup path, with redirect as a safety net
   try {
     await signInWithPopup(fb.auth, fb.provider);
   } catch (e) {
-    // popup blocked / blank / closed — fall back to redirect
-    const fallback = ["auth/popup-blocked", "auth/popup-closed-by-user",
-                      "auth/cancelled-popup-request", "auth/operation-not-supported-in-this-environment"];
-    if (fallback.includes(e.code)) {
-      console.warn("[sync] popup failed (", e.code, ") → redirecting");
-      await signInWithRedirect(fb.auth, fb.provider);
-      return;
-    }
-    throw e;
+    console.warn("[sync] popup failed (", e.code, ") → redirecting");
+    await signInWithRedirect(fb.auth, fb.provider);
   }
 }
 export async function signOutUser() {

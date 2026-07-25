@@ -385,7 +385,8 @@ async function renderSyncPanel() {
       <p><small>Sign in to sync your coffees and brews across devices and share
       with someone.</small></p>
       <button id="signin">Sign in with Google</button>
-      <p><a href="#" id="signin-redirect"><small>Trouble signing in? Use redirect instead</small></a></p>
+      <p><small>You'll be taken to Google and returned here.</small></p>
+      <p><a href="#" id="signin-popup"><small>Use popup instead</small></a></p>
       <p id="auth-err" class="explain"></p>`;
     const errBox = panel.querySelector("#auth-err");
     if (sync.lastAuthError()) errBox.textContent = "Last error: " + sync.lastAuthError();
@@ -394,8 +395,8 @@ async function renderSyncPanel() {
       errBox.textContent = "Sign-in failed: " + (e.code || e.message);
     });
     panel.querySelector("#signin").addEventListener("click", () => go({}));
-    panel.querySelector("#signin-redirect").addEventListener("click", (ev) => {
-      ev.preventDefault(); go({ forceRedirect: true });
+    panel.querySelector("#signin-popup").addEventListener("click", (ev) => {
+      ev.preventDefault(); go({ usePopup: true });
     });
     return;
   }
