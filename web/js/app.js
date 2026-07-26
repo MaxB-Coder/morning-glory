@@ -10,9 +10,14 @@ const METHOD_LABEL = {
   espresso: "Espresso", moka: "Moka", aeropress: "AeroPress", v60: "V60",
   chemex: "Chemex", frenchpress: "French press", coldbrew: "Cold brew",
 };
+// compact forms for tables, where column width is tight
+const METHOD_SHORT = {
+  espresso: "Espresso", moka: "Moka", aeropress: "AeroPress", v60: "V60",
+  chemex: "Chemex", frenchpress: "French", coldbrew: "Cold",
+};
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v17";
+export const APP_VERSION = "v22";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -292,9 +297,13 @@ async function renderCoffee(id) {
   }).join("")}</div>` : "";
 
   const rows = brews.slice().reverse().map((b) =>
-    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td>
-     <td>${verdictLabel(b.verdict)}</td>
-     <td><button class="link-btn del-brew" data-id="${b.id}" title="Delete this brew">✕</button></td></tr>`
+    `<tr>
+       <td class="nowrap">${fmtDate(b.createdAt)}</td>
+       <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
+       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${verdictIcon(b.verdict)}</td>
+       <td class="nowrap"><button class="link-btn del-brew" data-id="${b.id}" title="Delete this brew">✕</button></td>
+     </tr>`
   ).join("");
 
   view.replaceChildren(el(`
@@ -532,16 +541,16 @@ function renderExtras(method) {
   if (method === "espresso") {
     d.innerHTML = `<summary>Shot detail (optional)</summary>
       <div class="grid">
-        <label>Dose g <input id="doseG" type="number" step="any"></label>
-        <label>Yield g <input id="yieldG" type="number" step="any"></label>
-        <label>Time s <input id="shotTimeS" type="number" step="any"></label>
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Yield (g) <input id="yieldG" type="number" step="any" inputmode="decimal"></label>
+        <label>Time (s) <input id="shotTimeS" type="number" step="any" inputmode="decimal"></label>
       </div>`;
   } else {
     d.innerHTML = `<summary>Brew detail (optional)</summary>
       <div class="grid">
-        <label>Dose g <input id="doseG" type="number" step="any"></label>
-        <label>Brew time s <input id="brewTimeS" type="number" step="any"></label>
-        <label>Water °C <input id="waterTempC" type="number" step="any"></label>
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Time (s) <input id="brewTimeS" type="number" step="any" inputmode="decimal"></label>
+        <label>Water (°C) <input id="waterTempC" type="number" step="any" inputmode="decimal"></label>
       </div>`;
   }
 }
@@ -561,10 +570,16 @@ async function renderHistory() {
   const all = await db.allCoffeesIncludingArchived();
   const coffees = Object.fromEntries(all.map((c) => [String(c.id), c]));
   const rows = brews.map((b) =>
-    `<tr><td>${b.createdAt.slice(0, 10)}</td><td>${esc(coffees[String(b.coffeeId)]?.name || "—")}</td><td>${METHOD_LABEL[b.method]}</td><td>${b.grindSetting}</td><td>${verdictLabel(b.verdict)}</td></tr>`
+    `<tr>
+       <td class="nowrap">${fmtDate(b.createdAt)}</td>
+       <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}</td>
+       <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
+       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${verdictIcon(b.verdict)}</td>
+     </tr>`
   ).join("");
   view.replaceChildren(el(`<div><h2>History</h2>${brews.length
-    ? `<table><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`
+    ? `<table class="compact"><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
     : "<p><small>No brews logged yet.</small></p>"}</div>`));
 }
 
@@ -575,23 +590,29 @@ async function renderSettings() {
     <div>
       <h2>Settings</h2>
       <article>
-        <strong>Grinder:</strong> ${esc(g.name)} (${g.min}–${g.max}, step ${g.step})
-        ${g.calibration ? `· calibrated: ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}` : ""}
-        <br><a href="#/setup">Edit grinder</a>
+        <div><strong>Grinder:</strong> ${esc(g.name)} (${g.min}–${g.max}, step ${g.step})</div>
+        ${g.calibration
+          ? `<div><strong>Calibrated:</strong> ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}</div>`
+          : `<div><small>Not calibrated</small></div>`}
+        <div style="margin-top:.5rem"><a href="#/setup">Edit grinder</a></div>
       </article>
       <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
-      <article><small>App version ${APP_VERSION}</small>
-        <button id="force-update" class="secondary">Force update</button></article>
-      <article>
-        <strong>Layout diagnostics</strong>
-        <pre id="diag" class="diag">measuring…</pre>
-        <button id="copy-diag" class="secondary">Copy diagnostics</button>
+      <article class="inline-row">
+        <span>
+          <strong>Version</strong> ${APP_VERSION}
+          <br><small id="update-status">Checking for updates…</small>
+        </span>
+        <button id="force-update" class="secondary compact-btn" hidden>Update</button>
       </article>
       <article>
         <strong>Backup</strong>
-        <p><small>IndexedDB can be cleared by the browser. Export a JSON backup regularly.</small></p>
+        <p><small>Your phone can clear local data. Export a JSON backup now and then.</small></p>
         <button id="export">Export backup</button>
-        <label>Import backup <input id="import" type="file" accept="application/json"></label>
+        <div class="inline-row">
+          <span>Import backup</span>
+          <button id="import-btn" class="secondary compact-btn">Choose file</button>
+          <input id="import" type="file" accept="application/json" hidden>
+        </div>
       </article>
     </div>`));
   view.querySelector("#export").addEventListener("click", async () => {
@@ -624,119 +645,51 @@ async function renderSettings() {
     location.reload(true);
   });
 
-  renderDiagnostics();
+  view.querySelector("#import-btn").addEventListener("click", () =>
+    view.querySelector("#import").click());
+
+  checkForUpdate();
   await renderSyncPanel();
 }
 
-// Prints the real geometry from the device so layout gaps can be measured
-// rather than guessed at.
-function renderDiagnostics() {
-  const box = document.getElementById("diag");
-  if (!box) return;
-  const nav = document.querySelector(".bottom-nav");
-  const bodyRect = document.body.getBoundingClientRect();
-  const navRect = nav.getBoundingClientRect();
-  const cs = getComputedStyle(nav);
-  const probe = document.createElement("div");
-  probe.style.cssText =
-    "position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);width:0;";
-  document.body.appendChild(probe);
-  const safeBottom = probe.getBoundingClientRect().height;
-  probe.remove();
-
-  const lines = [
-    `standalone      : ${window.navigator.standalone === true}`,
-    `display-mode    : ${window.matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser"}`,
-    `screen.height   : ${window.screen.height}`,
-    `innerHeight     : ${window.innerHeight}`,
-    `visualViewport  : ${window.visualViewport ? Math.round(window.visualViewport.height) : "n/a"}`,
-    `body height     : ${Math.round(bodyRect.height)}  (bottom ${Math.round(bodyRect.bottom)})`,
-    `nav top/bottom  : ${Math.round(navRect.top)} / ${Math.round(navRect.bottom)}`,
-    `nav height      : ${Math.round(navRect.height)}`,
-    `nav pad-bottom  : ${cs.paddingBottom}`,
-    `safe-inset-bot  : ${Math.round(safeBottom)}`,
-    `GAP below nav   : ${Math.round(window.innerHeight - navRect.bottom)}`,
-    `devicePixelRatio: ${window.devicePixelRatio}`,
-  ];
-  box.textContent = lines.join("\n");
-
-  const copy = document.getElementById("copy-diag");
-  if (copy) copy.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(box.textContent); toast("Copied"); }
-    catch { toast("Select the text to copy"); }
-  });
+// Compare the running build against version.json on the server (fetched with
+// cache:no-store so the service worker can't answer with a stale copy).
+async function checkForUpdate() {
+  const status = document.getElementById("update-status");
+  const btn = document.getElementById("force-update");
+  if (!status) return;
+  try {
+    const res = await fetch(`./version.json?t=${Date.now()}`, { cache: "no-store" });
+    const { version } = await res.json();
+    if (version && version !== APP_VERSION) {
+      status.textContent = `Update available (${version})`;
+      status.className = "update-available";
+      if (btn) btn.hidden = false;
+    } else {
+      status.textContent = "Up to date";
+      status.className = "update-ok";
+      if (btn) btn.hidden = true;
+    }
+  } catch {
+    status.textContent = "Couldn't check (offline)";
+    status.className = "";
+    if (btn) btn.hidden = false;   // let the user force it anyway
+  }
 }
 
-async function renderSyncPanel() {
-  const panel = document.getElementById("sync-panel");
-  if (!panel) return;
-  const st = sync.status();
-
-  if (!st.available) {
-    panel.innerHTML = `<strong>Sharing</strong>
-      <p><small>Sync isn't configured. The app runs locally on this device.
-      To share with someone, add your Firebase keys in
-      <code>js/firebase-config.js</code> (see SYNC-DESIGN.md).</small></p>`;
-    return;
-  }
-
-  if (!st.signedIn) {
-    panel.innerHTML = `<strong>Sharing</strong>
-      <p><small>Sign in to sync your coffees and brews across devices and share
-      with someone.</small></p>
-      <button id="signin">Sign in with Google</button>
-      <p id="auth-err" class="explain"></p>`;
-    const errBox = panel.querySelector("#auth-err");
-    if (sync.lastAuthError()) errBox.textContent = "Last error: " + sync.lastAuthError();
-    panel.querySelector("#signin").addEventListener("click", () =>
-      sync.signIn().catch((e) => {
-        console.error("[signin]", e);
-        // user closing the popup isn't an error worth shouting about
-        if ((e.code || "").includes("popup-closed") || (e.code || "").includes("cancelled")) return;
-        errBox.textContent = "Sign-in failed: " + (e.code || e.message);
-      }));
-    return;
-  }
-
-  if (!st.householdId) {
-    panel.innerHTML = `<strong>Sharing</strong>
-      <p><small>Signed in as ${esc(st.user.name || st.user.email)}.</small></p>
-      <p><small>Create a household (then share the code) or join one.</small></p>
-      <button id="create">Create household</button>
-      <label>Join with invite code
-        <input id="joincode" placeholder="6-char code" maxlength="6" style="text-transform:uppercase">
-      </label>
-      <button id="join" class="secondary">Join</button>
-      <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
-    panel.querySelector("#create").addEventListener("click", async () => {
-      try { const code = await sync.createHousehold();
-        alert("Household created. Invite code: " + code); renderSettings(); }
-      catch (e) { alert("Failed: " + e.message); }
-    });
-    panel.querySelector("#join").addEventListener("click", async () => {
-      const code = panel.querySelector("#joincode").value;
-      try { await sync.joinHousehold(code); alert("Joined!"); renderSettings(); }
-      catch (e) { alert("Join failed: " + e.message); }
-    });
-    panel.querySelector("#signout").addEventListener("click", async (ev) => {
-      ev.preventDefault(); await sync.signOutUser(); renderSettings();
-    });
-    return;
-  }
-
-  const code = await sync.getInviteCode();
-  panel.innerHTML = `<strong>Sharing</strong>
-    <p><small>Signed in as ${esc(st.user.name || st.user.email)} · sync ${st.online ? "on" : "offline"}.</small></p>
-    <p>Invite code: <strong style="font-size:1.3rem;letter-spacing:.15em">${esc(code || "—")}</strong></p>
-    <p><small>Share this code with the person you want to sync with. They sign in and tap Join.</small></p>
-    <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
-  panel.querySelector("#signout").addEventListener("click", async (ev) => {
-    ev.preventDefault(); await sync.signOutUser(); renderSettings();
-  });
-}
 
 // --- helpers ----------------------------------------------------------------
 function verdictLabel(v) { return { good: "🟢 Good", under: "🟠 Sour", over: "🔴 Bitter" }[v] || v; }
+// icon-only for narrow table columns
+function verdictIcon(v) { return { good: "🟢", under: "🟠", over: "🔴" }[v] || v; }
+
+// dd/mm/yy — compact and unambiguous for a UK-style reader
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso).slice(0, 10);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
+}
 
 let toastTimer = null;
 function toast(msg) {
@@ -754,7 +707,7 @@ function toast(msg) {
 // so a sync-triggered re-render stacked duplicate + buttons on top of each other.)
 function addFab(hash, label) {
   removeFab();
-  const f = el(`<button class="fab" id="fab" title="Add">${label}</button>`);
+  const f = el(`<button class="fab" id="fab" title="Add"><span>${label}</span></button>`);
   f.addEventListener("click", () => (location.hash = hash));
   document.body.appendChild(f);
 }

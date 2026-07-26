@@ -1,0 +1,719 @@
+// Morning Glory — buildless SPA. Hash router + views. JS owns UI + storage;
+// the Python engine (via bridge) owns the recommendation math; sync.js mirrors
+// the local store to Firestore for multi-user sharing (optional / offline-first).
+import * as db from "./db.js";
+import { initEngine, recommend } from "./bridge.js";
+import * as sync from "./sync.js";
+
+const METHODS = ["espresso", "moka", "aeropress", "v60", "chemex", "frenchpress", "coldbrew"];
+const METHOD_LABEL = {
+  espresso: "Espresso", moka: "Moka", aeropress: "AeroPress", v60: "V60",
+  chemex: "Chemex", frenchpress: "French press", coldbrew: "Cold brew",
+};
+// compact forms for tables, where column width is tight
+const METHOD_SHORT = {
+  espresso: "Espresso", moka: "Moka", aeropress: "AeroPress", v60: "V60",
+  chemex: "Chemex", frenchpress: "French", coldbrew: "Cold",
+};
+// Bump this with every deploy — shown in Settings so you can confirm which
+// build the browser/service worker is actually running.
+export const APP_VERSION = "v20";
+
+const view = document.getElementById("view");
+const boot = document.getElementById("boot");
+const bootStatus = document.getElementById("boot-status");
+
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// --- boot -------------------------------------------------------------------
+function showApp() {
+  boot.hidden = true;
+  document.querySelector(".app-header").hidden = false;
+  view.hidden = false;
+  document.querySelector(".bottom-nav").hidden = false;
+}
+
+async function main() {
+  const badge = document.getElementById("engine-badge");
+
+  // Reveal the UI immediately. Coffee registration / setup work without the
+  // engine; only the recommendation number needs Pyodide. Don't block on it.
+  window.addEventListener("hashchange", route);
+  try {
+    showApp();
+    await route();
+  } catch (e) {
+    console.error("[route]", e);
+    view.innerHTML = `<article><strong>Something broke rendering the screen.</strong>
+      <p><small>${esc(e.message || e)}</small></p></article>`;
+  }
+
+  // Warm the engine in the background; update the badge when done.
+  initEngine((s) => { badge.textContent = "engine: " + s.toLowerCase(); })
+    .then(() => { badge.textContent = "engine: ready"; badge.classList.add("ok"); })
+    .catch((e) => {
+      console.error("[engine]", e);
+      badge.textContent = "engine: offline";
+    });
+
+  // Start sync in the background (no-op if Firebase isn't configured).
+  // When remote data merges in, re-render the current screen.
+  sync.initSync({
+    onChange: (st) => {
+      renderSyncBadge(st);
+      // If the Sharing panel is on screen, re-render it so sign-in / household
+      // state appears immediately instead of after a manual navigation.
+      if (document.getElementById("sync-panel")) renderSyncPanel();
+    },
+    onData: () => route(),
+  }).catch((e) => console.warn("[sync]", e));
+}
+
+function renderSyncBadge(st) {
+  const b = document.getElementById("sync-badge");
+  if (!b) return;
+  if (!st.available) { b.hidden = true; return; }
+  b.hidden = false;
+  if (!st.signedIn) { b.textContent = "sync: sign in"; b.className = "badge"; }
+  else if (!st.householdId) { b.textContent = "sync: no household"; b.className = "badge"; }
+  else { b.textContent = st.online ? "sync: on" : "sync: offline";
+         b.className = "badge" + (st.online ? " ok" : ""); }
+}
+
+// --- router -----------------------------------------------------------------
+async function route() {
+  const hash = location.hash || "#/";
+  const [path, query] = hash.slice(1).split("?");
+  const params = new URLSearchParams(query || "");
+  const parts = path.split("/").filter(Boolean);
+
+  document.querySelectorAll("[data-nav]").forEach((a) =>
+    a.classList.toggle("active", a.getAttribute("href") === `#/${parts[0] || ""}`));
+
+  removeFab();   // only Home re-adds it
+
+  // gate on setup
+  const grinder = await db.getGrinder();
+  if (!grinder && parts[0] !== "setup") { location.hash = "#/setup"; return; }
+
+  if (parts[0] === "setup") return renderSetup();
+  if (parts[0] === "coffee" && parts[1] === "new") return renderCoffeeForm();
+  if (parts[0] === "coffee" && parts[1]) return renderCoffee(parts[1]);
+  if (parts[0] === "brew") return renderBrew(params.get("coffee"), params.get("method"));
+  if (parts[0] === "history") return renderHistory();
+  if (parts[0] === "settings") return renderSettings();
+  return renderHome();
+}
+
+// --- setup ------------------------------------------------------------------
+async function renderSetup() {
+  const g = (await db.getGrinder()) || { name: "", min: 0, max: 40, step: 0.5, calibration: null };
+  const cal = g.calibration || {};
+  const methodOpts = METHODS.map((m) =>
+    `<option value="${m}" ${cal.method === m ? "selected" : ""}>${METHOD_LABEL[m]}</option>`).join("");
+  view.replaceChildren(el(`
+    <article>
+      <h2>Grinder setup</h2>
+      <p><small>Enter your grinder's dial range. The calibration point is optional but recommended: one grind setting that has worked for you on any brew method. It tells the app how your specific dial maps to grind size, so day-one numbers land in the right ballpark. It's ignored once you've logged real brews.</small></p>
+      <form id="setup-form">
+        <label>Grinder name <input name="name" value="${esc(g.name)}" placeholder="e.g. Baratza Encore" required></label>
+        <div class="grid">
+          <label>Min <input name="min" type="number" step="any" value="${g.min}" required></label>
+          <label>Max <input name="max" type="number" step="any" value="${g.max}" required></label>
+          <label>Step <input name="step" type="number" step="any" value="${g.step}" required></label>
+        </div>
+        <fieldset>
+          <legend><small>Calibration point (optional)</small></legend>
+          <div class="grid">
+            <label>Method <select name="calMethod"><option value="">— none —</option>${methodOpts}</select></label>
+            <label>Setting that worked <input name="calSetting" type="number" step="any" value="${cal.setting ?? ""}" placeholder="e.g. 22"></label>
+          </div>
+        </fieldset>
+        <button type="submit">Save</button>
+      </form>
+    </article>`));
+  view.querySelector("#setup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const cm = f.get("calMethod");
+    const cs = f.get("calSetting");
+    const calibration = (cm && cs !== "") ? { method: cm, setting: +cs } : null;
+    await db.saveGrinder({
+      name: f.get("name"), min: +f.get("min"), max: +f.get("max"), step: +f.get("step"),
+      calibration,
+    });
+    location.hash = "#/";
+  });
+}
+
+// --- home -------------------------------------------------------------------
+async function renderHome() {
+  const coffees = await db.allCoffees();
+  const list = coffees.length
+    ? coffees.map((c) => `
+        <article class="coffee-card" data-id="${c.id}">
+          ${c.photo ? `<img class="card-thumb" src="${c.photo}" alt="">` : ""}
+          <div class="card-body">
+            <strong>${esc(c.name)}</strong><br>
+            <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
+          </div>
+          <span class="chev">›</span>
+        </article>`).join("")
+    : `<article class="empty">
+         <p><strong>No coffees yet.</strong></p>
+         <p><small>Add a bag to get your first grind recommendation.</small></p>
+         <button id="add-first">Add your first coffee</button>
+       </article>`;
+  view.replaceChildren(el(`<div><h2>Your coffees</h2>${list}</div>`));
+  const first = view.querySelector("#add-first");
+  if (first) first.addEventListener("click", () => (location.hash = "#/coffee/new"));
+  view.querySelectorAll(".coffee-card").forEach((c) =>
+    c.addEventListener("click", () => (location.hash = `#/coffee/${c.dataset.id}`)));
+  addFab("#/coffee/new", "+");
+}
+
+// --- coffee form ------------------------------------------------------------
+function renderCoffeeForm() {
+  let photoData = null;   // resized JPEG data URL, set when a photo is chosen
+
+  view.replaceChildren(el(`
+    <article>
+      <div class="title-row">
+        <h2>Register coffee</h2>
+        <button type="button" id="photo-btn" class="icon-btn" title="Add a photo of the bag">📷</button>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" hidden>
+      <div id="photo-preview" class="photo-preview" hidden>
+        <img id="photo-img" alt="Coffee bag">
+        <button type="button" id="photo-remove" class="link-btn">Remove photo</button>
+      </div>
+
+      <form id="coffee-form">
+        <label>Name <input name="name" required placeholder="Roaster — Origin"></label>
+        <div class="grid">
+          <label>Roast
+            <select name="roast"><option>light</option><option selected>medium</option><option>dark</option></select>
+          </label>
+          <label>Process
+            <select name="process"><option selected>washed</option><option>honey</option><option>natural</option></select>
+          </label>
+        </div>
+        <details>
+          <summary>More detail (optional)</summary>
+          <label>Roast date <input name="roastDate" type="date" class="full-width"></label>
+          <label>Origin <input name="origin"></label>
+          <label>Variety <input name="variety"></label>
+          <label>Altitude (masl) <input name="altitudeMasl" type="number" inputmode="numeric"></label>
+
+          <div class="toggle-row">
+            <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="false">Decaf</button>
+          </div>
+
+          <label>Notes <textarea name="notes" rows="3"></textarea></label>
+        </details>
+        <button type="submit">Save coffee</button>
+      </form>
+    </article>`));
+
+  // --- photo -------------------------------------------------------------
+  const input = view.querySelector("#photo-input");
+  const preview = view.querySelector("#photo-preview");
+  const img = view.querySelector("#photo-img");
+  view.querySelector("#photo-btn").addEventListener("click", () => input.click());
+  view.querySelector("#photo-remove").addEventListener("click", () => {
+    photoData = null; input.value = ""; preview.hidden = true;
+  });
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    try {
+      photoData = await resizeImage(file, 700, 0.65);
+      img.src = photoData;
+      preview.hidden = false;
+    } catch (err) {
+      console.error("[photo]", err);
+      toast("Couldn't read that image");
+    }
+  });
+
+  // --- decaf toggle pill --------------------------------------------------
+  const decafPill = view.querySelector("#decaf-pill");
+  decafPill.addEventListener("click", () => {
+    const on = decafPill.getAttribute("aria-pressed") === "true";
+    decafPill.setAttribute("aria-pressed", String(!on));
+  });
+
+  view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const c = await db.addCoffee({
+      name: f.get("name"), roast: f.get("roast"), process: f.get("process"),
+      roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
+      variety: f.get("variety") || null,
+      altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
+      decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
+      notes: f.get("notes") || null,
+      photo: photoData,
+    });
+    location.hash = `#/coffee/${c.id}`;
+  });
+}
+
+// Downscale + JPEG-compress a chosen image so it stays small enough for
+// IndexedDB and for a Firestore document (well under the 1 MB doc limit).
+function resizeImage(file, maxSide = 700, quality = 0.65) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("bad image"));
+      image.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+        const w = Math.round(image.width * scale);
+        const h = Math.round(image.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(image, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- coffee detail ----------------------------------------------------------
+async function renderCoffee(id) {
+  const c = await db.getCoffee(id);
+  if (!c) { location.hash = "#/"; return; }
+  const brews = (await db.brewsForCoffee(id)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const g = await db.getGrinder();
+
+  const strip = brews.length ? `<div class="dial-strip">${brews.map((b) => {
+    const h = Math.max(8, ((b.grindSetting - g.min) / (g.max - g.min)) * 100);
+    return `<div class="dial-bar ${b.verdict}" style="height:${h}%" title="${b.method} ${b.grindSetting} (${b.verdict})"></div>`;
+  }).join("")}</div>` : "";
+
+  const rows = brews.slice().reverse().map((b) =>
+    `<tr>
+       <td class="nowrap">${fmtDate(b.createdAt)}</td>
+       <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
+       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${verdictIcon(b.verdict)}</td>
+       <td class="nowrap"><button class="link-btn del-brew" data-id="${b.id}" title="Delete this brew">✕</button></td>
+     </tr>`
+  ).join("");
+
+  view.replaceChildren(el(`
+    <div>
+      <p><a href="#/" class="back">← All coffees</a></p>
+      <div class="title-row">
+        <h2>${esc(c.name)}</h2>
+        ${c.photo
+          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+               <img src="${c.photo}" alt="${esc(c.name)}">
+             </button>`
+          : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
+      </div>
+      <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
+
+      <section class="step method-step">
+        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
+        <div class="method-pills">${METHODS.map((m) =>
+          `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
+      </section>
+
+      <h3 class="step-title" style="margin-top:1.5rem"><span class="step-num">📈</span> Dial-in history</h3>
+      ${strip || "<p><small>No brews logged yet.</small></p>"}
+      ${brews.length ? `<p class="scale-hint"><span>taller bar = coarser grind</span></p>
+        <table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table>` : ""}
+
+      <div class="center-row" style="margin-top:2rem">
+        <button id="archive-coffee" class="danger-link">Archive this coffee</button>
+      </div>
+    </div>`));
+
+  view.querySelectorAll(".method-pills button").forEach((btn) =>
+    btn.addEventListener("click", () => location.hash = `#/brew?coffee=${id}&method=${btn.dataset.m}`));
+
+  // Delete a mis-logged brew — it would otherwise keep training the model wrong.
+  view.querySelectorAll(".del-brew").forEach((btn) =>
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this brew? It will stop influencing recommendations.")) return;
+      await db.softDelete("brew", btn.dataset.id);
+      route();
+    }));
+
+  view.querySelector("#archive-coffee").addEventListener("click", async () => {
+    if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;
+    await db.updateCoffee({ ...c, archived: 1 });
+    location.hash = "#/";
+  });
+
+  // photo: thumbnail opens the lightbox; camera button adds one
+  const thumb = view.querySelector("#photo-thumb");
+  if (thumb) thumb.addEventListener("click", () => openPhotoLightbox(c));
+  const addBtn = view.querySelector("#photo-add");
+  if (addBtn) addBtn.addEventListener("click", () => pickPhoto(c));
+}
+
+// Open the file picker, resize, and save onto the coffee.
+function pickPhoto(coffee) {
+  const input = el(`<input type="file" accept="image/*" hidden>`);
+  document.body.appendChild(input);
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    input.remove();
+    if (!file) return;
+    try {
+      const photo = await resizeImage(file, 700, 0.65);
+      await db.updateCoffee({ ...coffee, photo });
+      toast("Photo saved");
+      route();
+    } catch (err) {
+      console.error("[photo]", err);
+      toast("Couldn't read that image");
+    }
+  });
+  input.click();
+}
+
+// Tap-to-enlarge overlay with Replace / Remove. Tapping the backdrop closes it.
+function openPhotoLightbox(coffee) {
+  const overlay = el(`
+    <div class="lightbox" id="lightbox">
+      <div class="lightbox-inner">
+        <img src="${coffee.photo}" alt="${esc(coffee.name)}">
+        <div class="lightbox-actions">
+          <button type="button" id="lb-replace">Replace photo</button>
+          <button type="button" id="lb-remove" class="danger-link">Remove photo</button>
+        </div>
+        <p class="lightbox-hint">Tap anywhere to close</p>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  // Tapping ANYWHERE closes — including the photo itself. Only the action
+  // buttons swallow the tap, so they don't dismiss before they run.
+  overlay.addEventListener("click", close);
+  overlay.querySelector(".lightbox-actions")
+    .addEventListener("click", (e) => e.stopPropagation());
+
+  overlay.querySelector("#lb-replace").addEventListener("click", () => {
+    close(); pickPhoto(coffee);
+  });
+  overlay.querySelector("#lb-remove").addEventListener("click", async () => {
+    if (!confirm("Remove this photo?")) return;
+    await db.updateCoffee({ ...coffee, photo: null });
+    close(); toast("Photo removed"); route();
+  });
+}
+
+// --- brew (the core screen) -------------------------------------------------
+async function renderBrew(coffeeId, method) {
+  method = method || "espresso";
+  const c = await db.getCoffee(coffeeId);
+  const g = await db.getGrinder();
+  if (!c) { location.hash = "#/"; return; }
+
+  // NOTE: this header block deliberately mirrors renderCoffee() exactly — same
+  // back link, title row, subtitle and method section — so navigating from the
+  // coffee page to here doesn't visually shift the pills.
+  view.replaceChildren(el(`
+    <div>
+      <p><a href="#/coffee/${c.id}" class="back">← All coffees</a></p>
+      <div class="title-row">
+        <h2>${esc(c.name)}</h2>
+        ${c.photo
+          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+               <img src="${c.photo}" alt="${esc(c.name)}">
+             </button>`
+          : `<span class="thumb-spacer"></span>`}
+      </div>
+      <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
+
+      <section class="step method-step">
+        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
+        <div class="method-pills" id="pills">${METHODS.map((m) =>
+          `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">2</span> Suggested grind</h3>
+        <div class="rec-wrap" id="rec"><progress></progress></div>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">3</span> What did you actually use?</h3>
+        <label>Grind setting
+          <input id="grind" type="number" step="${g.step}" min="${g.min}" max="${g.max}"
+                 inputmode="decimal" value="">
+          <small class="explain">${g.min}–${g.max} on your ${esc(g.name)}</small>
+        </label>
+        <details id="extras"></details>
+      </section>
+
+      <section class="step">
+        <h3 class="step-title"><span class="step-num">4</span> How did it taste?</h3>
+        <p><small>Tap one — this trains the recommendation.</small></p>
+        <div class="verdict-row">
+          <button class="v-under" data-v="under">🟠<br>Sour / weak</button>
+          <button class="v-good" data-v="good">🟢<br>Good</button>
+          <button class="v-over" data-v="over">🔴<br>Bitter / harsh</button>
+        </div>
+        <p class="scale-hint"><span>← grind finer</span><span>grind coarser →</span></p>
+      </section>
+    </div>`));
+
+  renderExtras(method);
+
+  const pills = view.querySelector("#pills");
+  pills.querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => location.hash = `#/brew?coffee=${coffeeId}&method=${b.dataset.m}`));
+
+  const brewThumb = view.querySelector("#photo-thumb");
+  if (brewThumb) brewThumb.addEventListener("click", () => openPhotoLightbox(c));
+
+  // fetch recommendation from the Python engine
+  // Strip photos: the engine never uses them, and base64 images would make the
+  // JSON crossing into Python needlessly huge on every recommendation.
+  const coffeesForEngine = (await db.allCoffeesIncludingArchived())
+    .map(({ photo, ...rest }) => rest);
+
+  const payload = {
+    grinder: g,
+    // include archived coffees: their brews are still valid training data
+    coffees: coffeesForEngine,
+    brews: await db.allBrews(),
+    request: { coffeeId: String(coffeeId), method },
+  };
+  let rec, recError = null;
+  try { rec = await recommend(payload); }
+  catch (e) { console.error("[recommend]", e); rec = null; recError = e.message || String(e); }
+
+  const recEl = view.querySelector("#rec");
+  if (rec) {
+    const exp = (rec.explanation || []).map((x) =>
+      `${x.label} ${x.delta > 0 ? "+" : ""}${x.delta}`).join(" · ");
+    recEl.replaceChildren(el(`
+      <div>
+        <div class="rec-number">${rec.setting}</div>
+        <div class="conf ${rec.confidence}">${rec.confidence} confidence</div>
+        ${rec.nudge ? `<div class="nudge">${esc(rec.nudge)}</div>` : ""}
+        ${exp ? `<details><summary class="explain">why?</summary><p class="explain">${esc(exp)}</p></details>` : ""}
+      </div>`));
+    view.querySelector("#grind").value = rec.setting;
+  } else {
+    recEl.innerHTML = `<p><small>No recommendation yet — you can still log this brew
+      and it will be used for training.</small></p>
+      <details><summary class="explain">why?</summary>
+        <p class="explain">${esc(recError || "engine not ready")}</p>
+        <button id="retry-engine" class="secondary">Retry engine</button>
+      </details>`;
+    const rb = recEl.querySelector("#retry-engine");
+    if (rb) rb.addEventListener("click", () => route());
+  }
+
+  view.querySelectorAll(".verdict-row button").forEach((btn) =>
+    btn.addEventListener("click", async () => {
+      const input = view.querySelector("#grind");
+      const grind = parseFloat(input.value);
+      if (isNaN(grind)) {
+        input.focus();
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+        toast("Enter the grind setting you used");
+        return;
+      }
+      const extra = collectExtras(method);
+      await db.addBrew({ coffeeId: String(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
+      toast(`Logged ${grind} · ${verdictLabel(btn.dataset.v)}`);
+      location.hash = `#/coffee/${coffeeId}`;
+    }));
+}
+
+function renderExtras(method) {
+  const d = view.querySelector("#extras");
+  if (!d) return;
+  if (method === "espresso") {
+    d.innerHTML = `<summary>Shot detail (optional)</summary>
+      <div class="grid">
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Yield (g) <input id="yieldG" type="number" step="any" inputmode="decimal"></label>
+        <label>Time (s) <input id="shotTimeS" type="number" step="any" inputmode="decimal"></label>
+      </div>`;
+  } else {
+    d.innerHTML = `<summary>Brew detail (optional)</summary>
+      <div class="grid">
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Time (s) <input id="brewTimeS" type="number" step="any" inputmode="decimal"></label>
+        <label>Water (°C) <input id="waterTempC" type="number" step="any" inputmode="decimal"></label>
+      </div>`;
+  }
+}
+function collectExtras(method) {
+  const num = (id) => { const e = view.querySelector("#" + id); const v = e && e.value; return v ? +v : null; };
+  const out = {};
+  ["doseG", "yieldG", "shotTimeS", "brewTimeS", "waterTempC"].forEach((k) => {
+    const v = num(k); if (v != null) out[k] = v;
+  });
+  return out;
+}
+
+// --- history ----------------------------------------------------------------
+async function renderHistory() {
+  const brews = (await db.allBrews()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  // include archived coffees here so old brews still show a name, not "?"
+  const all = await db.allCoffeesIncludingArchived();
+  const coffees = Object.fromEntries(all.map((c) => [String(c.id), c]));
+  const rows = brews.map((b) =>
+    `<tr>
+       <td class="nowrap">${fmtDate(b.createdAt)}</td>
+       <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}</td>
+       <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
+       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${verdictIcon(b.verdict)}</td>
+     </tr>`
+  ).join("");
+  view.replaceChildren(el(`<div><h2>History</h2>${brews.length
+    ? `<table class="compact"><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+    : "<p><small>No brews logged yet.</small></p>"}</div>`));
+}
+
+// --- settings ---------------------------------------------------------------
+async function renderSettings() {
+  const g = await db.getGrinder();
+  view.replaceChildren(el(`
+    <div>
+      <h2>Settings</h2>
+      <article>
+        <div><strong>Grinder:</strong> ${esc(g.name)} (${g.min}–${g.max}, step ${g.step})</div>
+        ${g.calibration
+          ? `<div><strong>Calibrated:</strong> ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}</div>`
+          : `<div><small>Not calibrated</small></div>`}
+        <div style="margin-top:.5rem"><a href="#/setup">Edit grinder</a></div>
+      </article>
+      <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
+      <article class="inline-row">
+        <span>
+          <strong>Version</strong> ${APP_VERSION}
+          <br><small id="update-status">Checking for updates…</small>
+        </span>
+        <button id="force-update" class="secondary compact-btn" hidden>Update</button>
+      </article>
+      <article>
+        <strong>Backup</strong>
+        <p><small>Your phone can clear local data. Export a JSON backup now and then.</small></p>
+        <button id="export">Export backup</button>
+        <div class="inline-row">
+          <span>Import backup</span>
+          <button id="import-btn" class="secondary compact-btn">Choose file</button>
+          <input id="import" type="file" accept="application/json" hidden>
+        </div>
+      </article>
+    </div>`));
+  view.querySelector("#export").addEventListener("click", async () => {
+    const data = await db.exportAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `morning-glory-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+  });
+  view.querySelector("#import").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const data = JSON.parse(await file.text());
+    await db.importAll(data);
+    alert("Backup imported.");
+    location.hash = "#/";
+  });
+
+  const fu = view.querySelector("#force-update");
+  if (fu) fu.addEventListener("click", async () => {
+    // Nuke caches + service worker so the next load is guaranteed fresh.
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    location.reload(true);
+  });
+
+  view.querySelector("#import-btn").addEventListener("click", () =>
+    view.querySelector("#import").click());
+
+  checkForUpdate();
+  await renderSyncPanel();
+}
+
+// Compare the running build against version.json on the server (fetched with
+// cache:no-store so the service worker can't answer with a stale copy).
+async function checkForUpdate() {
+  const status = document.getElementById("update-status");
+  const btn = document.getElementById("force-update");
+  if (!status) return;
+  try {
+    const res = await fetch(`./version.json?t=${Date.now()}`, { cache: "no-store" });
+    const { version } = await res.json();
+    if (version && version !== APP_VERSION) {
+      status.textContent = `Update available (${version})`;
+      status.className = "update-available";
+      if (btn) btn.hidden = false;
+    } else {
+      status.textContent = "Up to date";
+      status.className = "update-ok";
+      if (btn) btn.hidden = true;
+    }
+  } catch {
+    status.textContent = "Couldn't check (offline)";
+    status.className = "";
+    if (btn) btn.hidden = false;   // let the user force it anyway
+  }
+}
+
+
+// --- helpers ----------------------------------------------------------------
+function verdictLabel(v) { return { good: "🟢 Good", under: "🟠 Sour", over: "🔴 Bitter" }[v] || v; }
+// icon-only for narrow table columns
+function verdictIcon(v) { return { good: "🟢", under: "🟠", over: "🔴" }[v] || v; }
+
+// dd/mm/yy — compact and unambiguous for a UK-style reader
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso).slice(0, 10);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
+}
+
+let toastTimer = null;
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = el(`<div id="toast" class="toast" role="status" aria-live="polite"></div>`);
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+// Single FAB, replaced in place. (Previously each render appended another one,
+// so a sync-triggered re-render stacked duplicate + buttons on top of each other.)
+function addFab(hash, label) {
+  removeFab();
+  const f = el(`<button class="fab" id="fab" title="Add"><span>${label}</span></button>`);
+  f.addEventListener("click", () => (location.hash = hash));
+  document.body.appendChild(f);
+}
+function removeFab() {
+  const existing = document.getElementById("fab");
+  if (existing) existing.remove();
+}
+
+main();

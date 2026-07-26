@@ -3,7 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#3a2a1e" />
+  <!-- iOS standalone paints the strip BELOW the web viewport (where Safari's
+       toolbar would be) using theme-color. It must match the bottom nav's
+       background exactly, or it shows up as a coloured band under the nav
+       that no CSS can reach — the viewport simply doesn't extend there. -->
+  <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1c1714" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#1c1714" />
   <title>Morning Glory</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />

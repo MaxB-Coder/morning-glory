@@ -4,7 +4,7 @@
 // The core Pyodide files are precached on install. The numpy wheel and any
 // stdlib chunks Pyodide requests at runtime are cached on first use by the
 // runtime-cache fetch handler below, so a second launch works in airplane mode.
-const CACHE = "gw-v17";
+const CACHE = "gw-v22";
 const ASSETS = [
   "./",
   "./index.html",
@@ -51,6 +51,9 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  // version.json must ALWAYS come from the network, otherwise the update
+  // check would compare against a cached copy and never see a new release.
+  if (new URL(e.request.url).pathname.endsWith("/version.json")) return;
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return; // let cross-origin pass through
 
