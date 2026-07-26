@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v26";
+export const APP_VERSION = "v27";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -723,7 +723,7 @@ async function renderHistory() {
   const all = await db.allCoffeesIncludingArchived();
   const coffees = Object.fromEntries(all.map((c) => [String(c.id), c]));
   const rows = brews.map((b) =>
-    `<tr>
+    `<tr class="brew-row" data-id="${b.id}">
        <td class="nowrap">${fmtDate(b.createdAt)}</td>
        <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
@@ -732,8 +732,19 @@ async function renderHistory() {
      </tr>`
   ).join("");
   view.replaceChildren(el(`<div><h2>History</h2>${brews.length
-    ? `<table class="compact"><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+    ? `<table class="compact"><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+       <p class="explain" style="text-align:center">Tap a brew for full detail.</p>`
     : "<p><small>No brews logged yet.</small></p>"}</div>`));
+
+  // same detail sheet as the coffee page
+  const g = await db.getGrinder();
+  view.querySelectorAll(".brew-row").forEach((row) =>
+    row.addEventListener("click", () => {
+      const brew = brews.find((b) => String(b.id) === row.dataset.id);
+      if (!brew) return;
+      const coffee = coffees[String(brew.coffeeId)] || { name: "—" };
+      openBrewDetail(brew, coffee, g);
+    }));
 }
 
 // --- settings ---------------------------------------------------------------
