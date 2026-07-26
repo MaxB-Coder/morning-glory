@@ -37,10 +37,42 @@ def test_method_ordering_on_the_dial():
     assert settings[0] < settings[-1]
 
 
-def test_dark_finer_than_light_same_method():
+def test_dark_coarser_than_light_same_method():
+    """Dark roasts are more soluble and more brittle: they extract faster, so
+    they need a COARSER grind. Light roasts are denser and less soluble and
+    need a FINER grind. (This test previously asserted the opposite and locked
+    a backwards prior into the synthetic data.)"""
     dark = rec([_coffee(id=1, roast="dark")], [], 1, "v60")["setting"]
     light = rec([_coffee(id=2, roast="light")], [], 2, "v60")["setting"]
-    assert dark < light
+    assert dark > light
+
+
+def test_fresh_beans_coarser_than_aged():
+    """Fresh coffee is full of CO2 which slows the flow -> coarser. As it
+    degasses, flow speeds up and beans get brittle -> grind finer."""
+    fresh = rec([_coffee(id=1, roastDate="2026-07-24")], [], 1, "espresso")["setting"]
+    aged = rec([_coffee(id=2, roastDate="2026-06-01")], [], 2, "espresso")["setting"]
+    assert fresh > aged
+
+
+def test_decaf_coarser():
+    """Decaf processing damages cell structure -> brittle, extracts fast."""
+    plain = rec([_coffee(id=1)], [], 1, "espresso")["setting"]
+    decaf = rec([_coffee(id=2, decaf=True)], [], 2, "espresso")["setting"]
+    assert decaf > plain
+
+
+def test_dense_beans_finer():
+    """High-grown / harder beans are less soluble -> finer grind."""
+    soft = rec([_coffee(id=1, altitudeMasl=900)], [], 1, "espresso")["setting"]
+    dense = rec([_coffee(id=2, altitudeMasl=1900)], [], 2, "espresso")["setting"]
+    assert dense < soft
+
+
+def test_robusta_finer_than_arabica():
+    arabica = rec([_coffee(id=1, variety="Bourbon")], [], 1, "espresso")["setting"]
+    robusta = rec([_coffee(id=2, variety="Robusta")], [], 2, "espresso")["setting"]
+    assert robusta < arabica
 
 
 # --- learning from feedback -------------------------------------------------

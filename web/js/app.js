@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v25";
+export const APP_VERSION = "v26";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -301,13 +301,10 @@ async function renderCoffee(id) {
   const brews = (await db.brewsForCoffee(id)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const g = await db.getGrinder();
 
-  const strip = brews.length ? `<div class="dial-strip">${brews.map((b) => {
-    const h = Math.max(8, ((b.grindSetting - g.min) / (g.max - g.min)) * 100);
-    return `<div class="dial-bar ${b.verdict}" style="height:${h}%" title="${b.method} ${b.grindSetting} (${b.verdict})"></div>`;
-  }).join("")}</div>` : "";
+  const strip = brews.length ? dialInChart(brews) : "";
 
   const rows = brews.slice().reverse().map((b) =>
-    `<tr>
+    `<tr class="brew-row" data-id="${b.id}">
        <td class="nowrap">${fmtDate(b.createdAt)}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
        <td class="nowrap">${b.grindSetting}</td>
@@ -361,10 +358,18 @@ async function renderCoffee(id) {
 
   // Delete a mis-logged brew — it would otherwise keep training the model wrong.
   view.querySelectorAll(".del-brew").forEach((btn) =>
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", async (ev) => {
+      ev.stopPropagation();     // don't also open the detail popup
       if (!confirm("Delete this brew? It will stop influencing recommendations.")) return;
       await db.softDelete("brew", btn.dataset.id);
       route();
+    }));
+
+  // Tap a row to see everything that was logged for that brew.
+  view.querySelectorAll(".brew-row").forEach((row) =>
+    row.addEventListener("click", () => {
+      const brew = brews.find((b) => String(b.id) === row.dataset.id);
+      if (brew) openBrewDetail(brew, c, g);
     }));
 
   view.querySelector("#toggle-visibility").addEventListener("click", async () => {
@@ -396,6 +401,72 @@ async function renderCoffee(id) {
   if (addBtn) addBtn.addEventListener("click", () => pickPhoto(c));
 }
 
+/**
+ * Dial-in chart: grind setting over time, one line per brew method, points
+ * coloured by how the brew tasted.
+ *
+ * A line chart (rather than the old bars) because the useful question is
+ * "which way am I drifting, and have I settled?" — that's a trend over
+ * successive brews, which a line shows and isolated bars don't. The y-axis is
+ * scaled to the range you've actually used, not the whole grinder, so small
+ * adjustments stay visible.
+ */
+function dialInChart(brews) {
+  const W = 320, H = 130, padL = 26, padR = 8, padT = 10, padB = 18;
+  const byMethod = {};
+  brews.forEach((b) => (byMethod[b.method] ||= []).push(b));
+
+  const values = brews.map((b) => b.grindSetting);
+  let lo = Math.min(...values), hi = Math.max(...values);
+  if (hi === lo) { lo -= 1; hi += 1; }          // flat line: give it room
+  const padY = (hi - lo) * 0.15;
+  lo -= padY; hi += padY;
+
+  const n = brews.length;
+  const x = (i) => padL + (n === 1 ? (W - padL - padR) / 2
+                                   : (i / (n - 1)) * (W - padL - padR));
+  const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+  // index every brew chronologically so lines share one x-axis
+  const idx = new Map(brews.map((b, i) => [b.id, i]));
+  const COLOURS = ["var(--gw-accent)", "#4a7fa5", "#6a8f4a", "#8a5f9a", "#a5744a"];
+
+  let paths = "", dots = "", legend = "";
+  Object.entries(byMethod).forEach(([method, list], mi) => {
+    const colour = COLOURS[mi % COLOURS.length];
+    const pts = list.map((b) => `${x(idx.get(b.id)).toFixed(1)},${y(b.grindSetting).toFixed(1)}`);
+    if (pts.length > 1) {
+      paths += `<polyline points="${pts.join(" ")}" fill="none" stroke="${colour}"
+                 stroke-width="1.6" stroke-linejoin="round" opacity=".85"/>`;
+    }
+    list.forEach((b) => {
+      const fill = { good: "#2e7d32", under: "#ef6c00", over: "#b71c1c" }[b.verdict] || colour;
+      dots += `<circle cx="${x(idx.get(b.id)).toFixed(1)}" cy="${y(b.grindSetting).toFixed(1)}"
+                r="3.4" fill="${fill}" stroke="${colour}" stroke-width="1"/>`;
+    });
+    legend += `<span class="legend-item"><i style="background:${colour}"></i>${METHOD_LABEL[method]}</span>`;
+  });
+
+  // y-axis: just the extremes, enough to read the scale without clutter
+  const axis = `
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="var(--pico-muted-border-color)"/>
+    <text x="${padL - 4}" y="${padT + 4}" class="ax">${hi.toFixed(1)}</text>
+    <text x="${padL - 4}" y="${H - padB}" class="ax">${lo.toFixed(1)}</text>`;
+
+  const good = brews.filter((b) => b.verdict === "good").length;
+  const latest = brews[brews.length - 1];
+
+  return `
+    <svg class="dial-chart" viewBox="0 0 ${W} ${H}" role="img"
+         aria-label="Grind setting over time">${axis}${paths}${dots}</svg>
+    <div class="legend">${legend}</div>
+    <div class="chart-stats">
+      <span><strong>${brews.length}</strong> brew${brews.length === 1 ? "" : "s"}</span>
+      <span><strong>${Math.round((good / brews.length) * 100)}%</strong> good</span>
+      <span>last <strong>${latest.grindSetting}</strong> ${verdictIcon(latest.verdict)}</span>
+    </div>`;
+}
+
 // Open the file picker, resize, and save onto the coffee.
 function pickPhoto(coffee) {
   const input = el(`<input type="file" accept="image/*" hidden>`);
@@ -415,6 +486,37 @@ function pickPhoto(coffee) {
     }
   });
   input.click();
+}
+
+// Everything that was recorded for one brew. Fields that weren't filled in are
+// omitted rather than shown blank.
+function openBrewDetail(b, coffee, grinder) {
+  const rows = [
+    ["Date", new Date(b.createdAt).toLocaleString()],
+    ["Coffee", coffee.name],
+    ["Method", METHOD_LABEL[b.method]],
+    ["Grind", `${b.grindSetting} (of ${grinder.min}–${grinder.max})`],
+    ["Result", verdictLabel(b.verdict)],
+    ["Dose", b.doseG != null ? `${b.doseG} g` : null],
+    ["Yield", b.yieldG != null ? `${b.yieldG} g` : null],
+    ["Ratio", (b.doseG && b.yieldG) ? `1:${(b.yieldG / b.doseG).toFixed(1)}` : null],
+    ["Shot time", b.shotTimeS != null ? `${b.shotTimeS} s` : null],
+    ["Brew time", b.brewTimeS != null ? `${b.brewTimeS} s` : null],
+    ["Water", b.waterTempC != null ? `${b.waterTempC} °C` : null],
+  ].filter(([, v]) => v != null && v !== "");
+
+  const overlay = el(`
+    <div class="lightbox" id="brew-detail">
+      <div class="lightbox-inner sheet">
+        <h3 style="margin:0 0 .75rem">Brew detail</h3>
+        <table class="detail-table"><tbody>
+          ${rows.map(([k, v]) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join("")}
+        </tbody></table>
+        <p class="lightbox-hint">Tap anywhere to close</p>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", () => overlay.remove());
 }
 
 // Tap-to-enlarge overlay with Replace / Remove. Tapping the backdrop closes it.
@@ -505,7 +607,11 @@ async function renderBrew(coffeeId, method) {
       </section>
     </div>`));
 
-  renderExtras(method);
+  // carry forward the settings from the last brew of this coffee+method
+  const priorBrews = (await db.brewsForCoffee(coffeeId))
+    .filter((b) => b.method === method)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  renderExtras(method, priorBrews[priorBrews.length - 1] || null);
 
   const pills = view.querySelector("#pills");
   pills.querySelectorAll("button").forEach((b) =>
@@ -571,23 +677,34 @@ async function renderBrew(coffeeId, method) {
     }));
 }
 
-function renderExtras(method) {
+// `last` is the previous brew of this coffee+method, used to pre-fill the
+// values that stay the same from brew to brew (dose, water temp). Yield and
+// time are deliberately left blank — they're outcomes, not settings.
+function renderExtras(method, last = null) {
   const d = view.querySelector("#extras");
   if (!d) return;
+  const prefill = (v) => (v == null || v === "" ? "" : ` value="${v}"`);
+  const dose = prefill(last && last.doseG);
+  const temp = prefill(last && last.waterTempC);
+  if (last && (last.doseG != null || last.waterTempC != null)) {
+    d.open = true;   // show it, so the carried-over values are visible
+  }
   if (method === "espresso") {
     d.innerHTML = `<summary>Shot detail (optional)</summary>
       <div class="grid">
-        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"${dose}></label>
         <label>Yield (g) <input id="yieldG" type="number" step="any" inputmode="decimal"></label>
         <label>Time (s) <input id="shotTimeS" type="number" step="any" inputmode="decimal"></label>
-      </div>`;
+      </div>
+      ${dose ? '<p class="explain">Dose carried over from your last shot.</p>' : ""}`;
   } else {
     d.innerHTML = `<summary>Brew detail (optional)</summary>
       <div class="grid">
-        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"></label>
+        <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"${dose}></label>
         <label>Time (s) <input id="brewTimeS" type="number" step="any" inputmode="decimal"></label>
-        <label>Water (°C) <input id="waterTempC" type="number" step="any" inputmode="decimal"></label>
-      </div>`;
+        <label>Water (°C) <input id="waterTempC" type="number" step="any" inputmode="decimal"${temp}></label>
+      </div>
+      ${dose || temp ? '<p class="explain">Carried over from your last brew.</p>' : ""}`;
   }
 }
 function collectExtras(method) {

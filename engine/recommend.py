@@ -63,9 +63,22 @@ def _synth_feature_vector(feat: dict) -> list[float]:
         # a fixed reference date keeps encode_age() as the single age formula
         ref = date(2000, 1, 1)
         coffee["roastDate"] = ref.isoformat()
-        return F.encode(coffee, feat["method"],
-                        today=date.fromordinal(ref.toordinal() + int(age_days)))
-    return F.encode(coffee, feat["method"])
+        x = F.encode(coffee, feat["method"],
+                     today=date.fromordinal(ref.toordinal() + int(age_days)))
+    else:
+        x = F.encode(coffee, feat["method"])
+
+    # The synthetic rows carry density scores / temp / ratio directly rather
+    # than as free text, so write them straight into their feature slots.
+    x[F.FEATURES.index("variety_density")] = float(feat.get("varietyDensity") or 0.0)
+    x[F.FEATURES.index("origin_density")] = float(feat.get("originDensity") or 0.0)
+    x[F.FEATURES.index("water_temp")] = F.encode_water_temp(feat.get("waterTempC"))
+    ratio = feat.get("ratio")
+    if ratio:
+        typical = F.TYPICAL_RATIO.get(feat["method"])
+        if typical:
+            x[F.FEATURES.index("ratio_dev")] = max(-1.0, min(1.0, (ratio - typical) / typical))
+    return x
 
 
 def _build_training_set(grinder, coffee, real_brews_all, method_of_request):
@@ -174,6 +187,8 @@ def _explanation(beta, x, grinder):
     labels = {
         "roast": "roast", "process": "process", "age": "bean age",
         "altitude": "altitude", "decaf": "decaf", "dose_dev": "dose",
+        "ratio_dev": "brew ratio", "water_temp": "water temp",
+        "variety_density": "variety", "origin_density": "origin",
     }
     contribs = []
     for i, name in enumerate(F.FEATURES):
@@ -223,7 +238,15 @@ def recommend(payload: dict) -> dict:
     has_logs_for_method = any(b["method"] == method for b in coffee_brews)
     calibration = _calibration_shift(beta, grinder, coffee, has_logs_for_method)
 
-    x_req = F.encode(coffee, method)
+    # Encode the request using the most recent brew of this coffee+method as
+    # context (dose, ratio, temp), so the suggestion reflects how this person
+    # actually brews this bag rather than assuming defaults.
+    prior = sorted(
+        [b for b in coffee_brews if b["method"] == method],
+        key=lambda b: b.get("createdAt", ""),
+    )
+    context = prior[-1] if prior else None
+    x_req = F.encode(coffee, method, brew=context)
     y_hat = ridge.predict(beta, x_req) + bias + calibration
     y_hat = max(0.0, min(1.0, y_hat))
     setting = F.round_to_step(F.denormalize_setting(y_hat, grinder), grinder)
