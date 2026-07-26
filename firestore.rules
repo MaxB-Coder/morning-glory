@@ -58,9 +58,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ---- users (private per-account: which household am I in) -------------
+    // ---- users -------------------------------------------------------------
+    // The user doc itself (which household am I in), PLUS this user's private
+    // coffees and brews. Nobody else — not even a household member — can read
+    // these, which is what makes a "private" coffee actually private.
     match /users/{userId} {
       allow read, write: if signedIn() && uid() == userId;
+
+      match /{sub=**} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
     }
   }
 }

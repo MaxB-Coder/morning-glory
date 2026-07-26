@@ -7,7 +7,8 @@
 // filled in, initSync() no-ops and the app runs local-only.
 
 import {
-  getGrinder, allCoffees, allBrews, pending, markSynced, upsertFromRemote, uuid,
+  getGrinder, allCoffees, allCoffeesIncludingArchived, allBrews, brewsForCoffee,
+  getCoffee, updateCoffee, pending, markSynced, upsertFromRemote, hardDelete, uuid,
 } from "./db.js";
 import { firebaseConfig, isConfigured } from "./firebase-config.js";
 
@@ -196,23 +197,39 @@ export async function getInviteCode() {
 // ---- data sync -------------------------------------------------------------
 let unsub = [];
 
+// Shared data lives under the household; private data under the signed-in
+// user. Which path a record uses is decided purely by its coffee's visibility.
 function colPath(name) { return `households/${state.householdId}/${name}s`; }
+function privPath(name) { return `users/${state.user.uid}/${name}s`; }
 
 function startSubscriptions() {
   if (!state.householdId || !fb) return;
   stopSubscriptions();
   const { collection, onSnapshot, doc } = fb.fs;
 
-  for (const name of ["coffee", "brew"]) {
-    const col = collection(fb.dbf, colPath(name));
+  // Watch BOTH the shared household collections and this user's private ones.
+  const watch = (name, path) => {
+    const col = collection(fb.dbf, path);
     unsub.push(onSnapshot(col, async (snap) => {
       let changed = false;
       for (const d of snap.docChanges()) {
+        if (d.type === "removed") {
+          // Gone from the server — e.g. the owner made it private. Drop it
+          // locally without a tombstone, or we'd sync the deletion back.
+          await hardDelete(name, d.doc.id);
+          changed = true;
+          continue;
+        }
         const rec = { ...d.doc.data(), id: d.doc.id };
         if (await upsertFromRemote(name, rec)) changed = true;
       }
       if (changed) state.onData();
     }));
+  };
+
+  for (const name of ["coffee", "brew"]) {
+    watch(name, colPath(name));
+    watch(name, privPath(name));
   }
   // shared grinder is a single doc on the household
   const hdoc = doc(fb.dbf, "households", state.householdId);
@@ -225,7 +242,14 @@ function startSubscriptions() {
 }
 function stopSubscriptions() { unsub.forEach((u) => u && u()); unsub = []; }
 
-// Push all dirty local records up.
+// Is this coffee private? Brews inherit the visibility of their coffee, so a
+// private bag's brews never reach the household either.
+async function isPrivateCoffee(coffeeId) {
+  const c = await getCoffee(coffeeId);
+  return !!c && c.visibility === "private";
+}
+
+// Push all dirty local records up, each to the right path.
 export async function flush() {
   if (!state.householdId || !fb || !state.online) return;
   const { doc, setDoc, updateDoc } = fb.fs;
@@ -235,7 +259,11 @@ export async function flush() {
     for (const rec of dirty[name]) {
       const { dirty: _d, ...payload } = rec;
       payload.authorUid = state.user.uid;
-      await setDoc(doc(fb.dbf, colPath(name), rec.id), payload, { merge: true });
+      const priv = name === "coffee"
+        ? rec.visibility === "private"
+        : await isPrivateCoffee(rec.coffeeId);
+      const path = priv ? privPath(name) : colPath(name);
+      await setDoc(doc(fb.dbf, path, rec.id), payload, { merge: true });
       await markSynced(name, rec.id);
     }
   }
@@ -246,20 +274,74 @@ export async function flush() {
   }
 }
 
+/**
+ * Move a coffee (and all of its brews) between the shared household and this
+ * user's private space.
+ *
+ * Making a coffee PRIVATE deletes it and its brews from the household, so it
+ * disappears from the other person's device and stops training their engine —
+ * which is the whole point of marking it private.
+ *
+ * Works offline too: the local record is updated immediately and the remote
+ * move happens on the next flush; the destination write is what matters, and
+ * the source delete is retried by Firestore's own offline queue.
+ */
+export async function setCoffeeVisibility(coffeeId, visibility) {
+  const coffee = await getCoffee(coffeeId);
+  if (!coffee) throw new Error("coffee not found");
+  const priv = visibility === "private";
+
+  // 1. local first, so the UI is correct even with no connection
+  await updateCoffee({ ...coffee, visibility: priv ? "private" : "shared" });
+  const brews = await brewsForCoffee(coffeeId);
+
+  if (!fb || !state.householdId || !state.online) return;
+
+  const { doc, setDoc, deleteDoc } = fb.fs;
+  const from = (name) => (priv ? colPath(name) : privPath(name));
+  const to = (name) => (priv ? privPath(name) : colPath(name));
+
+  // 2. write to the destination
+  const payload = { ...coffee, visibility: priv ? "private" : "shared",
+                    authorUid: state.user.uid };
+  delete payload.dirty;
+  await setDoc(doc(fb.dbf, to("coffee"), coffeeId), payload, { merge: true });
+  for (const b of brews) {
+    const { dirty, ...bp } = b;
+    bp.authorUid = state.user.uid;
+    await setDoc(doc(fb.dbf, to("brew"), b.id), bp, { merge: true });
+  }
+
+  // 3. remove from the source — this is what makes it actually disappear
+  //    for the other person (their onSnapshot fires a "removed" change).
+  for (const b of brews) {
+    await deleteDoc(doc(fb.dbf, from("brew"), b.id)).catch(() => {});
+  }
+  await deleteDoc(doc(fb.dbf, from("coffee"), coffeeId)).catch(() => {});
+
+  await markSynced("coffee", coffeeId);
+  for (const b of brews) await markSynced("brew", b.id);
+}
+
 // Seed a freshly-created household with existing local data.
 async function pushAllLocal() {
   const { doc, setDoc, updateDoc } = fb.fs;
   const g = await getGrinder();
   if (g) { const { dirty, id, ...gg } = g;
     await updateDoc(doc(fb.dbf, "households", state.householdId), { grinder: gg }); }
-  for (const c of await allCoffees()) {
+  // respect visibility while seeding: private bags go to the user's own space
+  const coffees = await allCoffeesIncludingArchived();
+  const privIds = new Set(coffees.filter((c) => c.visibility === "private").map((c) => String(c.id)));
+  for (const c of coffees) {
     const { dirty, ...payload } = c; payload.authorUid = state.user.uid;
-    await setDoc(doc(fb.dbf, colPath("coffee"), c.id), payload, { merge: true });
+    const path = privIds.has(String(c.id)) ? privPath("coffee") : colPath("coffee");
+    await setDoc(doc(fb.dbf, path, c.id), payload, { merge: true });
     await markSynced("coffee", c.id);
   }
   for (const b of await allBrews()) {
     const { dirty, ...payload } = b; payload.authorUid = state.user.uid;
-    await setDoc(doc(fb.dbf, colPath("brew"), b.id), payload, { merge: true });
+    const path = privIds.has(String(b.coffeeId)) ? privPath("brew") : colPath("brew");
+    await setDoc(doc(fb.dbf, path, b.id), payload, { merge: true });
     await markSynced("brew", b.id);
   }
 }

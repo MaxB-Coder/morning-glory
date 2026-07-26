@@ -318,3 +318,10 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 .invite-code {
   font-size: 1.25rem; letter-spacing: .18em; color: var(--gw-accent);
 }
+
+/* small "private" marker on coffee cards */
+.priv-tag {
+  font-size: .62rem; text-transform: uppercase; letter-spacing: .06em;
+  border: 1px solid var(--pico-muted-border-color); border-radius: .6rem;
+  padding: .05rem .4rem; color: var(--pico-muted-color); vertical-align: middle;
+}

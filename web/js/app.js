@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v24";
+export const APP_VERSION = "v25";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -155,7 +155,8 @@ async function renderHome() {
         <article class="coffee-card" data-id="${c.id}">
           ${c.photo ? `<img class="card-thumb" src="${c.photo}" alt="">` : ""}
           <div class="card-body">
-            <strong>${esc(c.name)}</strong><br>
+            <strong>${esc(c.name)}</strong>${c.visibility === "private"
+              ? ' <span class="priv-tag">private</span>' : ""}<br>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
           <span class="chev">›</span>
@@ -208,7 +209,10 @@ function renderCoffeeForm() {
 
           <div class="toggle-row">
             <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="false">Decaf</button>
+            <button type="button" id="private-pill" class="toggle-pill" aria-pressed="false">Private</button>
           </div>
+          <p class="explain" style="text-align:center">Private coffees stay on your
+          devices only — they aren't shared and don't train anyone else's recommendations.</p>
 
           <label>Notes <textarea name="notes" rows="3"></textarea></label>
         </details>
@@ -237,12 +241,17 @@ function renderCoffeeForm() {
     }
   });
 
-  // --- decaf toggle pill --------------------------------------------------
-  const decafPill = view.querySelector("#decaf-pill");
-  decafPill.addEventListener("click", () => {
-    const on = decafPill.getAttribute("aria-pressed") === "true";
-    decafPill.setAttribute("aria-pressed", String(!on));
-  });
+  // --- toggle pills (decaf, private) --------------------------------------
+  const togglePill = (id) => {
+    const pill = view.querySelector(id);
+    pill.addEventListener("click", () => {
+      const on = pill.getAttribute("aria-pressed") === "true";
+      pill.setAttribute("aria-pressed", String(!on));
+    });
+    return pill;
+  };
+  const decafPill = togglePill("#decaf-pill");
+  const privatePill = togglePill("#private-pill");
 
   view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -253,6 +262,7 @@ function renderCoffeeForm() {
       variety: f.get("variety") || null,
       altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
       decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
+      visibility: privatePill.getAttribute("aria-pressed") === "true" ? "private" : "shared",
       notes: f.get("notes") || null,
       photo: photoData,
     });
@@ -332,6 +342,16 @@ async function renderCoffee(id) {
         <tbody>${rows}</tbody></table>` : ""}
 
       <div class="center-row" style="margin-top:2rem">
+        <button id="toggle-visibility" class="toggle-pill"
+                aria-pressed="${c.visibility === "private"}">
+          ${c.visibility === "private" ? "Private" : "Shared"}
+        </button>
+      </div>
+      <p class="explain" style="text-align:center">${c.visibility === "private"
+        ? "Only on your devices. Not shared, and not training anyone else's recommendations."
+        : "Shared with your household."}</p>
+
+      <div class="center-row" style="margin-top:1.5rem">
         <button id="archive-coffee" class="danger-link">Archive this coffee</button>
       </div>
     </div>`));
@@ -346,6 +366,22 @@ async function renderCoffee(id) {
       await db.softDelete("brew", btn.dataset.id);
       route();
     }));
+
+  view.querySelector("#toggle-visibility").addEventListener("click", async () => {
+    const goingPrivate = c.visibility !== "private";
+    const msg = goingPrivate
+      ? `Make "${c.name}" private?\n\nIt and its ${brews.length} brew(s) will be removed from the shared household — they'll disappear from the other person's device and stop affecting their recommendations.`
+      : `Share "${c.name}" with your household?\n\nIt and its ${brews.length} brew(s) will become visible to the other person and will train their recommendations.`;
+    if (!confirm(msg)) return;
+    try {
+      await sync.setCoffeeVisibility(c.id, goingPrivate ? "private" : "shared");
+      toast(goingPrivate ? "Now private" : "Now shared");
+      route();
+    } catch (e) {
+      console.error("[visibility]", e);
+      alert("Couldn't change visibility: " + (e.message || e));
+    }
+  });
 
   view.querySelector("#archive-coffee").addEventListener("click", async () => {
     if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;

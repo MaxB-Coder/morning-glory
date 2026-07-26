@@ -67,7 +67,11 @@ export async function saveGrinder(g) {
 export async function addCoffee(c) {
   const rec = {
     ...c, id: c.id || uuid(), createdAt: c.createdAt || new Date().toISOString(),
-    archived: c.archived ? 1 : 0, updatedAt: now(), dirty: 1, deleted: false,
+    archived: c.archived ? 1 : 0,
+    // "shared" lives in the household and syncs to everyone; "private" lives
+    // under the owner's own user document and never leaves their devices.
+    visibility: c.visibility === "private" ? "private" : "shared",
+    updatedAt: now(), dirty: 1, deleted: false,
   };
   await p((await store("coffee", "readwrite")).add(rec));
   return rec;
@@ -139,6 +143,14 @@ export async function upsertFromRemote(name, remote) {
   await p(os.put({ ...remote, id: key, dirty: 0 }));
   return true;
 }
+// Remove a record locally WITHOUT leaving a tombstone. Used when the server
+// says a doc is gone (e.g. someone made their coffee private, so it must
+// vanish from everyone else's device rather than sync back as a deletion).
+export async function hardDelete(name, id) {
+  const os = await store(name, "readwrite");
+  await p(os.delete(String(id)));
+}
+
 // Soft delete → tombstone that syncs.
 export async function softDelete(name, id) {
   const os = await store(name, "readwrite");
