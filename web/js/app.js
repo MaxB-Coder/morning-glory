@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v27";
+export const APP_VERSION = "v28";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");

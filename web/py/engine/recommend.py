@@ -35,7 +35,11 @@ REAL_WEIGHT_GOOD = 5.0
 REAL_WEIGHT_ADJUSTED = 3.5   # under / over samples
 SYNTH_FULL_UNTIL = 40.0      # real-brew count at which synthetic fades to floor
 SYNTH_FLOOR = 0.15
-BIAS_SHRINK_K = 3.0
+# Shrinkage for the per-coffee offset: n/(n+k). k=3 meant a single brew only
+# contributed 25% of what it had actually taught us, so even repeated "good"
+# brews never pulled the recommendation onto the setting that worked. k=1 makes
+# one brew worth 50% and three brews 75%.
+BIAS_SHRINK_K = 1.0
 ESPRESSO_TARGET_TIME = 28.0
 
 
@@ -262,11 +266,48 @@ def recommend(payload: dict) -> dict:
         key=lambda b: b.get("createdAt", ""),
     )
     if same:
+        # ---- LOCAL DIAL-IN ----------------------------------------------
+        # Once this coffee has been brewed on this method, the useful answer
+        # is a step from YOUR last setting, not a global model guess. That is
+        # how dialling in actually works: keep what was good, go finer when it
+        # was sour, coarser when it was bitter.
+        #
+        # The model still owns the cold start (new bag or new method), and
+        # still learns from every brew — but it must not talk you off a
+        # setting you have personally verified. Anchoring locally also stops
+        # the synthetic prior dragging a well-dialled coffee back toward its
+        # generic starting point.
         last = same[-1]
-        if last.get("verdict") == "under":
-            nudge = f"last: {last['grindSetting']} was sour → try finer"
-        elif last.get("verdict") == "over":
-            nudge = f"last: {last['grindSetting']} was bitter → try coarser"
+        used = float(last["grindSetting"])
+        verdict = last.get("verdict", "good")
+
+        step = float(grinder["step"]) or 0.5
+        adjust = 2.0 * step
+        # a wildly fast/slow shot means a bigger correction than a near miss
+        if method == "espresso" and last.get("shotTimeS"):
+            err = abs(float(last["shotTimeS"]) - ESPRESSO_TARGET_TIME) / ESPRESSO_TARGET_TIME
+            adjust = adjust * max(0.5, min(2.0, err * 3.0))
+
+        if verdict == "under":          # sour -> under-extracted -> finer
+            target = used - adjust
+            nudge = f"{used} was sour → going finer"
+        elif verdict == "over":         # bitter -> over-extracted -> coarser
+            target = used + adjust
+            nudge = f"{used} was bitter → going coarser"
+        else:
+            target = used
+            nudge = f"{used} was good last time — sticking with it"
+
+        setting = F.round_to_step(
+            F.denormalize_setting(
+                max(0.0, min(1.0, F.normalize_setting(target, grinder))), grinder),
+            grinder)
+        return {
+            "setting": float(setting),
+            "confidence": _confidence(n_cm, n_m),
+            "explanation": [],
+            "nudge": nudge,
+        }
 
     return {
         "setting": float(setting),

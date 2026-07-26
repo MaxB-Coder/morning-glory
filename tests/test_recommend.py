@@ -101,6 +101,46 @@ def test_repeated_over_pushes_coarser():
     assert after > base
 
 
+def test_single_good_brew_is_repeated_exactly():
+    """The bug that prompted this: one good brew at 8.5 recommended 9.5.
+    A setting you have verified must be repeated, not second-guessed."""
+    c = [_coffee()]
+    brews = [{"coffeeId": 1, "method": "espresso", "grindSetting": 8.5,
+              "verdict": "good", "shotTimeS": 24, "createdAt": "2026-07-25"}]
+    assert rec(c, brews, 1, "espresso")["setting"] == 8.5
+
+
+def test_last_verdict_steps_the_right_way():
+    c = [_coffee()]
+    used = 8.5
+    def after(verdict):
+        return rec(c, [{"coffeeId": 1, "method": "espresso", "grindSetting": used,
+                        "verdict": verdict, "createdAt": "2026-07-25"}], 1, "espresso")["setting"]
+    assert after("under") < used      # sour -> finer
+    assert after("over") > used       # bitter -> coarser
+    assert after("good") == used      # good  -> stay
+
+
+def test_dial_in_converges_and_then_holds():
+    """Walk a realistic session: two bitter shots, then good — and it must
+    stop moving once you're there."""
+    c = [_coffee()]
+    brews = []
+    seq = [(8.5, "over"), (9.5, "over"), (10.5, "good")]
+    for i, (s, v) in enumerate(seq, 1):
+        brews.append({"coffeeId": 1, "method": "espresso", "grindSetting": s,
+                      "verdict": v, "createdAt": f"2026-07-{i:02d}"})
+    assert rec(c, brews, 1, "espresso")["setting"] == 10.5
+
+
+def test_local_dial_in_does_not_leak_across_methods():
+    c = [_coffee()]
+    brews = [{"coffeeId": 1, "method": "espresso", "grindSetting": 8.5,
+              "verdict": "good", "createdAt": "2026-07-25"}]
+    # V60 has no history of its own, so it must still come from the model
+    assert rec(c, brews, 1, "v60")["setting"] > 15
+
+
 def test_repeated_good_converges_to_used_setting():
     c = [_coffee()]
     used = 15.0
