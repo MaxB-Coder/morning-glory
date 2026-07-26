@@ -56,5 +56,6 @@ if [ "${1:-}" = "--push" ]; then
   git push
   echo "  pushed."
 else
-  echo "  next:  git add -A && git commit -m \"...\" && git push"
+  echo "  version bumped only. To ship it:"
+  echo "    bash scripts/release.sh --push \"what changed\""
 fi

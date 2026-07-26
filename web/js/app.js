@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v22";
+export const APP_VERSION = "v24";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -650,6 +650,84 @@ async function renderSettings() {
 
   checkForUpdate();
   await renderSyncPanel();
+}
+
+// Sign-in / household / invite-code panel inside Settings.
+async function renderSyncPanel() {
+  const panel = document.getElementById("sync-panel");
+  if (!panel) return;
+  const st = sync.status();
+
+  if (!st.available) {
+    panel.innerHTML = `<strong>Sharing</strong>
+      <p><small>Sync isn't configured, so the app is running locally on this
+      device only.</small></p>`;
+    return;
+  }
+
+  if (!st.signedIn) {
+    panel.innerHTML = `<strong>Sharing</strong>
+      <p><small>Sign in to sync your coffees and brews across devices and share
+      with someone.</small></p>
+      <button id="signin">Sign in with Google</button>
+      <p id="auth-err" class="explain"></p>`;
+    const errBox = panel.querySelector("#auth-err");
+    if (sync.lastAuthError()) errBox.textContent = "Last error: " + sync.lastAuthError();
+    panel.querySelector("#signin").addEventListener("click", () =>
+      sync.signIn().catch((e) => {
+        console.error("[signin]", e);
+        const code = e.code || "";
+        if (code.includes("popup-closed") || code.includes("cancelled")) return;
+        errBox.textContent = "Sign-in failed: " + (code || e.message);
+      }));
+    return;
+  }
+
+  if (!st.householdId) {
+    panel.innerHTML = `<strong>Sharing</strong>
+      <p><small>Signed in as ${esc(st.user.name || st.user.email)}.</small></p>
+      <p><small>Create a household and share the code, or join one.</small></p>
+      <button id="create">Create household</button>
+      <div class="inline-row">
+        <span>Join with code</span>
+        <input id="joincode" placeholder="6 chars" maxlength="6"
+               style="text-transform:uppercase;width:7rem">
+        <button id="join" class="secondary compact-btn">Join</button>
+      </div>
+      <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
+    panel.querySelector("#create").addEventListener("click", async () => {
+      try {
+        const code = await sync.createHousehold();
+        alert("Household created. Invite code: " + code);
+        renderSettings();
+      } catch (e) { alert("Failed: " + e.message); }
+    });
+    panel.querySelector("#join").addEventListener("click", async () => {
+      try {
+        await sync.joinHousehold(panel.querySelector("#joincode").value);
+        toast("Joined household");
+        renderSettings();
+      } catch (e) { alert("Join failed: " + e.message); }
+    });
+    panel.querySelector("#signout").addEventListener("click", async (ev) => {
+      ev.preventDefault(); await sync.signOutUser(); renderSettings();
+    });
+    return;
+  }
+
+  const code = await sync.getInviteCode();
+  panel.innerHTML = `<strong>Sharing</strong>
+    <p><small>${esc(st.user.name || st.user.email)} · sync ${st.online ? "on" : "offline"}</small></p>
+    <div class="inline-row">
+      <span>Invite code</span>
+      <strong class="invite-code">${esc(code || "—")}</strong>
+    </div>
+    <p><small>Share this with the person you want to sync with — they sign in
+    and tap Join.</small></p>
+    <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
+  panel.querySelector("#signout").addEventListener("click", async (ev) => {
+    ev.preventDefault(); await sync.signOutUser(); renderSettings();
+  });
 }
 
 // Compare the running build against version.json on the server (fetched with
