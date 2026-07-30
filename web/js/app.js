@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.21";
+export const APP_VERSION = "1.5.22";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1181,20 +1181,35 @@ function ensureMotionPermission() {
   if (remembered === "denied") { motionPromise = Promise.resolve(false); return motionPromise; }
 
   motionPromise = new Promise((resolve) => {
-    const ask = async () => {
+    // Several event types, not just pointerdown. WebKit only treats certain
+    // events as a "user activation" for gated APIs, and pointerdown alone was
+    // being rejected — which left the promise pending forever and the foil
+    // frozen. click/touchend are the reliable ones; the rest are belt and braces.
+    const EVENTS = ["click", "touchend", "pointerup", "keydown"];
+    const arm = () => EVENTS.forEach((t) =>
+      document.addEventListener(t, ask, { once: true, capture: true }));
+    const disarm = () => EVENTS.forEach((t) =>
+      document.removeEventListener(t, ask, { capture: true }));
+
+    let asking = false;
+    async function ask() {
+      if (asking) return;
+      asking = true;
+      disarm();
       try {
         const res = await D.requestPermission();
         const ok = res === "granted";
         try { localStorage.setItem(MOTION_KEY, ok ? "granted" : "denied"); } catch {}
         resolve(ok);
       } catch (e) {
-        // Safari rejected the call as not gesture-initiated. Not fatal, and not
-        // worth remembering — re-arm and let the next touch try.
+        // Not gesture-initiated after all. Re-arm and let the next one try.
         console.warn("[motion]", e);
-        document.addEventListener("pointerdown", ask, { once: true });
+        asking = false;
+        arm();
       }
-    };
-    document.addEventListener("pointerdown", ask, { once: true });
+    }
+
+    arm();
   });
   return motionPromise;
 }
@@ -1283,10 +1298,14 @@ function initHolo(node) {
   if (reduced) return;
 
   // The permission gate was armed at boot, so by now it is usually already
-  // settled — no tap on the code required.
+  // settled — no tap on the code required. It can still be waiting on the very
+  // first interaction of a fresh load, though, so don't sit on a dead-looking
+  // code in the meantime: shimmer, and swap to tilt the moment it lands.
+  const waiting = setTimeout(idle, 1200);
   ensureMotionPermission().then((ok) => {
+    clearTimeout(waiting);
     if (!ok) { idle(); return; }
-    // guard against the panel having been re-rendered while we waited
+    // the panel may have been re-rendered while we waited
     if (node.isConnected) attach();
   });
 }
