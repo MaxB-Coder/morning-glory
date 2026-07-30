@@ -10,6 +10,12 @@
    because Safari's dynamic viewport (URL bar / keyboard) changes what "bottom"
    means as you scroll. 100dvh + flex avoids that entirely. */
 html, body { height: 100%; overflow: hidden; }
+/* The strip iOS reserves below the viewport in standalone mode is painted from
+   the CANVAS, not from any element — so nothing (not even the fixed-position
+   lightbox) can cover it. With no background on <html> it fell back to white
+   as soon as the lightbox sat over the body. Setting it explicitly keeps that
+   strip the app's colour whether an overlay is open or not. */
+html { background-color: var(--pico-background-color); }
 body {
   /* position:fixed + inset:0 pins the shell to the VISIBLE viewport exactly.
      100dvh was leaving a dead band at the bottom in the installed iOS app,
