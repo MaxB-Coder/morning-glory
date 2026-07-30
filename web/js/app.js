@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.3";
+export const APP_VERSION = "1.5.4";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1258,15 +1258,14 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
 }
 // --- hold-and-drag reordering ----------------------------------------------
-// Pointer Events so one code path covers touch and mouse. The order is saved to
-// localStorage on drop (see sortByOrder above).
+// Pointer Events so one code path covers touch and mouse.
 //
-// Two things make this awkward on a phone and are handled explicitly:
-//  1) A press that becomes a scroll must NOT become a drag — hence the movement
-//     threshold that cancels the long-press timer.
-//  2) Once dragging, the browser would still scroll the page under the finger,
-//     so touchmove is cancelled while a drag is live. That listener has to be
-//     non-passive or preventDefault() is ignored.
+// The cards are NOT re-parented while you drag. Everything is done with
+// transforms: the held card follows the finger, and the cards it has passed
+// slide out of the way by one card-height, which opens a visible gap showing
+// exactly where it will land. The DOM is reordered once, on drop.
+// (An earlier version moved the node on every crossing, which fought the
+// browser's own scroll handling and made the drop point impossible to read.)
 let justDragged = false;
 
 function enableReorder(container, totalCount) {
@@ -1277,97 +1276,111 @@ function enableReorder(container, totalCount) {
   // saved order would be wrong for everything hidden. Require the full list.
   if (cards.length < 2 || cards.length !== totalCount) return;
 
-  const HOLD_MS = 350;      // long enough not to fire on a tap
+  const HOLD_MS = 320;      // long enough not to fire on a tap
   const MOVE_CANCEL = 8;    // px of movement that means "this is a scroll"
 
-  let timer = null, dragging = null, startY = 0, offset = 0, pointerId = null;
+  let timer = null, held = null, heldIndex = -1, startY = 0;
+  let metrics = [], shift = 0, targetIndex = -1;
 
-  const blockScroll = (e) => { if (dragging) e.preventDefault(); };
-  container.addEventListener("touchmove", blockScroll, { passive: false });
+  // Block the page scrolling under the finger. Must be non-passive or
+  // preventDefault() is ignored.
+  container.addEventListener("touchmove", (e) => { if (held) e.preventDefault(); },
+    { passive: false });
 
-  const cleanup = () => {
+  const measure = () => {
+    metrics = cards.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { el, top: r.top, height: r.height, mid: r.top + r.height / 2 };
+    });
+    // real gap between two cards, so the opened space matches the layout
+    const gap = metrics.length > 1
+      ? Math.max(0, metrics[1].top - (metrics[0].top + metrics[0].height))
+      : 8;
+    shift = metrics[heldIndex].height + gap;
+  };
+
+  const paint = (dy) => {
+    held.style.transform = `translateY(${dy}px) scale(1.03)`;
+
+    const heldMid = metrics[heldIndex].mid + dy;
+    let moved = 0;
+    metrics.forEach((m, i) => {
+      if (i === heldIndex) return;
+      // a card below the held one slides UP once the held card passes its
+      // middle; a card above slides DOWN. Everything else stays put.
+      const passed = i > heldIndex ? heldMid > m.mid : heldMid < m.mid;
+      m.el.style.transform = passed
+        ? `translateY(${i > heldIndex ? -shift : shift}px)` : "";
+      if (passed) moved += i > heldIndex ? 1 : -1;
+    });
+    targetIndex = heldIndex + moved;
+  };
+
+  const reset = () => {
     clearTimeout(timer); timer = null;
-    if (dragging) {
-      dragging.classList.remove("dragging");
-      dragging.style.transform = "";
-      dragging = null;
-    }
-    pointerId = null;
+    cards.forEach((c) => { c.style.transform = ""; c.classList.remove("shifting"); });
+    if (held) held.classList.remove("dragging");
+    held = null; heldIndex = -1; targetIndex = -1;
   };
 
-  const start = (card, e) => {
-    dragging = card;
-    startY = e.clientY;
-    offset = 0;
+  const begin = (card, y) => {
+    held = card;
+    heldIndex = cards.indexOf(card);
+    startY = y;
+    measure();
     card.classList.add("dragging");
-    // belt and braces: if the browser managed to start a selection before the
-    // hold registered, drop it
+    cards.forEach((c) => { if (c !== card) c.classList.add("shifting"); });
     window.getSelection?.()?.removeAllRanges();
-    card.setPointerCapture?.(pointerId);
-    if (navigator.vibrate) navigator.vibrate(15);   // "you have it" feedback
+    if (navigator.vibrate) navigator.vibrate(15);
   };
 
-  const move = (e) => {
-    if (!dragging) return;
-    offset = e.clientY - startY;
-    dragging.style.transform = `translateY(${offset}px)`;
+  const drop = () => {
+    if (!held) { reset(); return; }
 
-    const rect = dragging.getBoundingClientRect();
-    const mid = rect.top + rect.height / 2;
-
-    // Swap with whichever neighbour's midpoint the dragged card has passed.
-    // After moving it in the DOM the element jumps, so startY is rebased by the
-    // exact jump — otherwise the card snaps away from the finger.
-    const others = [...container.querySelectorAll(".coffee-card")].filter((c) => c !== dragging);
-    for (const other of others) {
-      const r = other.getBoundingClientRect();
-      const otherMid = r.top + r.height / 2;
-      const before = rect.top < r.top;
-      if ((before && mid > otherMid) || (!before && mid < otherMid)) {
-        const prevTop = dragging.getBoundingClientRect().top;
-        container.insertBefore(dragging, before ? other.nextSibling : other);
-        const newTop = dragging.getBoundingClientRect().top;
-        startY += newTop - prevTop;
-        offset = e.clientY - startY;
-        dragging.style.transform = `translateY(${offset}px)`;
-        break;
-      }
+    if (targetIndex >= 0 && targetIndex !== heldIndex) {
+      const order = cards.filter((c) => c !== held);
+      order.splice(targetIndex, 0, held);
+      // one DOM write, after the gesture — no reflow mid-drag
+      order.forEach((c) => container.appendChild(c));
+      saveOrder(order.map((c) => c.dataset.id));
     }
-  };
 
-  const end = () => {
-    const wasDragging = !!dragging;
-    if (wasDragging) {
-      saveOrder([...container.querySelectorAll(".coffee-card")].map((c) => c.dataset.id));
-      // swallow the click this pointer sequence is about to fire
-      justDragged = true;
-      setTimeout(() => { justDragged = false; }, 0);
-    }
-    cleanup();
+    // Swallow the click this pointer sequence is about to fire, or dropping a
+    // card opens it. A 0ms timeout was too early — the click lands later.
+    justDragged = true;
+    const clear = () => { justDragged = false; };
+    setTimeout(clear, 400);
+
+    reset();
   };
 
   cards.forEach((card) => {
     card.addEventListener("pointerdown", (e) => {
       if (e.button != null && e.button !== 0) return;
-      pointerId = e.pointerId;
-      const downY = e.clientY, downX = e.clientX;
-      timer = setTimeout(() => start(card, { clientY: downY }), HOLD_MS);
+      const downX = e.clientX, downY = e.clientY;
+      const pid = e.pointerId;
 
-      const preDragMove = (ev) => {
-        if (dragging) return;
+      const cancelHold = (ev) => {
+        if (held) return;
         if (Math.abs(ev.clientY - downY) > MOVE_CANCEL
             || Math.abs(ev.clientX - downX) > MOVE_CANCEL) {
           clearTimeout(timer); timer = null;
-          card.removeEventListener("pointermove", preDragMove);
         }
       };
-      card.addEventListener("pointermove", preDragMove);
-      card.addEventListener("pointerup", () => card.removeEventListener("pointermove", preDragMove), { once: true });
+      card.addEventListener("pointermove", cancelHold);
+      card.addEventListener("pointerup", () =>
+        card.removeEventListener("pointermove", cancelHold), { once: true });
+
+      timer = setTimeout(() => {
+        // capture AFTER the hold, so a plain scroll is never hijacked
+        card.setPointerCapture?.(pid);
+        begin(card, downY);
+      }, HOLD_MS);
     });
 
-    card.addEventListener("pointermove", move);
-    card.addEventListener("pointerup", end);
-    card.addEventListener("pointercancel", cleanup);
+    card.addEventListener("pointermove", (e) => { if (held) paint(e.clientY - startY); });
+    card.addEventListener("pointerup", drop);
+    card.addEventListener("pointercancel", reset);
   });
 }
 

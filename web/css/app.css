@@ -451,7 +451,6 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   pointer-events: none;
 }
 .invite-code.holo-tappable { cursor: pointer; }
-}
 
 /* small "private" marker on coffee cards */
 .priv-tag {
@@ -629,9 +628,7 @@ td.truncate .roaster { font-size: .78em; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* Hold-and-drag reordering. The lifted card keeps its own transform for the
-   finger offset, so scale is applied to the shadow/opacity only — stacking a
-   scale() here would fight the inline translateY() set in JS. */
+/* Hold-and-drag reordering. */
 .coffee-card {
   touch-action: pan-y;
   /* A long press is a text-selection gesture to the browser as well as a drag
@@ -643,9 +640,16 @@ td.truncate .roaster { font-size: .78em; }
 }
 .coffee-card.dragging {
   position: relative; z-index: 30;
-  box-shadow: 0 8px 22px rgba(0,0,0,.28);
-  opacity: .96;
+  /* Explicitly opaque. It looked see-through because of an opacity:.96 that is
+     now gone AND because a card inherits the page background rather than
+     painting its own — over another card, that reads as transparent. */
+  background: var(--pico-card-background-color, var(--pico-background-color));
+  box-shadow: 0 10px 26px rgba(0,0,0,.32);
   cursor: grabbing;
+  transition: box-shadow .12s ease;      /* NOT transform: it tracks the finger */
 }
-/* neighbours slide rather than jump as the dragged card passes them */
-.coffee-card:not(.dragging) { transition: transform .14s ease; }
+/* Cards that slide aside to open the drop gap. Only these animate — the held
+   card must follow the finger with no easing at all. */
+.coffee-card.shifting { transition: transform .16s cubic-bezier(.2,.7,.3,1); }
+/* the press-down effect would fight the drag transform */
+.coffee-card.dragging:active { transform: none; filter: none; }
