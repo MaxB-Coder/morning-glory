@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.10";
+export const APP_VERSION = "1.1.11";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -406,19 +406,19 @@ async function renderCoffee(id) {
       <div class="title-row">
         <h2>${esc(c.name)}</h2>
         <!-- photo and star stacked, centres on the same vertical axis -->
-        <div class="photo-stack">
-          ${safePhoto(c.photo)
-            ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
-                 <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
-               </button>`
-            : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
-          <button type="button" id="star-toggle" class="star-btn"
-                  aria-pressed="${c.starred ? "true" : "false"}"
-                  title="${c.starred ? "Starred" : "Star this coffee"}"
-            >${starSvg(!!c.starred)}</button>
-        </div>
+        ${safePhoto(c.photo)
+          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+               <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
+             </button>`
+          : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
-      <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
+      <p class="subtitle-row">
+        <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
+        <button type="button" id="star-toggle" class="star-btn"
+                aria-pressed="${c.starred ? "true" : "false"}"
+                title="${c.starred ? "Starred" : "Star this coffee"}"
+          >${starSvg(!!c.starred)}</button>
+      </p>
 
       <section class="step method-step">
         <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
@@ -676,7 +676,10 @@ async function renderBrew(coffeeId, method) {
              </button>`
           : `<span class="thumb-spacer"></span>`}
       </div>
-      <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
+      <p class="subtitle-row">
+        <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
+        <span class="star-spacer"></span>
+      </p>
 
       <section class="step method-step">
         <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
