@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.17";
+export const APP_VERSION = "1.5.18";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -120,7 +120,6 @@ function showApp() {
 }
 
 async function main() {
-  const badge = document.getElementById("engine-badge");
 
   // Reveal the UI immediately. Coffee registration / setup work without the
   // engine; only the recommendation number needs Pyodide. Don't block on it.
@@ -134,19 +133,19 @@ async function main() {
   showApp();
   await safeRoute();
 
-  // Warm the engine in the background; update the badge when done.
-  initEngine((s) => { badge.textContent = "engine: " + s.toLowerCase(); })
-    .then(() => { badge.textContent = "engine: ready"; badge.classList.add("ok"); })
-    .catch((e) => {
-      console.error("[engine]", e);
-      badge.textContent = "engine: offline";
-    });
+  // Warm the engine in the background. The badges only exist while Settings is
+  // on screen, so progress is kept in module state and painted on demand
+  // instead of written straight to a node that may not be there.
+  initEngine((st) => setEngineState(st.toLowerCase(), false))
+    .then(() => setEngineState("ready", true))
+    .catch((e) => { console.error("[engine]", e); setEngineState("offline", false); });
 
   // Start sync in the background (no-op if Firebase isn't configured).
   // When remote data merges in, re-render the current screen.
   sync.initSync({
     onChange: (st) => {
-      renderSyncBadge(st);
+      syncState = st;
+      paintBadges();
       // If the Sharing panel is on screen, re-render it so sign-in / household
       // state appears immediately instead of after a manual navigation.
       if (document.getElementById("sync-panel")) renderSyncPanel();
@@ -157,10 +156,28 @@ async function main() {
   }).catch((e) => console.warn("[sync]", e));
 }
 
-function renderSyncBadge(st) {
+// Status badges live on the Settings screen, next to its title — not in the
+// app header, where they were on screen at all times for information you only
+// look at when something is wrong. Both are painted from module state so they
+// come back correct every time Settings is rendered.
+let engineState = "loading", engineOk = false, syncState = null;
+
+function setEngineState(text, ok) {
+  engineState = text; engineOk = ok;
+  paintBadges();
+}
+
+function paintBadges() {
+  const e = document.getElementById("engine-badge");
+  if (e) {
+    e.textContent = "engine: " + engineState;
+    e.className = "badge" + (engineOk ? " ok" : "");
+  }
+
   const b = document.getElementById("sync-badge");
   if (!b) return;
-  if (!st.available) { b.hidden = true; return; }
+  const st = syncState;
+  if (!st || !st.available) { b.hidden = true; return; }
   b.hidden = false;
   if (!st.signedIn) { b.textContent = "sync: sign in"; b.className = "badge"; }
   else if (!st.householdId) { b.textContent = "sync: no household"; b.className = "badge"; }
@@ -975,7 +992,13 @@ async function renderSettings() {
   const g = await db.getGrinder();
   view.replaceChildren(el(`
     <div>
-      <h2>Settings</h2>
+      <div class="title-row settings-head">
+        <h2>Settings</h2>
+        <span class="badge-row">
+          <span id="sync-badge" class="badge" hidden></span>
+          <span id="engine-badge" class="badge">engine: loading</span>
+        </span>
+      </div>
       <article class="inline-row">
         <span>
           <strong>Version</strong> ${APP_VERSION}
@@ -1002,6 +1025,8 @@ async function renderSettings() {
         </div>
       </article>
     </div>`));
+  paintBadges();                     // the nodes are new on every render
+
   view.querySelector("#export").addEventListener("click", async () => {
     const data = await db.exportAll();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -1116,7 +1141,7 @@ async function renderSyncPanel() {
   const code = await sync.getInviteCode();
   panel.innerHTML = `<div class="panel-head">
       <strong>Sharing</strong>
-      <small class="who">${esc(st.user.name || st.user.email)} · sync ${st.online ? "on" : "offline"}</small>
+      <small class="who">${esc(st.user.name || st.user.email)}</small>
     </div>
     <div class="inline-row">
       <span>Invite code</span>

@@ -738,3 +738,8 @@ td.truncate .roaster { font-size: .78em; }
 .coffee-card.shifting { transition: transform .16s cubic-bezier(.2,.7,.3,1); }
 /* the press-down effect would fight the drag transform */
 .coffee-card.dragging:active { transform: none; filter: none; }
+
+/* Settings title row: heading left, status badges right. Baseline-aligned so
+   the badges sit on the heading's baseline rather than floating mid-cap. */
+.settings-head { align-items: baseline; }
+.badge-row { display: flex; gap: .4rem; flex: none; }
