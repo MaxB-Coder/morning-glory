@@ -650,7 +650,15 @@ td.truncate .roaster { font-size: .78em; }
 /* Hold-and-drag reordering. The lifted card keeps its own transform for the
    finger offset, so scale is applied to the shadow/opacity only — stacking a
    scale() here would fight the inline translateY() set in JS. */
-.coffee-card { touch-action: pan-y; }
+.coffee-card {
+  touch-action: pan-y;
+  /* A long press is a text-selection gesture to the browser as well as a drag
+     to us, so without this the card's text gets selected (and iOS shows the
+     magnifier / callout) the moment the hold registers. */
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .coffee-card.dragging {
   position: relative; z-index: 30;
   box-shadow: 0 8px 22px rgba(0,0,0,.28);

@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.1";
+export const APP_VERSION = "1.5.2";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1289,6 +1289,9 @@ function enableReorder(container, totalCount) {
     startY = e.clientY;
     offset = 0;
     card.classList.add("dragging");
+    // belt and braces: if the browser managed to start a selection before the
+    // hold registered, drop it
+    window.getSelection?.()?.removeAllRanges();
     card.setPointerCapture?.(pointerId);
     if (navigator.vibrate) navigator.vibrate(15);   // "you have it" feedback
   };
