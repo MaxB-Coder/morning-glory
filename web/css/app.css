@@ -7,6 +7,9 @@
      derived from these two, so changing either keeps the alignment correct */
   --sub-line: 1.28rem;
   --star-h: 1.9rem;
+  /* approximate height of the top bar's own content (padding + text), used to
+     size the photo viewer's top fade so it mirrors the bottom one */
+  --header-h: 2.8rem;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* App-shell layout: header and bottom nav are flex children that never move;
@@ -278,13 +281,13 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    Since the app background is light, any dark backdrop that runs to the bottom
    of the screen leaves a light band under it, and every attempt to recolour
    that band failed (runtime theme-color changes are ignored in standalone).
-   Solved from the other end: theme-color (dark scheme) is set to #040303 —
-   the app background as it appears UNDER this scrim. The strip therefore
-   already matches the dimmed screen, so the scrim can be a flat colour with no
-   band. Cost: in normal use the strip is a touch darker than the app, which is
-   invisible on a dark palette.
-   If you ever change the scrim opacity or the dark background, recompute
-   theme-color to match, or the band comes back.
+   Every attempt to colour-match that strip failed (runtime theme-color is
+   ignored; launch theme-color didn't take either). So the scrim simply RAMPS
+   TO ZERO across the nav bar: where it ends it is showing the app's own colour,
+   which is what the strip is, so there is no edge to see. A matching fade at
+   the top keeps it symmetrical.
+   Do not flatten these ramps — a flat scrim reaching the bottom has been tried
+   repeatedly and always shows the band.
    A tap anywhere, including over the nav, closes it. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
@@ -296,11 +299,16 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--nav-h) + 1.75rem + env(safe-area-inset-bottom, 0px));
 }
-/* flat dim, edge to edge — matches the strip via theme-color (see above) */
+/* dim, fading in over the header and out over the nav */
 .lightbox::before {
   content: "";
   position: absolute; inset: 0;
-  background: rgba(0, 0, 0, .86);
+  background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, .86) calc(var(--header-h) + env(safe-area-inset-top, 0px)),
+      rgba(0, 0, 0, .86) calc(100% - var(--nav-h) - env(safe-area-inset-bottom, 0px)),
+      rgba(0, 0, 0, 0) calc(100% - env(safe-area-inset-bottom, 0px)));
   pointer-events: none;
 }
 /* content sits above the scrim layer */
