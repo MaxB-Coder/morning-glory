@@ -510,3 +510,48 @@ td.truncate .roaster { font-size: .78em; }
 .invite-hint { margin-top: .35rem; text-wrap: balance; }
 /* Edit sits beside Archive: same height so the pair reads as one row */
 #edit-coffee { font-size: .85rem; padding: .45rem .9rem; }
+
+/* Optical nudge only: the name/roaster block sat a touch high against the
+   thumbnail. position:relative moves the paint, not the layout, so the card
+   height, thumbnail, star and chevron are all untouched. */
+.card-title { position: relative; top: .15rem; }
+
+/* Secondary FAB: mirrors + on the opposite corner, same size and baseline so
+   the pair reads as one row. Neutral surface on purpose — + is the primary
+   action here, and a second orange circle would compete with it. */
+.fab-filter {
+  right: auto; left: 1rem;
+  background: var(--pico-background-color);
+  color: var(--pico-color);
+  border: 1px solid var(--pico-muted-border-color);
+  box-shadow: 0 3px 10px rgba(0,0,0,.18);
+}
+.fab-filter .fab-ico { display: block; width: 1.5rem; height: 1.5rem; }
+/* count of active filters, so the state is visible without opening the sheet */
+.fab-badge {
+  position: absolute; top: -.15rem; right: -.15rem;
+  min-width: 1.15rem; height: 1.15rem; padding: 0 .25rem;
+  border-radius: 1rem; background: var(--gw-accent); color: #fff;
+  font-size: .7rem; font-weight: 600; line-height: 1.15rem; text-align: center;
+}
+
+.filter-sheet { text-align: left; max-height: 75vh; overflow-y: auto; }
+.filter-group { margin-bottom: .9rem; }
+.filter-group h4 {
+  margin: 0 0 .4rem; font-size: .75rem; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--pico-muted-color);
+}
+.filter-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+.filter-pills .toggle-pill { margin: 0; }
+.filter-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; margin-top: 1rem;
+}
+.filter-actions #filter-done { width: auto; margin: 0; padding: .5rem 1.1rem; }
+.filter-actions .link-btn { padding: .45rem .8rem; }
+
+.no-match { text-align: center; }
+.no-match .link-btn { margin-top: .5rem; }
+/* .fab span nudges the "+" glyph to optical centre; an SVG and a badge don't
+   need it, and it would push the badge off the corner. */
+.fab-filter span { transform: none; }

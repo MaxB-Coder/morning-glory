@@ -17,16 +17,38 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.3.2";
+export const APP_VERSION = "1.4.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
 const bootStatus = document.getElementById("boot-status");
 
-// Home "show starred only" filter. Module-level rather than persisted: it's a
-// transient view preference, and it survives re-renders (including ones caused
-// by incoming sync) because this module isn't reloaded between navigations.
+// Home filters. Module-level rather than persisted: they're transient view
+// preferences, and they survive re-renders (including ones caused by incoming
+// sync) because this module isn't reloaded between navigations.
+// Empty array = no constraint on that facet (NOT "match nothing").
 let starredOnly = false;
+const FILTERS = { roast: [], process: [], roaster: [], decaf: false };
+
+const filterCount = () =>
+  FILTERS.roast.length + FILTERS.process.length + FILTERS.roaster.length
+  + (FILTERS.decaf ? 1 : 0) + (starredOnly ? 1 : 0);
+
+function clearFilters() {
+  FILTERS.roast = []; FILTERS.process = []; FILTERS.roaster = [];
+  FILTERS.decaf = false; starredOnly = false;
+}
+
+// AND across facets, OR within one — the way people read a filter panel:
+// "light OR medium roast, AND washed process".
+function applyFilters(list) {
+  return list.filter((c) =>
+    (!starredOnly || c.starred)
+    && (!FILTERS.decaf || c.decaf)
+    && (!FILTERS.roast.length || FILTERS.roast.includes(c.roast))
+    && (!FILTERS.process.length || FILTERS.process.includes(c.process))
+    && (!FILTERS.roaster.length || FILTERS.roaster.includes(c.roaster || "")));
+}
 
 // Icons are inline SVG, not text glyphs. ★ and › sit at different heights
 // inside their own font boxes, so no amount of flex centring could line them
@@ -36,6 +58,10 @@ const starSvg = (filled) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="t
         fill="${filled ? "currentColor" : "none"}"
         stroke="currentColor" stroke-width="1.7"
         stroke-linejoin="round"/></svg>`;
+
+const filterSvg = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M3 5h18l-7 8v6l-4 2v-8z" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linejoin="round"/></svg>`;
 
 const chevSvg = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
@@ -195,7 +221,7 @@ async function renderSetup() {
 async function renderHome() {
   const all = await db.allCoffees();
   const anyStarred = all.some((c) => c.starred);
-  const coffees = starredOnly ? all.filter((c) => c.starred) : all;
+  const coffees = applyFilters(all);
 
   const cards = coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
@@ -219,8 +245,8 @@ async function renderHome() {
          <button id="add-first">Add your first coffee</button>
        </article>`
     : (coffees.length ? cards
-       : `<p style="text-align:center"><small>No starred coffees yet — tap the
-          star on a coffee to pin it here.</small></p>`);
+       : `<p class="no-match"><small>No coffees match those filters.</small><br>
+          <button type="button" id="clear-filters" class="link-btn">Clear filters</button></p>`);
 
   view.replaceChildren(el(`
     <div>
@@ -240,11 +266,14 @@ async function renderHome() {
     if (starredOnly && !anyStarred) toast("No coffees are starred yet");
     safeRoute();
   });
+  const clr = view.querySelector("#clear-filters");
+  if (clr) clr.addEventListener("click", () => { clearFilters(); safeRoute(); });
   const first = view.querySelector("#add-first");
   if (first) first.addEventListener("click", () => (location.hash = "#/coffee/new"));
   view.querySelectorAll(".coffee-card").forEach((c) =>
     c.addEventListener("click", () => (location.hash = `#/coffee/${c.dataset.id}`)));
   addFab("#/coffee/new", "+");
+  if (all.length) addFilterFab(all);
 }
 
 // --- coffee form ------------------------------------------------------------
@@ -1141,8 +1170,95 @@ function addFab(hash, label) {
   document.body.appendChild(f);
 }
 function removeFab() {
-  const existing = document.getElementById("fab");
-  if (existing) existing.remove();
+  // both FABs — the filter one is only ever on Home, so every other screen
+  // must clear it or it lingers over the wrong list
+  ["fab", "fab-filter"].forEach((id) => {
+    const existing = document.getElementById(id);
+    if (existing) existing.remove();
+  });
+}
+
+// Mirror of the + button on the opposite corner. Deliberately NOT accent
+// coloured: + is the one primary action on this screen, and two orange circles
+// would compete. Neutral surface + border reads as secondary.
+function addFilterFab(all) {
+  const n = filterCount();
+  const f = el(`<button class="fab fab-filter" id="fab-filter"
+      title="Filter coffees" aria-label="Filter coffees">
+      <span class="fab-ico">${filterSvg}</span>
+      ${n ? `<span class="fab-badge">${n}</span>` : ""}
+    </button>`);
+  f.addEventListener("click", () => openFilterSheet(all));
+  document.body.appendChild(f);
+}
+
+// Filter sheet. Facets are built from the coffees you actually have, so you
+// can never select a roaster or roast that would return nothing.
+function openFilterSheet(all) {
+  const roasters = [...new Set(all.map((c) => c.roaster).filter(Boolean))].sort();
+  const roasts = ["light", "medium", "dark"].filter((r) => all.some((c) => c.roast === r));
+  const procs = ["washed", "honey", "natural"].filter((x) => all.some((c) => c.process === x));
+  const anyDecaf = all.some((c) => c.decaf);
+  const anyStar = all.some((c) => c.starred);
+
+  const pill = (facet, value, label, on) =>
+    `<button type="button" class="toggle-pill" data-facet="${facet}"
+       data-value="${esc(value)}" aria-pressed="${on}">${esc(label)}</button>`;
+
+  const group = (title, html) =>
+    html ? `<div class="filter-group"><h4>${title}</h4><div class="filter-pills">${html}</div></div>` : "";
+
+  const overlay = el(`
+    <div class="lightbox" id="filter-sheet">
+      <div class="lightbox-inner sheet filter-sheet">
+        <h3 style="margin:0 0 .75rem">Filter</h3>
+        ${group("Roast", roasts.map((r) => pill("roast", r, r, FILTERS.roast.includes(r))).join(""))}
+        ${group("Process", procs.map((x) => pill("process", x, x, FILTERS.process.includes(x))).join(""))}
+        ${group("Roaster", roasters.map((r) => pill("roaster", r, r, FILTERS.roaster.includes(r))).join(""))}
+        ${group("Other", [
+          anyStar ? pill("starred", "1", "Starred", starredOnly) : "",
+          anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "",
+        ].join(""))}
+        <div class="filter-actions">
+          <button type="button" id="filter-clear" class="link-btn">Clear all</button>
+          <button type="button" id="filter-done">Show <span id="filter-n"></span></button>
+        </div>
+      </div>
+    </div>`);
+
+  const sheet = overlay.querySelector(".filter-sheet");
+  const nSpan = overlay.querySelector("#filter-n");
+  const refresh = () => {
+    const n = applyFilters(all).length;
+    nSpan.textContent = n === all.length ? `all ${n}` : `${n} of ${all.length}`;
+  };
+
+  overlay.querySelectorAll(".toggle-pill").forEach((b) =>
+    b.addEventListener("click", () => {
+      const { facet, value } = b.dataset;
+      const on = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", String(on));
+      if (facet === "starred") starredOnly = on;
+      else if (facet === "decaf") FILTERS.decaf = on;
+      else if (on) FILTERS[facet].push(value);
+      else FILTERS[facet] = FILTERS[facet].filter((v) => v !== value);
+      refresh();
+    }));
+
+  overlay.querySelector("#filter-clear").addEventListener("click", () => {
+    clearFilters();
+    overlay.querySelectorAll(".toggle-pill").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    refresh();
+  });
+
+  const close = () => { overlay.remove(); safeRoute(); };
+  overlay.querySelector("#filter-done").addEventListener("click", close);
+  // backdrop closes; taps inside the sheet must not
+  sheet.addEventListener("click", (e) => e.stopPropagation());
+  overlay.addEventListener("click", close);
+
+  document.body.appendChild(overlay);
+  refresh();
 }
 
 main();
