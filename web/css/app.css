@@ -10,11 +10,10 @@
    because Safari's dynamic viewport (URL bar / keyboard) changes what "bottom"
    means as you scroll. 100dvh + flex avoids that entirely. */
 html, body { height: 100%; overflow: hidden; }
-/* The strip iOS reserves below the viewport in standalone mode is painted from
-   the CANVAS, not from any element — so nothing (not even the fixed-position
-   lightbox) can cover it. With no background on <html> it fell back to white
-   as soon as the lightbox sat over the body. Setting it explicitly keeps that
-   strip the app's colour whether an overlay is open or not. */
+/* Give the canvas the app's colour so any area outside the document (e.g. a
+   rubber-band overscroll) matches rather than flashing white.
+   NB: this is NOT what caused the band under an open lightbox — that was the
+   overlay stopping at the safe-area edge. See .lightbox. */
 html { background-color: var(--pico-background-color); }
 body {
   /* position:fixed + inset:0 pins the shell to the VISIBLE viewport exactly.
@@ -29,7 +28,10 @@ body {
 /* [hidden] must win over the flex display below, or the overlay never hides */
 [hidden] { display: none !important; }
 .boot {
-  position: fixed; inset: 0; display: flex; flex-direction: column;
+  /* same safe-area caveat as .lightbox — reach past the inset */
+  position: fixed; top: 0; left: 0; right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: .5rem;
   background: var(--pico-background-color); z-index: 50; text-align: center;
 }
@@ -262,9 +264,17 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    so the layout doesn't shift between the coffee page and the brew page */
 .thumb-spacer { display: block; width: 3rem; height: 3rem; flex: none; }
 
-/* tap-to-enlarge overlay */
+/* tap-to-enlarge overlay.
+   NOT plain `inset: 0`. With viewport-fit=cover, iOS resolves a fixed element's
+   bottom edge to the SAFE-AREA boundary, so the overlay stopped ~34pt short of
+   the screen and the app (the nav strip) showed through underneath — a white
+   band in light mode, a slightly-lighter dark band in dark mode. Pulling the
+   bottom edge past the inset makes it cover the screen properly. Overshooting
+   is harmless: anything beyond the viewport is simply clipped. */
 .lightbox {
-  position: fixed; inset: 0; z-index: 80; display: flex;
+  position: fixed; z-index: 80; display: flex;
+  top: 0; left: 0; right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   align-items: center; justify-content: center; padding: 1.25rem;
   background: #121110;   /* must match OVERLAY_BG in app.js */
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
