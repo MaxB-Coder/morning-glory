@@ -48,7 +48,10 @@ body {
 /* iOS: keep the header clear of the notch / Dynamic Island. Requires
    viewport-fit=cover in the meta tag (already set). */
 .app-header {
-  display: flex; align-items: center; justify-content: space-between;
+  /* Centred, not space-between: the status badges used to sit on the right and
+     balance the title. With them moved to Settings the title was left alone
+     against a wide empty bar. */
+  display: flex; align-items: center; justify-content: center;
   padding: .6rem 1rem;
   padding-top: calc(.6rem + env(safe-area-inset-top, 0px));
   padding-left: calc(1rem + env(safe-area-inset-left, 0px));
