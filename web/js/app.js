@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.6";
+export const APP_VERSION = "1.4.7";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -943,7 +943,7 @@ async function renderSettings() {
         ${g.calibration
           ? `<div><strong>Calibrated:</strong> ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}</div>`
           : `<div><small>Not calibrated</small></div>`}
-        <div class="center-link" style="margin-top:.5rem"><a href="#/setup">Edit grinder</a></div>
+        <div class="center-link"><a href="#/setup">Edit grinder</a></div>
       </article>
       <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
       <article class="inline-row">

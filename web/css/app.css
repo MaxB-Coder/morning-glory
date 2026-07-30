@@ -572,7 +572,10 @@ td.truncate .roaster { font-size: .78em; }
 .filter-head .star-btn { min-width: 2.2rem; }
 
 /* centred standalone links in Settings (Sign out, Edit grinder) */
-.center-link { text-align: center; }
+/* Sign out was a <p> and Edit grinder a <div>: the <p> carried Pico's
+   ~1rem bottom margin on top of the panel's own padding, which is the extra
+   space under Sign out. One margin rule for both, whatever the tag. */
+.center-link { text-align: center; margin: .5rem 0 0; }
 /* One size for both links. Sign out used to be wrapped in <small> and Edit
    grinder wasn't, so they rendered at different sizes; the size now lives here
    and the markup is identical. */
