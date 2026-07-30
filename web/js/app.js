@@ -17,11 +17,19 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v29";
+export const APP_VERSION = "v30";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
 const bootStatus = document.getElementById("boot-status");
+
+// Home "show starred only" filter. Module-level rather than persisted: it's a
+// transient view preference, and it survives re-renders (including ones caused
+// by incoming sync) because this module isn't reloaded between navigations.
+let starredOnly = false;
+
+const STAR_FILLED = "★";
+const STAR_OUTLINE = "☆";
 
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 // Escapes single quotes and backticks too. Every attribute in this file is
@@ -174,9 +182,11 @@ async function renderSetup() {
 
 // --- home -------------------------------------------------------------------
 async function renderHome() {
-  const coffees = await db.allCoffees();
-  const list = coffees.length
-    ? coffees.map((c) => `
+  const all = await db.allCoffees();
+  const anyStarred = all.some((c) => c.starred);
+  const coffees = starredOnly ? all.filter((c) => c.starred) : all;
+
+  const cards = coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
           ${safePhoto(c.photo) ? `<img class="card-thumb" src="${safePhoto(c.photo)}" alt="">` : ""}
           <div class="card-body">
@@ -184,14 +194,38 @@ async function renderHome() {
               ? ' <span class="priv-tag">private</span>' : ""}<br>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
+          ${c.starred ? `<span class="star-mark">${STAR_FILLED}</span>` : ""}
           <span class="chev">›</span>
-        </article>`).join("")
-    : `<article class="empty">
+        </article>`).join("");
+
+  const list = all.length === 0
+    ? `<article class="empty">
          <p><strong>No coffees yet.</strong></p>
          <p><small>Add a bag to get your first grind recommendation.</small></p>
          <button id="add-first">Add your first coffee</button>
-       </article>`;
-  view.replaceChildren(el(`<div><h2>Your coffees</h2>${list}</div>`));
+       </article>`
+    : (coffees.length ? cards
+       : `<p style="text-align:center"><small>No starred coffees yet — tap the
+          star on a coffee to pin it here.</small></p>`);
+
+  view.replaceChildren(el(`
+    <div>
+      <div class="title-row">
+        <h2>Your coffees</h2>
+        ${all.length ? `<button type="button" id="star-filter" class="star-btn"
+          aria-pressed="${starredOnly}"
+          title="${starredOnly ? "Showing starred only" : "Show starred only"}"
+          >${starredOnly ? STAR_FILLED : STAR_OUTLINE}</button>` : ""}
+      </div>
+      ${list}
+    </div>`));
+
+  const filter = view.querySelector("#star-filter");
+  if (filter) filter.addEventListener("click", () => {
+    starredOnly = !starredOnly;
+    if (starredOnly && !anyStarred) toast("No coffees are starred yet");
+    safeRoute();
+  });
   const first = view.querySelector("#add-first");
   if (first) first.addEventListener("click", () => (location.hash = "#/coffee/new"));
   view.querySelectorAll(".coffee-card").forEach((c) =>
@@ -358,7 +392,13 @@ async function renderCoffee(id) {
 
   view.replaceChildren(el(`
     <div>
-      <p><a href="#/" class="back">← All coffees</a></p>
+      <div class="title-row back-row">
+        <a href="#/" class="back">← All coffees</a>
+        <button type="button" id="star-toggle" class="star-btn"
+                aria-pressed="${c.starred ? "true" : "false"}"
+                title="${c.starred ? "Starred" : "Star this coffee"}"
+          >${c.starred ? STAR_FILLED : STAR_OUTLINE}</button>
+      </div>
       <div class="title-row">
         <h2>${esc(c.name)}</h2>
         ${safePhoto(c.photo)
@@ -435,6 +475,16 @@ async function renderCoffee(id) {
     if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;
     await db.updateCoffee({ ...c, archived: 1 });
     location.hash = "#/";
+  });
+
+  // star toggle — optimistic: flip the glyph immediately, then persist
+  const star = view.querySelector("#star-toggle");
+  star.addEventListener("click", async () => {
+    const nowStarred = !c.starred;
+    star.textContent = nowStarred ? STAR_FILLED : STAR_OUTLINE;
+    star.setAttribute("aria-pressed", String(nowStarred));
+    await db.updateCoffee({ ...c, starred: nowStarred ? 1 : 0 });
+    c.starred = nowStarred ? 1 : 0;
   });
 
   // photo: thumbnail opens the lightbox; camera button adds one
@@ -642,18 +692,19 @@ async function renderBrew(coffeeId, method) {
       <section class="step">
         <h3 class="step-title"><span class="step-num">4</span> How did it taste?</h3>
         <p><small>Tap one — this trains the recommendation.</small></p>
+        ${method === "espresso" ? `
+        <div class="verdict-row five">
+          <button class="v-gusher" data-v="gusher">💨<br>Ran<br>through</button>
+          <button class="v-under" data-v="under">🟠<br>Sour</button>
+          <button class="v-good" data-v="good">🟢<br>Good</button>
+          <button class="v-over" data-v="over">🔴<br>Bitter</button>
+          <button class="v-choked" data-v="choked">🧱<br>Choked</button>
+        </div>` : `
         <div class="verdict-row">
           <button class="v-under" data-v="under">🟠<br>Sour / weak</button>
           <button class="v-good" data-v="good">🟢<br>Good</button>
           <button class="v-over" data-v="over">🔴<br>Bitter / harsh</button>
-        </div>
-        ${method === "espresso" ? `
-        <div class="verdict-row extremes">
-          <button class="v-gusher" data-v="gusher">💨<br>Ran through</button>
-          <button class="v-choked" data-v="choked">🧱<br>Choked</button>
-        </div>
-        <p class="explain" style="text-align:center">Use these when the shot
-        clearly gushed or stalled — they move the grind further.</p>` : ""}
+        </div>`}
         <p class="scale-hint"><span>← grind finer</span><span>grind coarser →</span></p>
       </section>
     </div>`));

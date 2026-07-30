@@ -354,7 +354,33 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   padding: .05rem .4rem; color: var(--pico-muted-color); vertical-align: middle;
 }
 
-/* the two espresso extremes sit on their own row, visually secondary */
-.verdict-row.extremes { grid-template-columns: 1fr 1fr; margin-top: .5rem; }
+/* espresso shows all five outcomes in one row, ordered finer -> coarser.
+   Tighter type and padding so five thumb targets fit a phone width. */
+.verdict-row.five { grid-template-columns: repeat(5, 1fr); gap: .3rem; }
+.verdict-row.five button {
+  padding: .6rem .1rem; font-size: .62rem; line-height: 1.2;
+  min-height: 4rem; letter-spacing: -.01em;
+}
 .v-gusher { background: #f9a825; border-color: #f9a825; color: #2b2320; }
 .v-choked { background: #6a1b9a; border-color: #6a1b9a; }
+
+/* --- favourites ---------------------------------------------------------- */
+/* Outline when off, filled yellow when on. Sized generously for a thumb even
+   though the glyph is small. */
+.star-btn {
+  width: auto; flex: none; margin: 0;
+  padding: .1rem .35rem;
+  background: transparent; border: none;
+  color: var(--pico-muted-color);
+  font-size: 1.5rem; line-height: 1;
+  min-width: 2.2rem; min-height: 2.2rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.star-btn[aria-pressed="true"] { color: #f5b301; }
+.star-btn:active { transform: scale(.92); }
+
+/* the small marker on a coffee card, just left of the chevron */
+.star-mark { color: #f5b301; font-size: 1rem; line-height: 1; flex: none; }
+
+/* back link + star share a row above the photo */
+.back-row { margin-bottom: .25rem; }

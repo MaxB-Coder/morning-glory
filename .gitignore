@@ -5,3 +5,4 @@ data/*.db
 .DS_Store
 *.bak
 .fuse_hidden*
+web/js/sw-register.js

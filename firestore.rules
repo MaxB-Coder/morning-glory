@@ -41,6 +41,7 @@ service cloud.firestore {
         && d.roast in ['light', 'medium', 'dark']
         && d.process in ['washed', 'honey', 'natural']
         && d.get('visibility', 'shared') in ['shared', 'private']
+        && d.get('starred', 0) is number
         && d.updatedAt is number
         && (d.get('origin', null) == null
             || (d.get('origin', null) is string && d.get('origin', null).size() <= 80))

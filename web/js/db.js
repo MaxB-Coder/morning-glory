@@ -71,6 +71,7 @@ export async function addCoffee(c) {
     // "shared" lives in the household and syncs to everyone; "private" lives
     // under the owner's own user document and never leaves their devices.
     visibility: c.visibility === "private" ? "private" : "shared",
+    starred: c.starred ? 1 : 0,
     updatedAt: now(), dirty: 1, deleted: false,
   };
   await p((await store("coffee", "readwrite")).add(rec));
@@ -204,6 +205,7 @@ function cleanCoffee(raw) {
     notes: str(raw.notes, 2000),
     photo: typeof raw.photo === "string" && IMG_RE.test(raw.photo) ? raw.photo : null,
     visibility: raw.visibility === "private" ? "private" : "shared",
+    starred: raw.starred ? 1 : 0,
     archived: raw.archived ? 1 : 0,
     createdAt: str(raw.createdAt, 40) || new Date().toISOString(),
     updatedAt: num(raw.updatedAt) || now(),
