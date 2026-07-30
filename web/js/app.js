@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.2";
+export const APP_VERSION = "1.4.3";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1052,7 +1052,7 @@ async function renderSyncPanel() {
                style="text-transform:uppercase;width:7rem">
         <button id="join" class="secondary compact-btn">Join</button>
       </div>
-      <p class="center-link"><a href="#" id="signout"><small>Sign out</small></a></p>`;
+      <p class="center-link"><a href="#" id="signout">Sign out</a></p>`;
     panel.querySelector("#create").addEventListener("click", async () => {
       try {
         const code = await sync.createHousehold();
@@ -1081,7 +1081,7 @@ async function renderSyncPanel() {
       <strong class="invite-code">${esc(code || "—")}</strong>
     </div>
     <p class="invite-hint"><small>Share this code. They sign in and tap Join.</small></p>
-    <p class="center-link"><a href="#" id="signout"><small>Sign out</small></a></p>`;
+    <p class="center-link"><a href="#" id="signout">Sign out</a></p>`;
   panel.querySelector("#signout").addEventListener("click", async (ev) => {
     ev.preventDefault(); await sync.signOutUser(); renderSettings();
   });

@@ -566,3 +566,7 @@ td.truncate .roaster { font-size: .78em; }
 
 /* centred standalone links in Settings (Sign out, Edit grinder) */
 .center-link { text-align: center; }
+/* One size for both links. Sign out used to be wrapped in <small> and Edit
+   grinder wasn't, so they rendered at different sizes; the size now lives here
+   and the markup is identical. */
+.center-link a { font-size: .9rem; }
