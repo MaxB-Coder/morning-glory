@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.18";
+export const APP_VERSION = "1.1.19";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -544,10 +544,11 @@ function dialInChart(brews) {
                  stroke-width="1.6" stroke-linejoin="round" opacity=".85"/>`;
     }
     list.forEach((b) => {
-      const fill = { good: "#2e7d32", under: "#ef6c00", over: "#b71c1c",
-                     gusher: "#f9a825", choked: "#6a1b9a" }[b.verdict] || colour;
+      // No stroke: the method-coloured ring fought with the fill and made the
+      // dots hard to read. Fills are tuned to the emoji used in the Result
+      // column so the chart and the table read as the same language.
       dots += `<circle cx="${x(idx.get(b.id)).toFixed(1)}" cy="${y(b.grindSetting).toFixed(1)}"
-                r="3.4" fill="${fill}" stroke="${colour}" stroke-width="1"/>`;
+                r="3.6" fill="${VERDICT_DOT[b.verdict] || colour}"/>`;
     });
     legend += `<span class="legend-item"><i style="background:${colour}"></i>${METHOD_LABEL[method]}</span>`;
   });
@@ -1047,6 +1048,16 @@ async function checkForUpdate() {
 // --- helpers ----------------------------------------------------------------
 function verdictLabel(v) { return { gusher: "💨 Ran through", under: "🟠 Sour",
   good: "🟢 Good", over: "🔴 Bitter", choked: "🧱 Choked" }[v] || v; }
+// Chart dot colours, matched to the Result-column emoji (🟠 🟢 🔴 💨 🧱) so the
+// two views agree at a glance.
+const VERDICT_DOT = {
+  under:  "#f5a623",   // 🟠
+  good:   "#4caf50",   // 🟢
+  over:   "#e53935",   // 🔴
+  gusher: "#9aa7b0",   // 💨
+  choked: "#a6503c",   // 🧱
+};
+
 // icon-only for narrow table columns
 function verdictIcon(v) { return { gusher: "💨", under: "🟠", good: "🟢",
   over: "🔴", choked: "🧱" }[v] || v; }

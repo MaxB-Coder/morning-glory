@@ -4,7 +4,7 @@
 // The core Pyodide files are precached on install. The numpy wheel and any
 // stdlib chunks Pyodide requests at runtime are cached on first use by the
 // runtime-cache fetch handler below, so a second launch works in airplane mode.
-const CACHE = "gw-1.1.18";
+const CACHE = "gw-1.1.19";
 const ASSETS = [
   "./",
   "./index.html",
