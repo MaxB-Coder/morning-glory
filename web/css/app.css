@@ -278,10 +278,12 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    Since the app background is light, any dark backdrop that runs to the bottom
    of the screen leaves a light band under it, and every attempt to recolour
    that band failed (runtime theme-color changes are ignored in standalone).
-   So: the scrim deliberately stops at the top of the nav bar. The nav and the
-   strip below it are both app-coloured and sit flush, which reads as a modal
-   over a tab bar rather than a stray band. The element itself still covers the
-   whole screen so a tap anywhere — including on the nav — closes it. */
+   So: the scrim covers everything, but across the nav bar it ramps from full
+   dim down to exactly zero at the viewport's bottom edge — which is precisely
+   where the untouchable strip starts. The nav therefore reads as part of the
+   dimmed backdrop, and the hand-off to the strip is invisible because both are
+   the app's colour at that exact line. The element covers the whole screen, so
+   a tap anywhere — including on the nav — closes it. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
   top: 0; left: 0; right: 0;
@@ -292,12 +294,17 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--nav-h) + 1.75rem + env(safe-area-inset-bottom, 0px));
 }
-/* the dimmed region: everything above the nav bar */
+/* the dim layer: solid over the content, ramping to nothing across the nav */
 .lightbox::before {
   content: "";
-  position: absolute; top: 0; left: 0; right: 0;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  background: rgba(0, 0, 0, .86);
+  position: absolute; inset: 0;
+  background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, .86) 0,
+      /* still fully dim at the top of the nav bar … */
+      rgba(0, 0, 0, .86) calc(100% - var(--nav-h) - env(safe-area-inset-bottom, 0px)),
+      /* … and exactly zero where the OS strip begins */
+      rgba(0, 0, 0, 0) calc(100% - env(safe-area-inset-bottom, 0px)));
   pointer-events: none;
 }
 /* content sits above the scrim layer */
