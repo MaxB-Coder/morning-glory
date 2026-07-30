@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.1";
+export const APP_VERSION = "1.1.2";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -622,7 +622,7 @@ function openPhotoLightbox(coffee) {
         <img src="${safePhoto(coffee.photo) || ""}" alt="${esc(coffee.name)}">
         <div class="lightbox-actions">
           <button type="button" id="lb-replace">Replace photo</button>
-          <button type="button" id="lb-remove" class="danger-link">Remove photo</button>
+          <button type="button" id="lb-remove" class="danger-solid">Remove photo</button>
         </div>
         <p class="lightbox-hint">Tap anywhere to close</p>
       </div>
