@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.9";
+export const APP_VERSION = "1.5.10";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1304,7 +1304,11 @@ let justDragged = false;
 function enableReorder(container, totalCount) {
   if (!container) return;
 
-  const cards = [...container.querySelectorAll(".coffee-card")];
+  // NOT const: a drop rewrites the DOM order, and every later drag has to work
+  // from the new one. Reusing the list captured at render time meant the second
+  // drag computed indices and travel limits against the OLD positions — the top
+  // card would fly past the boundary and nothing could be dropped above it.
+  let cards = [...container.querySelectorAll(".coffee-card")];
   // Reordering a filtered view would only describe the visible subset, so the
   // saved order would be wrong for everything hidden. Require the full list.
   if (cards.length < 2 || cards.length !== totalCount) return;
@@ -1329,6 +1333,10 @@ function enableReorder(container, totalCount) {
     { passive: false });
 
   const measure = () => {
+    // re-read from the DOM: document order is visual order, which is what all
+    // the index maths below assumes
+    cards = [...container.querySelectorAll(".coffee-card")];
+    heldIndex = cards.indexOf(held);
     metrics = cards.map((el) => ({
       el, top: el.offsetTop, height: el.offsetHeight,
       mid: el.offsetTop + el.offsetHeight / 2,
@@ -1399,10 +1407,9 @@ function enableReorder(container, totalCount) {
 
   const begin = (card, clientY) => {
     held = card;
-    heldIndex = cards.indexOf(card);
     lastClientY = clientY;
     startY = py(clientY);
-    measure();
+    measure();                       // sets heldIndex from the live DOM order
     card.classList.add("dragging");
     cards.forEach((c) => { if (c !== card) c.classList.add("shifting"); });
     window.getSelection?.()?.removeAllRanges();
