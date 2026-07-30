@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.2";
+export const APP_VERSION = "1.1.3";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -28,8 +28,18 @@ const bootStatus = document.getElementById("boot-status");
 // by incoming sync) because this module isn't reloaded between navigations.
 let starredOnly = false;
 
-const STAR_FILLED = "★";
-const STAR_OUTLINE = "☆";
+// Icons are inline SVG, not text glyphs. ★ and › sit at different heights
+// inside their own font boxes, so no amount of flex centring could line them
+// up; an SVG's geometry is exact, so equal-sized boxes align perfectly.
+const starSvg = (filled) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+        fill="${filled ? "currentColor" : "none"}"
+        stroke="currentColor" stroke-width="1.7"
+        stroke-linejoin="round"/></svg>`;
+
+const chevSvg = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 // Escapes single quotes and backticks too. Every attribute in this file is
@@ -194,8 +204,8 @@ async function renderHome() {
               ? ' <span class="priv-tag">private</span>' : ""}<br>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
-          ${c.starred ? `<span class="star-mark">${STAR_FILLED}</span>` : ""}
-          <span class="chev">›</span>
+          ${c.starred ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
+          <span class="chev">${chevSvg}</span>
         </article>`).join("");
 
   const list = all.length === 0
@@ -215,7 +225,7 @@ async function renderHome() {
         ${all.length ? `<button type="button" id="star-filter" class="star-btn"
           aria-pressed="${starredOnly}"
           title="${starredOnly ? "Showing starred only" : "Show starred only"}"
-          >${starredOnly ? STAR_FILLED : STAR_OUTLINE}</button>` : ""}
+          >${starSvg(starredOnly)}</button>` : ""}
       </div>
       ${list}
     </div>`));
@@ -405,7 +415,7 @@ async function renderCoffee(id) {
           <button type="button" id="star-toggle" class="star-btn"
                   aria-pressed="${c.starred ? "true" : "false"}"
                   title="${c.starred ? "Starred" : "Star this coffee"}"
-            >${c.starred ? STAR_FILLED : STAR_OUTLINE}</button>
+            >${starSvg(!!c.starred)}</button>
         </div>
       </div>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
@@ -482,7 +492,7 @@ async function renderCoffee(id) {
   const star = view.querySelector("#star-toggle");
   star.addEventListener("click", async () => {
     const nowStarred = !c.starred;
-    star.textContent = nowStarred ? STAR_FILLED : STAR_OUTLINE;
+    star.innerHTML = starSvg(nowStarred);
     star.setAttribute("aria-pressed", String(nowStarred));
     await db.updateCoffee({ ...c, starred: nowStarred ? 1 : 0 });
     c.starred = nowStarred ? 1 : 0;
