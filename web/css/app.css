@@ -273,20 +273,28 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    Nothing can paint into it and it takes its colour from theme-color at LAUNCH,
    so it is always the app's background — a flat dark scrim therefore left a
    visible band along the bottom edge.
-   Fix: fade the scrim to fully transparent at the bottom. Where the scrim ends
-   it is showing the app's own colour, which is exactly what the strip below is,
-   so the two meet with no seam — and the dimming is preserved everywhere else.
-   Content gets extra bottom padding so it stays clear of the fade. */
+   Fix: two stacked background layers.
+     top layer  — transparent for most of the height, then an OPAQUE band of the
+                  app background across the bottom. That hides the nav and ends
+                  in exactly the colour of the OS strip below, so there is no
+                  seam and no light patch.
+     under it   — the translucent dark scrim, so the app is still visible-but-
+                  dimmed everywhere above the band.
+   Fading to *transparent* instead was wrong: it revealed the light nav.
+   Content gets bottom padding so it stays above the band. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
   top: 0; left: 0; right: 0;
   bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   align-items: center; justify-content: center; padding: 1.25rem;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       to bottom,
-      rgba(0, 0, 0, .86) 0,
-      rgba(0, 0, 0, .86) calc(100% - 5.5rem),
-      rgba(0, 0, 0, 0) 100%);
+      transparent 0,
+      transparent calc(100% - 6.5rem),
+      var(--pico-background-color) calc(100% - 3rem),
+      var(--pico-background-color) 100%),
+    rgba(0, 0, 0, .86);
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
