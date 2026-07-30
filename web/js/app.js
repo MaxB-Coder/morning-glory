@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.3.0";
+export const APP_VERSION = "1.3.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -72,9 +72,6 @@ async function main() {
   // Every navigation goes through safeRoute, not route: previously only the
   // FIRST render was wrapped, so a later failure left a blank screen with the
   // error only in a console you can't open on a phone.
-  // split legacy "Name - Roaster" names before the first render
-  try { await db.migrateRoaster(); } catch (e) { console.warn("[migrate]", e); }
-
   window.addEventListener("hashchange", safeRoute);
   showApp();
   await safeRoute();

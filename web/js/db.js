@@ -98,44 +98,6 @@ export async function allCoffeesIncludingArchived() {
   return all.filter((c) => !c.deleted);
 }
 
-// One-time migration. Before roaster was its own field the convention was to
-// type "Songbird - Kin" into the name box (that was literally the placeholder),
-// so split on the LAST " - " and move the tail into roaster. Only touches
-// records where roaster has never been set; everything else gets roaster:null
-// so it is never reconsidered. Marked dirty, so the split syncs to the other
-// device rather than each phone splitting its own copy differently.
-export async function migrateRoaster() {
-  const os = await store("coffee", "readwrite");
-  const all = await p(os.getAll());
-  const recs = [];
-  for (const c of all) {
-    if (c.roaster !== undefined) continue;
-    const [name, roaster] = splitNameRoaster(c.name);
-    c.name = name; c.roaster = roaster;
-    c.updatedAt = now(); c.dirty = 1;
-    recs.push(c);
-  }
-  // Collect first, write second: issuing put() after awaiting a previous put
-  // can land outside the transaction's active window, which throws
-  // TransactionInactiveError and aborts the whole migration silently.
-  for (const c of recs) await p(os.put(c));
-  return recs.length;
-}
-
-// Accepts every separator that shows up in real bag names: hyphen, en dash,
-// em dash, slash, and "by". Requires surrounding spaces so hyphenated names
-// ("Kii AA-2", "Yirgacheffe-Kochere") are left intact. Splits on the LAST
-// separator, since the coffee name is likelier to contain one than the roaster.
-export function splitNameRoaster(raw) {
-  const full = String(raw || "").trim();
-  const m = [...full.matchAll(/\s+(?:[-\u2010-\u2015\u2212/|]|by)\s+/gi)].pop();
-  if (!m) return [full, null];
-  const name = full.slice(0, m.index).trim();
-  const roaster = full.slice(m.index + m[0].length).trim();
-  if (!name || !roaster) return [full, null];
-  return [name, roaster.slice(0, 80)];
-}
-
 // --- brew ------------------------------------------------------------------
 export async function addBrew(b) {
   const rec = {
