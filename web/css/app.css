@@ -9,7 +9,7 @@
   --star-h: 1.9rem;
   /* approximate height of the top bar's own content (padding + text), used to
      size the photo viewer's top fade so it mirrors the bottom one */
-  --header-h: 2.8rem;
+  --header-h: 3.4rem;   /* grew with the larger wordmark */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* App-shell layout: header and bottom nav are flex children that never move;
@@ -48,10 +48,7 @@ body {
 /* iOS: keep the header clear of the notch / Dynamic Island. Requires
    viewport-fit=cover in the meta tag (already set). */
 .app-header {
-  /* Centred, not space-between: the status badges used to sit on the right and
-     balance the title. With them moved to Settings the title was left alone
-     against a wide empty bar. */
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: flex-start;
   padding: .6rem 1rem;
   padding-top: calc(.6rem + env(safe-area-inset-top, 0px));
   padding-left: calc(1rem + env(safe-area-inset-left, 0px));
@@ -61,6 +58,11 @@ body {
   flex: none;              /* never shrinks, never scrolls away */
   z-index: 10;
 }
+/* The wordmark outranks the page titles below it. Those are plain <h2> with no
+   size set anywhere, so they render at the UA default 1.5em — 1.7rem clears
+   that without turning the bar into a billboard. */
+.app-header strong { font-size: 1.7rem; line-height: 1.15; }
+
 .badge {
   font-size: .7rem; padding: .15rem .5rem; border-radius: 1rem;
   background: var(--pico-muted-border-color);
