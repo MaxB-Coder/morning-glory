@@ -407,9 +407,13 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 .photo-stack { position: relative; flex: none; line-height: 0; }
 .photo-stack .star-btn {
   position: absolute;
-  top: calc(100% + .3rem);      /* sits below the photo, with breathing room */
+  /* `top` is the distance from the photo's bottom edge to the star's CENTRE
+     (thanks to the -50% Y shift), so this number is directly meaningful: the
+     subtitle line's centre sits ~1.6rem below the photo, given the default
+     ~1em paragraph margin above it. Nudge this one value to move the star. */
+  top: calc(100% + 1.6rem);
   left: 50%;
-  transform: translateX(-50%);  /* centres on the photo's vertical axis */
+  transform: translate(-50%, -50%);   /* centred on the photo's vertical axis */
 }
-/* keep the centring when pressed (transform would otherwise be replaced) */
-.photo-stack .star-btn:active { transform: translateX(-50%) scale(.92); }
+/* keep both offsets when pressed — a bare scale() would replace them */
+.photo-stack .star-btn:active { transform: translate(-50%, -50%) scale(.92); }
