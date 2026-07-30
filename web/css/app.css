@@ -592,3 +592,16 @@ td.truncate .roaster { font-size: .78em; }
   min-width: 0; text-align: right; color: var(--pico-muted-color);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* Hold-and-drag reordering. The lifted card keeps its own transform for the
+   finger offset, so scale is applied to the shadow/opacity only — stacking a
+   scale() here would fight the inline translateY() set in JS. */
+.coffee-card { touch-action: pan-y; }
+.coffee-card.dragging {
+  position: relative; z-index: 30;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28);
+  opacity: .96;
+  cursor: grabbing;
+}
+/* neighbours slide rather than jump as the dragged card passes them */
+.coffee-card:not(.dragging) { transition: transform .14s ease; }

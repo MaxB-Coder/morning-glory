@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.8";
+export const APP_VERSION = "1.5.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -48,6 +48,35 @@ function applyFilters(list) {
     && (!FILTERS.roast.length || FILTERS.roast.includes(c.roast))
     && (!FILTERS.process.length || FILTERS.process.includes(c.process))
     && (!FILTERS.roaster.length || FILTERS.roaster.includes(c.roaster || "")));
+}
+
+// --- manual card order ------------------------------------------------------
+// Deliberately localStorage, NOT the synced record: this is a per-device view
+// preference. Syncing it would mean two people silently reshuffling each
+// other's list, and it would need a conflict rule for a purely cosmetic value.
+const ORDER_KEY = "mg.coffeeOrder";
+
+function loadOrder() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ORDER_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+  } catch { return []; }
+}
+function saveOrder(ids) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); }
+  catch (e) { console.warn("[order]", e); }
+}
+// Ids not in the saved order (a coffee added since, or one synced from the
+// other person's phone) keep their natural position at the end rather than
+// jumping to the top.
+function sortByOrder(list) {
+  const order = loadOrder();
+  const rank = new Map(order.map((id, i) => [id, i]));
+  return [...list].sort((a, b) => {
+    const ra = rank.has(a.id) ? rank.get(a.id) : Infinity;
+    const rb = rank.has(b.id) ? rank.get(b.id) : Infinity;
+    return ra === rb ? 0 : ra - rb;
+  });
 }
 
 // Icons are inline SVG, not text glyphs. ★ and › sit at different heights
@@ -119,7 +148,9 @@ async function main() {
       // state appears immediately instead of after a manual navigation.
       if (document.getElementById("sync-panel")) renderSyncPanel();
     },
-    onData: () => safeRoute(),
+    // A sync arriving mid-drag would re-render the list out from under the
+    // finger. Nothing is lost by waiting — the next navigation renders it.
+    onData: () => { if (!document.querySelector(".coffee-card.dragging")) safeRoute(); },
   }).catch((e) => console.warn("[sync]", e));
 }
 
@@ -219,7 +250,7 @@ async function renderSetup() {
 
 // --- home -------------------------------------------------------------------
 async function renderHome() {
-  const all = await db.allCoffees();
+  const all = sortByOrder(await db.allCoffees());
   const coffees = applyFilters(all);
 
   const cards = coffees.map((c) => `
@@ -260,7 +291,11 @@ async function renderHome() {
   const first = view.querySelector("#add-first");
   if (first) first.addEventListener("click", () => (location.hash = "#/coffee/new"));
   view.querySelectorAll(".coffee-card").forEach((c) =>
-    c.addEventListener("click", () => (location.hash = `#/coffee/${c.dataset.id}`)));
+    c.addEventListener("click", () => {
+      if (justDragged) return;            // the drag's own click, not a tap
+      location.hash = `#/coffee/${c.dataset.id}`;
+    }));
+  enableReorder(view.querySelector(".coffee-card")?.parentElement, all.length);
   addFab("#/coffee/new", "+");
   if (all.length) addFilterFab(all);
 }
@@ -1154,6 +1189,117 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
 }
+// --- hold-and-drag reordering ----------------------------------------------
+// Pointer Events so one code path covers touch and mouse. The order is saved to
+// localStorage on drop (see sortByOrder above).
+//
+// Two things make this awkward on a phone and are handled explicitly:
+//  1) A press that becomes a scroll must NOT become a drag — hence the movement
+//     threshold that cancels the long-press timer.
+//  2) Once dragging, the browser would still scroll the page under the finger,
+//     so touchmove is cancelled while a drag is live. That listener has to be
+//     non-passive or preventDefault() is ignored.
+let justDragged = false;
+
+function enableReorder(container, totalCount) {
+  if (!container) return;
+
+  const cards = [...container.querySelectorAll(".coffee-card")];
+  // Reordering a filtered view would only describe the visible subset, so the
+  // saved order would be wrong for everything hidden. Require the full list.
+  if (cards.length < 2 || cards.length !== totalCount) return;
+
+  const HOLD_MS = 350;      // long enough not to fire on a tap
+  const MOVE_CANCEL = 8;    // px of movement that means "this is a scroll"
+
+  let timer = null, dragging = null, startY = 0, offset = 0, pointerId = null;
+
+  const blockScroll = (e) => { if (dragging) e.preventDefault(); };
+  container.addEventListener("touchmove", blockScroll, { passive: false });
+
+  const cleanup = () => {
+    clearTimeout(timer); timer = null;
+    if (dragging) {
+      dragging.classList.remove("dragging");
+      dragging.style.transform = "";
+      dragging = null;
+    }
+    pointerId = null;
+  };
+
+  const start = (card, e) => {
+    dragging = card;
+    startY = e.clientY;
+    offset = 0;
+    card.classList.add("dragging");
+    card.setPointerCapture?.(pointerId);
+    if (navigator.vibrate) navigator.vibrate(15);   // "you have it" feedback
+  };
+
+  const move = (e) => {
+    if (!dragging) return;
+    offset = e.clientY - startY;
+    dragging.style.transform = `translateY(${offset}px)`;
+
+    const rect = dragging.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+
+    // Swap with whichever neighbour's midpoint the dragged card has passed.
+    // After moving it in the DOM the element jumps, so startY is rebased by the
+    // exact jump — otherwise the card snaps away from the finger.
+    const others = [...container.querySelectorAll(".coffee-card")].filter((c) => c !== dragging);
+    for (const other of others) {
+      const r = other.getBoundingClientRect();
+      const otherMid = r.top + r.height / 2;
+      const before = rect.top < r.top;
+      if ((before && mid > otherMid) || (!before && mid < otherMid)) {
+        const prevTop = dragging.getBoundingClientRect().top;
+        container.insertBefore(dragging, before ? other.nextSibling : other);
+        const newTop = dragging.getBoundingClientRect().top;
+        startY += newTop - prevTop;
+        offset = e.clientY - startY;
+        dragging.style.transform = `translateY(${offset}px)`;
+        break;
+      }
+    }
+  };
+
+  const end = () => {
+    const wasDragging = !!dragging;
+    if (wasDragging) {
+      saveOrder([...container.querySelectorAll(".coffee-card")].map((c) => c.dataset.id));
+      // swallow the click this pointer sequence is about to fire
+      justDragged = true;
+      setTimeout(() => { justDragged = false; }, 0);
+    }
+    cleanup();
+  };
+
+  cards.forEach((card) => {
+    card.addEventListener("pointerdown", (e) => {
+      if (e.button != null && e.button !== 0) return;
+      pointerId = e.pointerId;
+      const downY = e.clientY, downX = e.clientX;
+      timer = setTimeout(() => start(card, { clientY: downY }), HOLD_MS);
+
+      const preDragMove = (ev) => {
+        if (dragging) return;
+        if (Math.abs(ev.clientY - downY) > MOVE_CANCEL
+            || Math.abs(ev.clientX - downX) > MOVE_CANCEL) {
+          clearTimeout(timer); timer = null;
+          card.removeEventListener("pointermove", preDragMove);
+        }
+      };
+      card.addEventListener("pointermove", preDragMove);
+      card.addEventListener("pointerup", () => card.removeEventListener("pointermove", preDragMove), { once: true });
+    });
+
+    card.addEventListener("pointermove", move);
+    card.addEventListener("pointerup", end);
+    card.addEventListener("pointercancel", cleanup);
+  });
+}
+
 // Single FAB, replaced in place. (Previously each render appended another one,
 // so a sync-triggered re-render stacked duplicate + buttons on top of each other.)
 function addFab(hash, label) {
