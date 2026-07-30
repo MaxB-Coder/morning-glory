@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.1.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -392,20 +392,21 @@ async function renderCoffee(id) {
 
   view.replaceChildren(el(`
     <div>
-      <div class="title-row back-row">
-        <a href="#/" class="back">← All coffees</a>
-        <button type="button" id="star-toggle" class="star-btn"
-                aria-pressed="${c.starred ? "true" : "false"}"
-                title="${c.starred ? "Starred" : "Star this coffee"}"
-          >${c.starred ? STAR_FILLED : STAR_OUTLINE}</button>
-      </div>
+      <p><a href="#/" class="back">← All coffees</a></p>
       <div class="title-row">
         <h2>${esc(c.name)}</h2>
-        ${safePhoto(c.photo)
-          ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
-               <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
-             </button>`
-          : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
+        <!-- photo and star stacked, centres on the same vertical axis -->
+        <div class="photo-stack">
+          ${safePhoto(c.photo)
+            ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
+                 <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
+               </button>`
+            : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
+          <button type="button" id="star-toggle" class="star-btn"
+                  aria-pressed="${c.starred ? "true" : "false"}"
+                  title="${c.starred ? "Starred" : "Star this coffee"}"
+            >${c.starred ? STAR_FILLED : STAR_OUTLINE}</button>
+        </div>
       </div>
       <p><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
 
