@@ -43,6 +43,8 @@ service cloud.firestore {
         && d.get('visibility', 'shared') in ['shared', 'private']
         && d.get('starred', 0) is number
         && d.updatedAt is number
+        && (d.get('roaster', null) == null
+            || (d.get('roaster', null) is string && d.get('roaster', null).size() <= 80))
         && (d.get('origin', null) == null
             || (d.get('origin', null) is string && d.get('origin', null).size() <= 80))
         && (d.get('variety', null) == null

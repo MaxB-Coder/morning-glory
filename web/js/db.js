@@ -72,6 +72,7 @@ export async function addCoffee(c) {
     // under the owner's own user document and never leaves their devices.
     visibility: c.visibility === "private" ? "private" : "shared",
     starred: c.starred ? 1 : 0,
+    roaster: c.roaster || null,
     updatedAt: now(), dirty: 1, deleted: false,
   };
   await p((await store("coffee", "readwrite")).add(rec));
@@ -95,6 +96,34 @@ export async function allCoffees() {
 export async function allCoffeesIncludingArchived() {
   const all = await p((await store("coffee")).getAll());
   return all.filter((c) => !c.deleted);
+}
+
+// One-time migration. Before roaster was its own field the convention was to
+// type "Songbird - Kin" into the name box (that was literally the placeholder),
+// so split on the LAST " - " and move the tail into roaster. Only touches
+// records where roaster has never been set; everything else gets roaster:null
+// so it is never reconsidered. Marked dirty, so the split syncs to the other
+// device rather than each phone splitting its own copy differently.
+export async function migrateRoaster() {
+  const os = await store("coffee", "readwrite");
+  const all = await p(os.getAll());
+  let changed = 0;
+  for (const c of all) {
+    if (c.roaster !== undefined) continue;
+    const i = String(c.name || "").lastIndexOf(" - ");
+    if (i > 0) {
+      const roaster = c.name.slice(i + 3).trim();
+      const name = c.name.slice(0, i).trim();
+      if (name && roaster) { c.name = name; c.roaster = roaster.slice(0, 80); }
+      else c.roaster = null;
+    } else {
+      c.roaster = null;
+    }
+    c.updatedAt = now(); c.dirty = 1;
+    await p(os.put(c));
+    changed++;
+  }
+  return changed;
 }
 
 // --- brew ------------------------------------------------------------------
@@ -198,6 +227,7 @@ function cleanCoffee(raw) {
     roast: oneOf(raw.roast, ROASTS, "medium"),
     process: oneOf(raw.process, PROCESSES, "washed"),
     roastDate: /^\d{4}-\d{2}-\d{2}/.test(String(raw.roastDate || "")) ? String(raw.roastDate).slice(0, 10) : null,
+    roaster: str(raw.roaster, 80),
     origin: str(raw.origin, 80),
     variety: str(raw.variety, 80),
     altitudeMasl: num(raw.altitudeMasl),

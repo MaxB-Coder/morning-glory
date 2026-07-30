@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.29";
+export const APP_VERSION = "1.2.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -72,6 +72,9 @@ async function main() {
   // Every navigation goes through safeRoute, not route: previously only the
   // FIRST render was wrapped, so a later failure left a blank screen with the
   // error only in a console you can't open on a phone.
+  // split legacy "Name - Roaster" names before the first render
+  try { await db.migrateRoaster(); } catch (e) { console.warn("[migrate]", e); }
+
   window.addEventListener("hashchange", safeRoute);
   showApp();
   await safeRoute();
@@ -202,6 +205,7 @@ async function renderHome() {
           <div class="card-body">
             <strong>${esc(c.name)}</strong>${c.visibility === "private"
               ? ' <span class="priv-tag">private</span>' : ""}<br>
+            ${c.roaster ? `<small class="roaster">${esc(c.roaster)}</small><br>` : ""}
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
           ${c.starred ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
@@ -260,7 +264,8 @@ function renderCoffeeForm() {
       </div>
 
       <form id="coffee-form">
-        <label>Name <input name="name" required placeholder="Name - Roaster"></label>
+        <label>Name <input name="name" required placeholder="e.g. Songbird"></label>
+        <label>Roaster <input name="roaster" placeholder="e.g. Kin"></label>
         <div class="grid">
           <label>Roast
             <select name="roast"><option>light</option><option selected>medium</option><option>dark</option></select>
@@ -326,7 +331,8 @@ function renderCoffeeForm() {
     e.preventDefault();
     const f = new FormData(e.target);
     const c = await db.addCoffee({
-      name: f.get("name"), roast: f.get("roast"), process: f.get("process"),
+      name: f.get("name"), roaster: f.get("roaster") || null,
+      roast: f.get("roast"), process: f.get("process"),
       roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
       variety: f.get("variety") || null,
       altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
@@ -412,6 +418,7 @@ async function renderCoffee(id) {
              </button>`
           : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
+      ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
       <p class="subtitle-row">
         <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
         <button type="button" id="star-toggle" class="star-btn"
@@ -614,6 +621,7 @@ function openBrewDetail(b, coffee, grinder) {
   const rows = [
     ["Date", new Date(b.createdAt).toLocaleString()],
     ["Coffee", coffee.name],
+    ["Roaster", coffee.roaster || null],
     ["Method", METHOD_LABEL[b.method]],
     ["Grind", `${b.grindSetting} (of ${grinder.min}–${grinder.max})`],
     ["Result", verdictLabel(b.verdict)],
@@ -691,6 +699,7 @@ async function renderBrew(coffeeId, method) {
              </button>`
           : `<span class="thumb-spacer"></span>`}
       </div>
+      ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
       <p class="subtitle-row">
         <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
         <span class="star-spacer"></span>
@@ -855,7 +864,9 @@ async function renderHistory() {
   const rows = brews.map((b) =>
     `<tr class="brew-row" data-id="${b.id}">
        <td class="nowrap">${fmtDate(b.createdAt)}</td>
-       <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}</td>
+       <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}${
+         coffees[String(b.coffeeId)]?.roaster
+           ? `<br><small class="roaster">${esc(coffees[String(b.coffeeId)].roaster)}</small>` : ""}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
        <td class="nowrap">${Number(b.grindSetting)}</td>
        <td class="nowrap">${verdictIcon(b.verdict)}</td>
@@ -1025,8 +1036,7 @@ async function renderSyncPanel() {
       <span>Invite code</span>
       <strong class="invite-code">${esc(code || "—")}</strong>
     </div>
-    <p><small>Share this with the person you want to sync with — they sign in
-    and tap Join.</small></p>
+    <p class="invite-hint"><small>Share this code. They sign in and tap Join.</small></p>
     <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
   panel.querySelector("#signout").addEventListener("click", async (ev) => {
     ev.preventDefault(); await sync.signOutUser(); renderSettings();

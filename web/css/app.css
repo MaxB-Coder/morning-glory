@@ -480,3 +480,14 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   margin-top: calc((var(--sub-line) - var(--star-h)) / 2);
 }
 .star-spacer { display: block; }             /* keeps the brew page identical */
+
+/* roaster sits under the coffee name, in the same muted style as the
+   roast · process · origin line */
+.roaster { color: var(--pico-muted-color); }
+.roaster-line { margin: .15rem 0 0; }
+.card-body .roaster { line-height: 1.35; }
+/* history table: coffee name + roaster stack, so the cell can be two lines */
+td.truncate .roaster { font-size: .78em; }
+/* invite hint: short line, and if it does wrap, split it evenly rather than
+   leaving one orphan word (and never break mid-dash at the line end) */
+.invite-hint { margin-top: .35rem; text-wrap: balance; }
