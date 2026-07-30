@@ -33,6 +33,19 @@ _SYNTH_CACHE = None
 
 REAL_WEIGHT_GOOD = 5.0
 REAL_WEIGHT_ADJUSTED = 3.5   # under / over samples
+
+# How far each verdict moves the grind, as a multiple of the base adjustment.
+# "gusher" (ran straight through) and "choked" (stalled) are unambiguous
+# mechanical failures rather than taste calls, so they warrant a much bigger
+# correction than a shot that was merely a bit sour or bitter.
+#   negative = grind finer, positive = grind coarser
+VERDICT_STEPS = {
+    "gusher": -2.5,   # far too coarse
+    "under":  -1.0,   # slightly too coarse (sour / weak)
+    "good":    0.0,
+    "over":   +1.0,   # slightly too fine (bitter / harsh)
+    "choked": +2.5,   # far too fine
+}
 SYNTH_FULL_UNTIL = 40.0      # real-brew count at which synthetic fades to floor
 SYNTH_FLOOR = 0.15
 # Shrinkage for the per-coffee offset: n/(n+k). k=3 meant a single brew only
@@ -112,14 +125,9 @@ def _build_training_set(grinder, coffee, real_brews_all, method_of_request):
             err = abs(float(b["shotTimeS"]) - ESPRESSO_TARGET_TIME) / ESPRESSO_TARGET_TIME
             d = delta * max(0.5, min(2.0, err))
 
-        if verdict == "good":
-            y_t, wt = y_used, REAL_WEIGHT_GOOD
-        elif verdict == "under":            # sour/weak -> grind finer -> lower y
-            y_t, wt = max(0.0, y_used - d), REAL_WEIGHT_ADJUSTED
-        elif verdict == "over":             # bitter/harsh -> coarser -> higher y
-            y_t, wt = min(1.0, y_used + d), REAL_WEIGHT_ADJUSTED
-        else:
-            y_t, wt = y_used, REAL_WEIGHT_GOOD
+        step_mult = VERDICT_STEPS.get(verdict, 0.0)
+        y_t = max(0.0, min(1.0, y_used + step_mult * d))
+        wt = REAL_WEIGHT_GOOD if step_mult == 0.0 else REAL_WEIGHT_ADJUSTED
 
         X.append(x)
         y.append(y_t)
@@ -140,12 +148,10 @@ def _per_coffee_bias(beta, grinder, coffee_brews):
         c = b["_coffee"]
         x = F.encode(c, b["method"], brew=b)
         y_used = F.normalize_setting(b["grindSetting"], grinder)
-        v = b.get("verdict", "good")
-        y_t = y_used
-        if v == "under":
-            y_t = max(0.0, y_used - delta)
-        elif v == "over":
-            y_t = min(1.0, y_used + delta)
+        # same verdict->direction table as the training set, so a gusher or a
+        # choke moves this coffee's offset as hard as it moves the model
+        step_mult = VERDICT_STEPS.get(b.get("verdict", "good"), 0.0)
+        y_t = max(0.0, min(1.0, y_used + step_mult * delta))
         resid.append(y_t - ridge.predict(beta, x))
     n = len(resid)
     return (sum(resid) / n) * (n / (n + BIAS_SHRINK_K))
@@ -175,6 +181,46 @@ def _calibration_shift(beta, grinder, coffee, has_logs_for_method):
     predicted = ridge.predict(beta, x_ref)
     target = F.normalize_setting(cal_setting, grinder)
     return target - predicted
+
+
+def _local_dial_in(last, grinder, method, n_cm, n_m):
+    """Step from the user's own last setting for this coffee+method.
+
+    Once a coffee has been brewed on a method, this — not the model — decides
+    the recommendation. Dialling in is a feedback loop: keep what was good, go
+    finer when it was sour, coarser when it was bitter, and move further for an
+    outright gusher or choke. The model owns only the cold start, so it can
+    never talk you off a setting you have personally verified, and the
+    synthetic prior can't drag a well-dialled bag back to its generic guess.
+    """
+    used = float(last["grindSetting"])
+    verdict = last.get("verdict", "good")
+
+    step = float(grinder["step"]) or 0.5
+    adjust = 2.0 * step
+    # a wildly fast/slow shot warrants a bigger correction than a near miss
+    if method == "espresso" and last.get("shotTimeS"):
+        err = abs(float(last["shotTimeS"]) - ESPRESSO_TARGET_TIME) / ESPRESSO_TARGET_TIME
+        adjust *= max(0.5, min(2.0, err * 3.0))
+
+    target = used + VERDICT_STEPS.get(verdict, 0.0) * adjust
+    nudges = {
+        "gusher": f"{used} ran through → going much finer",
+        "under":  f"{used} was sour → going finer",
+        "good":   f"{used} was good last time — sticking with it",
+        "over":   f"{used} was bitter → going coarser",
+        "choked": f"{used} choked → going much coarser",
+    }
+    setting = F.round_to_step(
+        F.denormalize_setting(
+            max(0.0, min(1.0, F.normalize_setting(target, grinder))), grinder),
+        grinder)
+    return {
+        "setting": float(setting),
+        "confidence": _confidence(n_cm, n_m),
+        "explanation": [],
+        "nudge": nudges.get(verdict, nudges["good"]),
+    }
 
 
 def _confidence(n_coffee_method, n_method):
@@ -233,10 +279,26 @@ def recommend(payload: dict) -> dict:
         b["_coffee"] = c
         brews.append(b)
 
+    coffee_brews = [b for b in brews if b["coffeeId"] == str(coffee["id"])]
+    same = sorted(
+        [b for b in coffee_brews if b["method"] == method],
+        key=lambda b: b.get("createdAt", ""),
+    )
+    n_cm = len(same)
+    n_m = sum(1 for b in brews if b["method"] == method)
+
+    # FAST PATH: if this coffee already has history on this method, the answer
+    # is a step from the last setting (see the local dial-in block below) and
+    # the model isn't consulted at all. Return before building the training set
+    # so we don't solve a ~500-row least-squares problem and discard it — this
+    # is the common case once a bag is in use, and it's the slowest thing the
+    # engine does inside WebAssembly.
+    if same:
+        return _local_dial_in(same[-1], grinder, method, n_cm, n_m)
+
     X, y, w = _build_training_set(grinder, coffee, brews, method)
     beta = ridge.fit(X, y, w)
 
-    coffee_brews = [b for b in brews if b["coffeeId"] == str(coffee["id"])]
     bias = _per_coffee_bias(beta, grinder, coffee_brews)
 
     has_logs_for_method = any(b["method"] == method for b in coffee_brews)
@@ -255,59 +317,8 @@ def recommend(payload: dict) -> dict:
     y_hat = max(0.0, min(1.0, y_hat))
     setting = F.round_to_step(F.denormalize_setting(y_hat, grinder), grinder)
 
-    n_cm = sum(1 for b in coffee_brews if b["method"] == method)
-    n_m = sum(1 for b in brews if b["method"] == method)
     confidence = _confidence(n_cm, n_m)
-
-    # last-brew nudge for this coffee+method
     nudge = None
-    same = sorted(
-        [b for b in coffee_brews if b["method"] == method],
-        key=lambda b: b.get("createdAt", ""),
-    )
-    if same:
-        # ---- LOCAL DIAL-IN ----------------------------------------------
-        # Once this coffee has been brewed on this method, the useful answer
-        # is a step from YOUR last setting, not a global model guess. That is
-        # how dialling in actually works: keep what was good, go finer when it
-        # was sour, coarser when it was bitter.
-        #
-        # The model still owns the cold start (new bag or new method), and
-        # still learns from every brew — but it must not talk you off a
-        # setting you have personally verified. Anchoring locally also stops
-        # the synthetic prior dragging a well-dialled coffee back toward its
-        # generic starting point.
-        last = same[-1]
-        used = float(last["grindSetting"])
-        verdict = last.get("verdict", "good")
-
-        step = float(grinder["step"]) or 0.5
-        adjust = 2.0 * step
-        # a wildly fast/slow shot means a bigger correction than a near miss
-        if method == "espresso" and last.get("shotTimeS"):
-            err = abs(float(last["shotTimeS"]) - ESPRESSO_TARGET_TIME) / ESPRESSO_TARGET_TIME
-            adjust = adjust * max(0.5, min(2.0, err * 3.0))
-
-        if verdict == "under":          # sour -> under-extracted -> finer
-            target = used - adjust
-            nudge = f"{used} was sour → going finer"
-        elif verdict == "over":         # bitter -> over-extracted -> coarser
-            target = used + adjust
-            nudge = f"{used} was bitter → going coarser"
-        else:
-            target = used
-            nudge = f"{used} was good last time — sticking with it"
-
-        setting = F.round_to_step(
-            F.denormalize_setting(
-                max(0.0, min(1.0, F.normalize_setting(target, grinder))), grinder),
-            grinder)
-        return {
-            "setting": float(setting),
-            "confidence": _confidence(n_cm, n_m),
-            "explanation": [],
-            "nudge": nudge,
-        }
 
     return {
         "setting": float(setting),

@@ -121,6 +121,22 @@ def test_last_verdict_steps_the_right_way():
     assert after("good") == used      # good  -> stay
 
 
+def test_extreme_verdicts_move_further_and_the_right_way():
+    """A gusher (ran straight through) means far too coarse -> much finer.
+    A choke means far too fine -> much coarser. Both must move more than the
+    milder sour/bitter verdicts."""
+    c = [_coffee()]
+    used = 8.5
+    def after(verdict):
+        return rec(c, [{"coffeeId": 1, "method": "espresso", "grindSetting": used,
+                        "verdict": verdict, "createdAt": "2026-07-25"}], 1, "espresso")["setting"]
+    gusher, under = after("gusher"), after("under")
+    over, choked = after("over"), after("choked")
+    assert gusher < under < used < over < choked          # correct ordering
+    assert (used - gusher) > (used - under)               # gusher moves further
+    assert (choked - used) > (over - used)                # choke moves further
+
+
 def test_dial_in_converges_and_then_holds():
     """Walk a realistic session: two bitter shots, then good — and it must
     stop moving once you're there."""

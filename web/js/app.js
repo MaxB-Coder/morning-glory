@@ -17,14 +17,26 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "v28";
+export const APP_VERSION = "v29";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
 const bootStatus = document.getElementById("boot-status");
 
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Escapes single quotes and backticks too. Every attribute in this file is
+// double-quoted, so `"` alone was technically enough — but one future
+// single-quoted attribute would have turned that into an injection point.
+const esc = (s) => String(s ?? "").replace(/[&<>"'`=]/g, (c) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
+  "'": "&#39;", "`": "&#96;", "=": "&#61;",
+}[c]));
+
+// A photo is only ever a base64 JPEG/PNG data URL produced by resizeImage().
+// Anything else — a tampered backup file, a hostile value synced from another
+// account — must never reach an <img src>, where `" onerror="…` would execute.
+const SAFE_IMAGE = /^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/;
+const safePhoto = (p) => (typeof p === "string" && SAFE_IMAGE.test(p) ? p : null);
 
 // --- boot -------------------------------------------------------------------
 function showApp() {
@@ -39,15 +51,12 @@ async function main() {
 
   // Reveal the UI immediately. Coffee registration / setup work without the
   // engine; only the recommendation number needs Pyodide. Don't block on it.
-  window.addEventListener("hashchange", route);
-  try {
-    showApp();
-    await route();
-  } catch (e) {
-    console.error("[route]", e);
-    view.innerHTML = `<article><strong>Something broke rendering the screen.</strong>
-      <p><small>${esc(e.message || e)}</small></p></article>`;
-  }
+  // Every navigation goes through safeRoute, not route: previously only the
+  // FIRST render was wrapped, so a later failure left a blank screen with the
+  // error only in a console you can't open on a phone.
+  window.addEventListener("hashchange", safeRoute);
+  showApp();
+  await safeRoute();
 
   // Warm the engine in the background; update the badge when done.
   initEngine((s) => { badge.textContent = "engine: " + s.toLowerCase(); })
@@ -66,7 +75,7 @@ async function main() {
       // state appears immediately instead of after a manual navigation.
       if (document.getElementById("sync-panel")) renderSyncPanel();
     },
-    onData: () => route(),
+    onData: () => safeRoute(),
   }).catch((e) => console.warn("[sync]", e));
 }
 
@@ -82,6 +91,22 @@ function renderSyncBadge(st) {
 }
 
 // --- router -----------------------------------------------------------------
+async function safeRoute() {
+  try {
+    await route();
+  } catch (e) {
+    console.error("[route]", e);
+    view.replaceChildren(el(`
+      <article>
+        <strong>Something went wrong on this screen.</strong>
+        <p><small>${esc(e.message || e)}</small></p>
+        <button id="err-home">Back to your coffees</button>
+      </article>`));
+    const b = view.querySelector("#err-home");
+    if (b) b.addEventListener("click", () => { location.hash = "#/"; });
+  }
+}
+
 async function route() {
   const hash = location.hash || "#/";
   const [path, query] = hash.slice(1).split("?");
@@ -153,7 +178,7 @@ async function renderHome() {
   const list = coffees.length
     ? coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
-          ${c.photo ? `<img class="card-thumb" src="${c.photo}" alt="">` : ""}
+          ${safePhoto(c.photo) ? `<img class="card-thumb" src="${safePhoto(c.photo)}" alt="">` : ""}
           <div class="card-body">
             <strong>${esc(c.name)}</strong>${c.visibility === "private"
               ? ' <span class="priv-tag">private</span>' : ""}<br>
@@ -191,7 +216,7 @@ function renderCoffeeForm() {
       </div>
 
       <form id="coffee-form">
-        <label>Name <input name="name" required placeholder="Roaster — Origin"></label>
+        <label>Name <input name="name" required placeholder="Name - Roaster"></label>
         <div class="grid">
           <label>Roast
             <select name="roast"><option>light</option><option selected>medium</option><option>dark</option></select>
@@ -272,8 +297,19 @@ function renderCoffeeForm() {
 
 // Downscale + JPEG-compress a chosen image so it stays small enough for
 // IndexedDB and for a Firestore document (well under the 1 MB doc limit).
+// A Firestore document is capped at ~1 MB, and the photo shares that document
+// with the rest of the coffee. Anything approaching the cap fails to sync at
+// all, so re-encode at lower quality until it comfortably fits.
+const PHOTO_BUDGET_BYTES = 350 * 1024;
+
 function resizeImage(file, maxSide = 700, quality = 0.65) {
   return new Promise((resolve, reject) => {
+    if (!file.type || !file.type.startsWith("image/")) {
+      reject(new Error("not an image")); return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      reject(new Error("image too large")); return;
+    }
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);
     reader.onload = () => {
@@ -281,12 +317,19 @@ function resizeImage(file, maxSide = 700, quality = 0.65) {
       image.onerror = () => reject(new Error("bad image"));
       image.onload = () => {
         const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-        const w = Math.round(image.width * scale);
-        const h = Math.round(image.height * scale);
+        const w = Math.max(1, Math.round(image.width * scale));
+        const h = Math.max(1, Math.round(image.height * scale));
         const canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         canvas.getContext("2d").drawImage(image, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+
+        let q = quality;
+        let out = canvas.toDataURL("image/jpeg", q);
+        while (out.length > PHOTO_BUDGET_BYTES && q > 0.3) {
+          q -= 0.1;
+          out = canvas.toDataURL("image/jpeg", q);
+        }
+        resolve(out);
       };
       image.src = reader.result;
     };
@@ -307,7 +350,7 @@ async function renderCoffee(id) {
     `<tr class="brew-row" data-id="${b.id}">
        <td class="nowrap">${fmtDate(b.createdAt)}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
-       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${Number(b.grindSetting)}</td>
        <td class="nowrap">${verdictIcon(b.verdict)}</td>
        <td class="nowrap"><button class="link-btn del-brew" data-id="${b.id}" title="Delete this brew">✕</button></td>
      </tr>`
@@ -318,9 +361,9 @@ async function renderCoffee(id) {
       <p><a href="#/" class="back">← All coffees</a></p>
       <div class="title-row">
         <h2>${esc(c.name)}</h2>
-        ${c.photo
+        ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
-               <img src="${c.photo}" alt="${esc(c.name)}">
+               <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
              </button>`
           : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
@@ -362,7 +405,7 @@ async function renderCoffee(id) {
       ev.stopPropagation();     // don't also open the detail popup
       if (!confirm("Delete this brew? It will stop influencing recommendations.")) return;
       await db.softDelete("brew", btn.dataset.id);
-      route();
+      safeRoute();
     }));
 
   // Tap a row to see everything that was logged for that brew.
@@ -381,7 +424,7 @@ async function renderCoffee(id) {
     try {
       await sync.setCoffeeVisibility(c.id, goingPrivate ? "private" : "shared");
       toast(goingPrivate ? "Now private" : "Now shared");
-      route();
+      safeRoute();
     } catch (e) {
       console.error("[visibility]", e);
       alert("Couldn't change visibility: " + (e.message || e));
@@ -440,7 +483,8 @@ function dialInChart(brews) {
                  stroke-width="1.6" stroke-linejoin="round" opacity=".85"/>`;
     }
     list.forEach((b) => {
-      const fill = { good: "#2e7d32", under: "#ef6c00", over: "#b71c1c" }[b.verdict] || colour;
+      const fill = { good: "#2e7d32", under: "#ef6c00", over: "#b71c1c",
+                     gusher: "#f9a825", choked: "#6a1b9a" }[b.verdict] || colour;
       dots += `<circle cx="${x(idx.get(b.id)).toFixed(1)}" cy="${y(b.grindSetting).toFixed(1)}"
                 r="3.4" fill="${fill}" stroke="${colour}" stroke-width="1"/>`;
     });
@@ -479,7 +523,7 @@ function pickPhoto(coffee) {
       const photo = await resizeImage(file, 700, 0.65);
       await db.updateCoffee({ ...coffee, photo });
       toast("Photo saved");
-      route();
+      safeRoute();
     } catch (err) {
       console.error("[photo]", err);
       toast("Couldn't read that image");
@@ -524,7 +568,7 @@ function openPhotoLightbox(coffee) {
   const overlay = el(`
     <div class="lightbox" id="lightbox">
       <div class="lightbox-inner">
-        <img src="${coffee.photo}" alt="${esc(coffee.name)}">
+        <img src="${safePhoto(coffee.photo) || ""}" alt="${esc(coffee.name)}">
         <div class="lightbox-actions">
           <button type="button" id="lb-replace">Replace photo</button>
           <button type="button" id="lb-remove" class="danger-link">Remove photo</button>
@@ -547,7 +591,7 @@ function openPhotoLightbox(coffee) {
   overlay.querySelector("#lb-remove").addEventListener("click", async () => {
     if (!confirm("Remove this photo?")) return;
     await db.updateCoffee({ ...coffee, photo: null });
-    close(); toast("Photo removed"); route();
+    close(); toast("Photo removed"); safeRoute();
   });
 }
 
@@ -566,9 +610,9 @@ async function renderBrew(coffeeId, method) {
       <p><a href="#/coffee/${c.id}" class="back">← All coffees</a></p>
       <div class="title-row">
         <h2>${esc(c.name)}</h2>
-        ${c.photo
+        ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
-               <img src="${c.photo}" alt="${esc(c.name)}">
+               <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
              </button>`
           : `<span class="thumb-spacer"></span>`}
       </div>
@@ -603,6 +647,13 @@ async function renderBrew(coffeeId, method) {
           <button class="v-good" data-v="good">🟢<br>Good</button>
           <button class="v-over" data-v="over">🔴<br>Bitter / harsh</button>
         </div>
+        ${method === "espresso" ? `
+        <div class="verdict-row extremes">
+          <button class="v-gusher" data-v="gusher">💨<br>Ran through</button>
+          <button class="v-choked" data-v="choked">🧱<br>Choked</button>
+        </div>
+        <p class="explain" style="text-align:center">Use these when the shot
+        clearly gushed or stalled — they move the grind further.</p>` : ""}
         <p class="scale-hint"><span>← grind finer</span><span>grind coarser →</span></p>
       </section>
     </div>`));
@@ -657,7 +708,7 @@ async function renderBrew(coffeeId, method) {
         <button id="retry-engine" class="secondary">Retry engine</button>
       </details>`;
     const rb = recEl.querySelector("#retry-engine");
-    if (rb) rb.addEventListener("click", () => route());
+    if (rb) rb.addEventListener("click", () => safeRoute());
   }
 
   view.querySelectorAll(".verdict-row button").forEach((btn) =>
@@ -727,7 +778,7 @@ async function renderHistory() {
        <td class="nowrap">${fmtDate(b.createdAt)}</td>
        <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
-       <td class="nowrap">${b.grindSetting}</td>
+       <td class="nowrap">${Number(b.grindSetting)}</td>
        <td class="nowrap">${verdictIcon(b.verdict)}</td>
      </tr>`
   ).join("");
@@ -789,10 +840,19 @@ async function renderSettings() {
   });
   view.querySelector("#import").addEventListener("change", async (e) => {
     const file = e.target.files[0]; if (!file) return;
-    const data = JSON.parse(await file.text());
-    await db.importAll(data);
-    alert("Backup imported.");
-    location.hash = "#/";
+    try {
+      if (file.size > 25 * 1024 * 1024) throw new Error("file too large");
+      const data = JSON.parse(await file.text());
+      const r = await db.importAll(data);
+      alert(`Imported ${r.coffees} coffee(s) and ${r.brews} brew(s).` +
+            (r.skipped > 0 ? `\n${r.skipped} unreadable record(s) were skipped.` : ""));
+      location.hash = "#/";
+    } catch (err) {
+      console.error("[import]", err);
+      alert("Couldn't import that file: " + (err.message || err));
+    } finally {
+      e.target.value = "";   // let the same file be re-picked after a failure
+    }
   });
 
   const fu = view.querySelector("#force-update");
@@ -921,9 +981,11 @@ async function checkForUpdate() {
 
 
 // --- helpers ----------------------------------------------------------------
-function verdictLabel(v) { return { good: "🟢 Good", under: "🟠 Sour", over: "🔴 Bitter" }[v] || v; }
+function verdictLabel(v) { return { gusher: "💨 Ran through", under: "🟠 Sour",
+  good: "🟢 Good", over: "🔴 Bitter", choked: "🧱 Choked" }[v] || v; }
 // icon-only for narrow table columns
-function verdictIcon(v) { return { good: "🟢", under: "🟠", over: "🔴" }[v] || v; }
+function verdictIcon(v) { return { gusher: "💨", under: "🟠", good: "🟢",
+  over: "🔴", choked: "🧱" }[v] || v; }
 
 // dd/mm/yy — compact and unambiguous for a UK-style reader
 function fmtDate(iso) {

@@ -167,13 +167,118 @@ export async function exportAll() {
     brews: await p((await store("brew")).getAll()),
   };
 }
+// --- import validation ------------------------------------------------------
+// A backup file is UNTRUSTED input: it can be hand-edited, corrupted, or come
+// from someone else. Previously whatever it contained went straight into
+// IndexedDB and from there into the DOM. Everything is now whitelisted by
+// field, coerced to the right type, and anything unexpected is dropped.
+
+const METHODS = ["espresso", "moka", "aeropress", "v60", "chemex", "frenchpress", "coldbrew"];
+const ROASTS = ["light", "medium", "dark"];
+const PROCESSES = ["washed", "honey", "natural"];
+const VERDICTS = ["good", "under", "over", "gusher", "choked"];
+const IMG_RE = /^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/;
+
+const str = (v, max = 200) =>
+  typeof v === "string" ? v.slice(0, max) : (v == null ? null : String(v).slice(0, max));
+const num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
+
+function cleanCoffee(raw) {
+  if (!raw || typeof raw !== "object" || raw.id == null) return null;
+  const name = str(raw.name, 120);
+  if (!name) return null;
+  return {
+    id: String(raw.id).slice(0, 64),
+    name,
+    roast: oneOf(raw.roast, ROASTS, "medium"),
+    process: oneOf(raw.process, PROCESSES, "washed"),
+    roastDate: /^\d{4}-\d{2}-\d{2}/.test(String(raw.roastDate || "")) ? String(raw.roastDate).slice(0, 10) : null,
+    origin: str(raw.origin, 80),
+    variety: str(raw.variety, 80),
+    altitudeMasl: num(raw.altitudeMasl),
+    decaf: raw.decaf ? 1 : 0,
+    notes: str(raw.notes, 2000),
+    photo: typeof raw.photo === "string" && IMG_RE.test(raw.photo) ? raw.photo : null,
+    visibility: raw.visibility === "private" ? "private" : "shared",
+    archived: raw.archived ? 1 : 0,
+    createdAt: str(raw.createdAt, 40) || new Date().toISOString(),
+    updatedAt: num(raw.updatedAt) || now(),
+    deleted: !!raw.deleted,
+    dirty: 1,
+  };
+}
+
+function cleanBrew(raw) {
+  if (!raw || typeof raw !== "object" || raw.id == null || raw.coffeeId == null) return null;
+  const grind = num(raw.grindSetting);
+  if (grind == null) return null;
+  const out = {
+    id: String(raw.id).slice(0, 64),
+    coffeeId: String(raw.coffeeId).slice(0, 64),
+    method: oneOf(raw.method, METHODS, "espresso"),
+    grindSetting: grind,
+    verdict: oneOf(raw.verdict, VERDICTS, "good"),
+    createdAt: str(raw.createdAt, 40) || new Date().toISOString(),
+    updatedAt: num(raw.updatedAt) || now(),
+    deleted: !!raw.deleted,
+    dirty: 1,
+  };
+  for (const k of ["doseG", "yieldG", "shotTimeS", "brewTimeS", "waterTempC"]) {
+    const v = num(raw[k]);
+    if (v != null) out[k] = v;
+  }
+  return out;
+}
+
+function cleanGrinder(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const min = num(raw.min), max = num(raw.max), step = num(raw.step);
+  if (min == null || max == null || max <= min) return null;
+  let calibration = null;
+  if (raw.calibration && METHODS.includes(raw.calibration.method)) {
+    const s = num(raw.calibration.setting);
+    if (s != null) calibration = { method: raw.calibration.method, setting: s };
+  }
+  return {
+    id: "grinder",
+    name: str(raw.name, 80) || "Grinder",
+    min, max, step: step && step > 0 ? step : 0.5,
+    calibration,
+    updatedAt: num(raw.updatedAt) || now(),
+    deleted: false, dirty: 1,
+  };
+}
+
 export async function importAll(data) {
-  const db = await open();
-  const t = db.transaction(["grinder", "coffee", "brew"], "readwrite");
-  if (data.grinder) t.objectStore("grinder").put({ ...data.grinder, id: "grinder" });
-  (data.coffees || []).forEach((c) => t.objectStore("coffee").put({ ...c, id: String(c.id) }));
-  (data.brews || []).forEach((b) => t.objectStore("brew").put({ ...b, id: String(b.id) }));
-  return new Promise((resolve, reject) => {
+  if (!data || typeof data !== "object") throw new Error("not a backup file");
+
+  const grinder = cleanGrinder(data.grinder);
+  const coffees = (Array.isArray(data.coffees) ? data.coffees : []).map(cleanCoffee).filter(Boolean);
+  const brews = (Array.isArray(data.brews) ? data.brews : []).map(cleanBrew).filter(Boolean);
+
+  // drop brews whose coffee isn't in the file — they'd be unreachable orphans
+  const ids = new Set(coffees.map((c) => c.id));
+  const usable = brews.filter((b) => ids.has(b.coffeeId));
+
+  if (!grinder && !coffees.length) throw new Error("nothing importable in that file");
+
+  const dbi = await open();
+  const t = dbi.transaction(["grinder", "coffee", "brew"], "readwrite");
+  if (grinder) t.objectStore("grinder").put(grinder);
+  coffees.forEach((c) => t.objectStore("coffee").put(c));
+  usable.forEach((b) => t.objectStore("brew").put(b));
+
+  await new Promise((resolve, reject) => {
     t.oncomplete = resolve; t.onerror = () => reject(t.error);
   });
+  return {
+    coffees: coffees.length,
+    brews: usable.length,
+    skipped: (data.coffees?.length || 0) - coffees.length
+           + (data.brews?.length || 0) - usable.length,
+  };
 }
