@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.8";
+export const APP_VERSION = "1.5.9";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1180,8 +1180,11 @@ function initHolo(node) {
     // rather than snapping to every reading
     curX += (targetX - curX) * 0.07;
     curY += (targetY - curY) * 0.07;
-    node.style.setProperty("--holo-x", `${50 + curX * 35}%`);
-    node.style.setProperty("--holo-y", `${50 + curY * 35}%`);
+    // Both axes drive both layers. Y is inverted so tipping the top of the
+    // phone away pushes the hotspot up the text, the way a real reflection of
+    // a fixed light behaves.
+    node.style.setProperty("--holo-x", `${50 + curX * 55}%`);
+    node.style.setProperty("--holo-y", `${50 - curY * 55}%`);
   };
 
   const attach = () => {
