@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.19";
+export const APP_VERSION = "1.1.20";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -547,8 +547,12 @@ function dialInChart(brews) {
       // No stroke: the method-coloured ring fought with the fill and made the
       // dots hard to read. Fills are tuned to the emoji used in the Result
       // column so the chart and the table read as the same language.
-      dots += `<circle cx="${x(idx.get(b.id)).toFixed(1)}" cy="${y(b.grindSetting).toFixed(1)}"
-                r="3.6" fill="${VERDICT_DOT[b.verdict] || colour}"/>`;
+      const cx = x(idx.get(b.id)), cy = y(b.grindSetting);
+      dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}"
+                r="3.6" fill="${VERDICT_DOT[b.verdict] || colour}"/>` +
+              // specular highlight, mimicking the gloss on the emoji dots
+              `<circle cx="${(cx - 1.15).toFixed(1)}" cy="${(cy - 1.25).toFixed(1)}"
+                r="1.05" fill="#fff" opacity=".5"/>`;
     });
     legend += `<span class="legend-item"><i style="background:${colour}"></i>${METHOD_LABEL[method]}</span>`;
   });
