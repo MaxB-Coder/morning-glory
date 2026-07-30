@@ -428,19 +428,23 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   font-size: 1.3rem; letter-spacing: .18em; font-weight: 800;
   --holo-x: 50%;
   --holo-y: 50%;
-  /* Many thin white slivers, each separated by a SATURATED mid-tone rather
-     than a near-black. The dark valleys did give contrast, but at this size
-     they read as black gaps chopping the letters up. Deep-but-coloured keeps
-     the same white-to-valley luminance step while every part of the glyph
-     stays a colour. Frequency matters as much as contrast: with only a couple
-     of broad bands the foil can slide a long way before anything changes. */
+  /* Irregular white slivers over saturated mid-tones. Real foil doesn't glint
+     on a metronome: the stops are deliberately unevenly spaced and of varying
+     width and intensity (some pure #fff and hard-edged, some a soft off-white),
+     with the occasional twin glint close together. Evenly spaced identical
+     bands read as a printed stripe pattern sliding past, which is exactly what
+     it looked like. No near-blacks — the valleys are deep COLOURS, so the
+     luminance step survives without black gaps chopping up the letters. */
   --holo-foil: linear-gradient(115deg,
-    #c9822f 0%,   #ffffff 4%,   #ffd98a 7%,   #e07a2f 13%,
-    #17a89a 19%,  #ffffff 23%,  #bff6ff 26%,  #1d7fb8 32%,
-    #3fa9f5 38%,  #ffffff 42%,  #d8ecff 45%,  #5b53c9 51%,
-    #b07cff 57%,  #ffffff 61%,  #ffe0fb 64%,  #c2439a 70%,
-    #ff7ec4 76%,  #ffffff 80%,  #ffe6b0 83%,  #d1732c 89%,
-    #e0a04a 94%,  #ffffff 97%,  #c9822f 100%);
+    #c9822f 0%,    #ffffff 2.6%,  #ffe7b4 4.2%,  #e07a2f 8%,
+    #f3f9ff 10.4%, #17a89a 14%,   #ffffff 15.2%, #7fe8dd 16.4%,
+    #1d7fb8 22%,   #eaf6ff 24.1%, #3fa9f5 27%,   #ffffff 28%,
+    #6f8fe8 33%,   #5b53c9 38.5%, #f2ecff 41.8%, #b07cff 45%,
+    #ffffff 46.2%, #d9b8ff 48%,   #c2439a 54%,   #ffd9ef 57.3%,
+    #ff7ec4 61%,   #ffffff 62%,   #ffb3a0 66%,   #d1732c 71%,
+    #fff3dc 74.6%, #e0a04a 78%,   #ffffff 79%,   #ffcf7a 81%,
+    #b8641f 86%,   #fdf6ea 90.2%, #d99b48 93%,   #ffffff 94.1%,
+    #c9822f 100%);
   background-image: var(--holo-foil);
   background-size: 300% 300%;
   background-position: var(--holo-x) var(--holo-y);

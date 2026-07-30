@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.13";
+export const APP_VERSION = "1.5.14";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1216,25 +1216,31 @@ function initHolo(node) {
 
   if (reduced) return;
 
-  // iOS 13+ only delivers orientation after an explicit grant, and only from a
-  // user gesture — so it is requested on tap, not on render.
+  // iOS 13+ will not hand over orientation without an explicit grant, and will
+  // only prompt from inside a user gesture. That requirement is Apple's and
+  // can't be worked around — but it doesn't have to be a tap on the code
+  // itself. Listening on the whole document means the grant rides on whatever
+  // you touch next (scrolling the page, opening a panel), so by the time you
+  // look at the code it is usually already live.
   if (typeof D.requestPermission === "function" && !holoGranted) {
     node.title = "Tap to tilt";
     node.classList.add("holo-tappable");
-    // NOT idle() here. Running the fallback shimmer while waiting for the tap
-    // meant the foil crawled around on a phone sitting perfectly still, which
-    // is the opposite of the point. Static until it can actually track tilt;
-    // the shimmer is only for devices that have no sensor at all.
-    node.addEventListener("click", async () => {
+
+    const ask = async () => {
       try {
         const res = await D.requestPermission();
         if (res === "granted") { holoGranted = true; attach(); }
-        else toast("Motion access denied");
+        else { toast("Motion access denied"); idle(); }
       } catch (e) {
+        // Thrown when the call didn't originate from a gesture Safari accepts.
+        // Not fatal: the next gesture gets another go.
         console.warn("[holo]", e);
-        toast("Motion unavailable on this device");
+        document.addEventListener("pointerdown", ask, { once: true });
       }
-    });
+    };
+
+    document.addEventListener("pointerdown", ask, { once: true });
+    holoDetach = () => document.removeEventListener("pointerdown", ask);
   } else {
     attach();
   }
