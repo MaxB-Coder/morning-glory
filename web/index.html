@@ -20,17 +20,19 @@
   -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' https://www.gstatic.com 'wasm-unsafe-eval' 'unsafe-eval';
+    script-src 'self' https://www.gstatic.com https://apis.google.com 'wasm-unsafe-eval' 'unsafe-eval';
     style-src 'self' 'unsafe-inline';
     img-src 'self' data:;
     font-src 'self';
-    connect-src 'self' https://*.googleapis.com https://www.gstatic.com wss://*.firebaseio.com;
-    frame-src https://morningglory89.firebaseapp.com https://accounts.google.com;
+    connect-src 'self' https://*.googleapis.com https://www.gstatic.com https://apis.google.com
+                https://securetoken.googleapis.com wss://*.firebaseio.com;
+    frame-src https://morningglory89.firebaseapp.com https://accounts.google.com
+              https://apis.google.com;
     worker-src 'self' blob:;
     manifest-src 'self';
     object-src 'none';
     base-uri 'self';
-    form-action 'self';
+    form-action 'self' https://morningglory89.firebaseapp.com https://accounts.google.com;
   " />
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
