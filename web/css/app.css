@@ -570,3 +570,15 @@ td.truncate .roaster { font-size: .78em; }
    grinder wasn't, so they rendered at different sizes; the size now lives here
    and the markup is identical. */
 .center-link a { font-size: .9rem; }
+
+/* Sharing panel header: title left, account + sync state right, one line.
+   min-width:0 + ellipsis so a long email shortens instead of wrapping the
+   title onto a second row. */
+.panel-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .75rem; margin-bottom: .5rem;
+}
+.panel-head .who {
+  min-width: 0; text-align: right; color: var(--pico-muted-color);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

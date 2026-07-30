@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.3";
+export const APP_VERSION = "1.4.4";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1042,8 +1042,10 @@ async function renderSyncPanel() {
   }
 
   if (!st.householdId) {
-    panel.innerHTML = `<strong>Sharing</strong>
-      <p><small>Signed in as ${esc(st.user.name || st.user.email)}.</small></p>
+    panel.innerHTML = `<div class="panel-head">
+        <strong>Sharing</strong>
+        <small class="who">${esc(st.user.name || st.user.email)}</small>
+      </div>
       <p><small>Create a household and share the code, or join one.</small></p>
       <button id="create">Create household</button>
       <div class="inline-row">
@@ -1074,8 +1076,10 @@ async function renderSyncPanel() {
   }
 
   const code = await sync.getInviteCode();
-  panel.innerHTML = `<strong>Sharing</strong>
-    <p><small>${esc(st.user.name || st.user.email)} · sync ${st.online ? "on" : "offline"}</small></p>
+  panel.innerHTML = `<div class="panel-head">
+      <strong>Sharing</strong>
+      <small class="who">${esc(st.user.name || st.user.email)} · sync ${st.online ? "on" : "offline"}</small>
+    </div>
     <div class="inline-row">
       <span>Invite code</span>
       <strong class="invite-code">${esc(code || "—")}</strong>
