@@ -564,4 +564,5 @@ td.truncate .roaster { font-size: .78em; }
 .filter-head h3 { margin: 0; }
 .filter-head .star-btn { min-width: 2.2rem; }
 
-.signout-row { text-align: center; }
+/* centred standalone links in Settings (Sign out, Edit grinder) */
+.center-link { text-align: center; }
