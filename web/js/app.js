@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.5";
+export const APP_VERSION = "1.1.6";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -593,6 +593,34 @@ function pickPhoto(coffee) {
   input.click();
 }
 
+// The exact colour of a full-screen overlay's backdrop. Kept in one place
+// because the OS chrome has to be told to match it (see darkenChrome).
+const OVERLAY_BG = "#121110";
+
+/**
+ * While a full-screen overlay is open, tell iOS to paint its reserved strip
+ * (below the viewport, where Safari's toolbar would live) in the overlay's
+ * colour instead of the app's.
+ *
+ * That strip is outside the document, so no element — not even a fixed,
+ * inset-0 overlay — can cover it. It's painted from theme-color / the canvas.
+ * In light mode the app colour is near-white, so opening a dark overlay left a
+ * bright bar under the nav. Swapping theme-color for the duration fixes it.
+ *
+ * Returns a function that restores the previous values.
+ */
+function darkenChrome() {
+  const metas = [...document.querySelectorAll('meta[name="theme-color"]')];
+  const previous = metas.map((m) => m.getAttribute("content"));
+  metas.forEach((m) => m.setAttribute("content", OVERLAY_BG));
+  document.documentElement.style.backgroundColor = OVERLAY_BG;
+
+  return () => {
+    metas.forEach((m, i) => m.setAttribute("content", previous[i]));
+    document.documentElement.style.backgroundColor = "";
+  };
+}
+
 // Everything that was recorded for one brew. Fields that weren't filled in are
 // omitted rather than shown blank.
 function openBrewDetail(b, coffee, grinder) {
@@ -621,7 +649,8 @@ function openBrewDetail(b, coffee, grinder) {
       </div>
     </div>`);
   document.body.appendChild(overlay);
-  overlay.addEventListener("click", () => overlay.remove());
+  const restoreChrome = darkenChrome();
+  overlay.addEventListener("click", () => { restoreChrome(); overlay.remove(); });
 }
 
 // Tap-to-enlarge overlay with Replace / Remove. Tapping the backdrop closes it.
@@ -638,8 +667,9 @@ function openPhotoLightbox(coffee) {
       </div>
     </div>`);
   document.body.appendChild(overlay);
+  const restoreChrome = darkenChrome();
 
-  const close = () => overlay.remove();
+  const close = () => { restoreChrome(); overlay.remove(); };
   // Tapping ANYWHERE closes — including the photo itself. Only the action
   // buttons swallow the tap, so they don't dismiss before they run.
   overlay.addEventListener("click", close);

@@ -262,7 +262,7 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
 .lightbox {
   position: fixed; inset: 0; z-index: 80; display: flex;
   align-items: center; justify-content: center; padding: 1.25rem;
-  background: rgba(0, 0, 0, .9);
+  background: #121110;   /* must match OVERLAY_BG in app.js */
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
 }
