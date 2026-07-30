@@ -2,6 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+
+  <!-- Content-Security-Policy.
+       Blocks the whole class of attack where injected markup runs script:
+       no inline script blocks, no inline event handlers (onerror=...), and
+       scripts only from this origin plus Google's SDK host.
+
+       Notes on the two loose-looking entries:
+       * 'wasm-unsafe-eval' — required to instantiate Pyodide's WebAssembly.
+       * 'unsafe-eval' — Pyodide's Emscripten glue builds functions at runtime.
+         It weakens protection against eval-based payloads, but injected HTML
+         and attributes are still inert, which is the realistic vector here.
+       * style 'unsafe-inline' — the app uses a handful of style="" attributes.
+
+       IF SIGN-IN OR THE ENGINE BREAKS: delete this single meta tag, redeploy,
+       and tell me which one failed — nothing else depends on it.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://www.gstatic.com 'wasm-unsafe-eval' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data:;
+    font-src 'self';
+    connect-src 'self' https://*.googleapis.com https://www.gstatic.com wss://*.firebaseio.com;
+    frame-src https://morningglory89.firebaseapp.com https://accounts.google.com;
+    worker-src 'self' blob:;
+    manifest-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  " />
+
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <!-- iOS standalone paints the strip BELOW the web viewport (where Safari's
        toolbar would be) using theme-color. It must match the bottom nav's
@@ -47,11 +78,6 @@
   </nav>
 
   <script type="module" src="./js/app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () =>
-        navigator.serviceWorker.register("./sw.js").catch(console.warn));
-    }
-  </script>
+  <script src="./js/sw-register.js"></script>
 </body>
 </html>

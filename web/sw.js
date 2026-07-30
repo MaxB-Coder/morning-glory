@@ -4,7 +4,7 @@
 // The core Pyodide files are precached on install. The numpy wheel and any
 // stdlib chunks Pyodide requests at runtime are cached on first use by the
 // runtime-cache fetch handler below, so a second launch works in airplane mode.
-const CACHE = "gw-1.0.1";
+const CACHE = "gw-1.1.0";
 const ASSETS = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const ASSETS = [
   "./js/app.js",
   "./js/db.js",
   "./js/bridge.js",
+  "./js/sw-register.js",
   "./js/sync.js",
   "./js/firebase-config.js",
   "./py/engine/__init__.py",
