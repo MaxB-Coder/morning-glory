@@ -413,8 +413,62 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 }
 /* the glyph's own box, nudged to optical centre */
 .fab span { display: block; transform: translateY(-.06em); }
+/* Holographic invite code — foil-card look rather than flat accent.
+   Two stacked layers, both using background-clip:text:
+     base   = rainbow foil, slowly drifting
+     ::after = a narrow white specular streak that sweeps across
+   The ::after repeats the text via attr(), so the streak is clipped to the
+   glyphs and not to the box. --holo-x/-y are set by the tilt handler; when the
+   device reports orientation the animations are switched off and the sheen is
+   driven by those variables instead. */
 .invite-code {
-  font-size: 1.25rem; letter-spacing: .18em; color: var(--gw-accent);
+  position: relative;
+  font-size: 1.25rem; letter-spacing: .18em; font-weight: 700;
+  --holo-x: 50%;
+  --holo-y: 50%;
+  background-image: linear-gradient(100deg,
+    #b26a2a 0%, #d8a13d 14%, #6fd2c0 28%, #4aa3e0 42%,
+    #a06fd0 56%, #e06fa8 70%, #d8a13d 86%, #b26a2a 100%);
+  background-size: 300% 100%;
+  background-position: var(--holo-x) 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: holo-drift 7s linear infinite;
+}
+.invite-code::after {
+  content: attr(data-code);
+  position: absolute; left: 0; top: 0;
+  background-image: linear-gradient(75deg,
+    transparent 42%, rgba(255,255,255,.9) 50%, transparent 58%);
+  background-size: 250% 100%;
+  background-position: var(--holo-x) var(--holo-y);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: holo-sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+/* tilt takes over: kill the timed drift so the two don't fight */
+.invite-code.holo-tilt,
+.invite-code.holo-tilt::after { animation: none; }
+/* still legible with motion turned off */
+.invite-code.holo-still,
+.invite-code.holo-still::after { animation: none; }
+.invite-code.holo-tappable { cursor: pointer; }
+
+@keyframes holo-drift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes holo-sheen {
+  0%, 100% { background-position: 140% 50%; }
+  50%      { background-position: -40% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invite-code, .invite-code::after { animation: none; }
 }
 
 /* small "private" marker on coffee cards */

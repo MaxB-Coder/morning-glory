@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.0";
+export const APP_VERSION = "1.5.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1124,6 +1124,63 @@ async function renderSyncPanel() {
   panel.querySelector("#signout").addEventListener("click", async (ev) => {
     ev.preventDefault(); await sync.signOutUser(); renderSettings();
   });
+  initHolo(panel.querySelector(".invite-code"));
+}
+
+// --- holographic invite code ------------------------------------------------
+// Idle state is a slow drifting foil gradient. If the device reports
+// orientation, the sheen tracks tilt instead — the panel re-renders often, so
+// the previous listener is always detached first rather than stacking up.
+let holoDetach = null;
+
+function initHolo(node) {
+  if (holoDetach) { holoDetach(); holoDetach = null; }
+  if (!node || !node.textContent.trim() || node.textContent.trim() === "—") return;
+
+  // the sheen layer is a ::after that re-renders the same text, so it needs the
+  // string in an attribute
+  node.dataset.code = node.textContent.trim();
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    node.classList.add("holo-still");
+    return;
+  }
+
+  const D = window.DeviceOrientationEvent;
+  if (!D) return;
+
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
+  const apply = (e) => {
+    if (e.gamma == null && e.beta == null) return;
+    // gamma: left/right tilt. beta: front/back, offset by 45° because a phone
+    // is usually held tipped back, not flat.
+    node.style.setProperty("--holo-x", `${50 + clamp((e.gamma || 0) / 40) * 60}%`);
+    node.style.setProperty("--holo-y", `${50 + clamp(((e.beta || 0) - 45) / 40) * 60}%`);
+    node.classList.add("holo-tilt");
+  };
+
+  const attach = () => {
+    window.addEventListener("deviceorientation", apply);
+    holoDetach = () => window.removeEventListener("deviceorientation", apply);
+  };
+
+  // iOS 13+ only delivers orientation after an explicit permission grant, and
+  // only from a user gesture — so it is requested on tap, not on render.
+  if (typeof D.requestPermission === "function") {
+    node.title = "Tap to tilt";
+    node.classList.add("holo-tappable");
+    node.addEventListener("click", async () => {
+      try {
+        if (await D.requestPermission() === "granted") {
+          attach();
+          node.classList.remove("holo-tappable");
+          node.removeAttribute("title");
+        }
+      } catch (e) { console.warn("[holo]", e); }
+    }, { once: true });
+  } else {
+    attach();
+  }
 }
 
 // Compare the running build against version.json on the server (fetched with
