@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.4";
+export const APP_VERSION = "1.5.5";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1128,11 +1128,22 @@ async function renderSyncPanel() {
 }
 
 // --- holographic invite code ------------------------------------------------
-// Tilt-driven only: the foil and the specular streak are positioned from
-// --holo-x / --holo-y and nothing moves unless the phone does. Raw
-// deviceorientation is noisy and fires faster than a frame, so readings are
-// smoothed and written once per rAF rather than on every event.
+// Tilt-driven: the foil and the specular streak are positioned from
+// --holo-x / --holo-y and nothing moves unless the phone does.
+//
+// Getting this working on iOS took three separate fixes, all of them non-obvious:
+//   * the grant is remembered in holoGranted. The Sharing panel re-renders on
+//     every sync tick, and each re-render used to reset the element to "needs a
+//     tap" — with a {once:true} listener that had already been spent, so it
+//     could never be re-armed.
+//   * the tap handler retries. A denied or failed request used to consume the
+//     only listener, leaving a permanently dead element and no way to tell.
+//   * a watchdog. Permission can be granted and still deliver nothing (iOS has
+//     a system-level Motion & Orientation switch, and desktop browsers have no
+//     sensor at all), so if no reading arrives the idle shimmer starts and the
+//     reason is reported instead of the code just sitting there looking broken.
 let holoDetach = null;
+let holoGranted = false;
 
 function initHolo(node) {
   if (holoDetach) { holoDetach(); holoDetach = null; }
@@ -1142,14 +1153,18 @@ function initHolo(node) {
   node.dataset.code = node.textContent.trim();
 
   const D = window.DeviceOrientationEvent;
-  if (!D || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const idle = () => { if (!reduced) node.classList.add("holo-idle"); };
+
+  if (!D) { idle(); return; }
 
   const clamp = (v) => Math.max(-1, Math.min(1, v));
   let targetX = 0, targetY = 0, curX = 0, curY = 0, raf = 0, live = false;
 
   const onOrient = (e) => {
     if (e.gamma == null && e.beta == null) return;
-    live = true;
+    if (!live) { live = true; node.classList.remove("holo-idle"); }
     // gamma: left/right tilt, the dominant axis for a foil sheen.
     // beta: front/back, offset by 45° because a phone is held tipped back.
     targetX = clamp((e.gamma || 0) / 35);
@@ -1159,7 +1174,7 @@ function initHolo(node) {
   const frame = () => {
     raf = requestAnimationFrame(frame);
     if (!live) return;
-    // exponential smoothing — enough to kill sensor jitter without feeling laggy
+    // exponential smoothing — kills sensor jitter without feeling laggy
     curX += (targetX - curX) * 0.18;
     curY += (targetY - curY) * 0.18;
     node.style.setProperty("--holo-x", `${50 + curX * 60}%`);
@@ -1167,28 +1182,38 @@ function initHolo(node) {
   };
 
   const attach = () => {
+    node.classList.remove("holo-tappable");
+    node.removeAttribute("title");
     window.addEventListener("deviceorientation", onOrient);
     raf = requestAnimationFrame(frame);
+    // no readings => no sensor, or iOS Settings › Safari › Motion & Orientation
+    // Access is off. Shimmer anyway rather than sitting there looking dead.
+    const watchdog = setTimeout(() => { if (!live) idle(); }, 1500);
     holoDetach = () => {
       window.removeEventListener("deviceorientation", onOrient);
       cancelAnimationFrame(raf);
+      clearTimeout(watchdog);
     };
   };
 
+  if (reduced) return;
+
   // iOS 13+ only delivers orientation after an explicit grant, and only from a
   // user gesture — so it is requested on tap, not on render.
-  if (typeof D.requestPermission === "function") {
+  if (typeof D.requestPermission === "function" && !holoGranted) {
     node.title = "Tap to tilt";
     node.classList.add("holo-tappable");
+    idle();
     node.addEventListener("click", async () => {
       try {
-        if (await D.requestPermission() === "granted") {
-          attach();
-          node.classList.remove("holo-tappable");
-          node.removeAttribute("title");
-        }
-      } catch (e) { console.warn("[holo]", e); }
-    }, { once: true });
+        const res = await D.requestPermission();
+        if (res === "granted") { holoGranted = true; attach(); }
+        else toast("Motion access denied");
+      } catch (e) {
+        console.warn("[holo]", e);
+        toast("Motion unavailable on this device");
+      }
+    });
   } else {
     attach();
   }
