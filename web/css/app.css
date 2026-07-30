@@ -264,22 +264,27 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    so the layout doesn't shift between the coffee page and the brew page */
 .thumb-spacer { display: block; width: 3rem; height: 3rem; flex: none; }
 
-/* Full-screen sheet for viewing a photo.
-   It uses the APP BACKGROUND rather than a dark scrim, and that's deliberate:
-   iOS reserves ~47pt below the viewport (where Safari's toolbar would sit) that
-   no element can paint into, and it only reads theme-color at launch — so a
-   dark scrim always left a visible band of app colour along the bottom edge.
-   Matching the app background makes that strip blend perfectly in both light
-   and dark mode, with no JS colour juggling. The photo and buttons carry the
-   focus instead of a dimmed backdrop. */
+/* Full-screen dim scrim for viewing a photo.
+   iOS reserves ~47pt below the viewport (where Safari's toolbar would sit).
+   Nothing can paint into it and it takes its colour from theme-color at LAUNCH,
+   so it is always the app's background — a flat dark scrim therefore left a
+   visible band along the bottom edge.
+   Fix: fade the scrim to fully transparent at the bottom. Where the scrim ends
+   it is showing the app's own colour, which is exactly what the strip below is,
+   so the two meet with no seam — and the dimming is preserved everywhere else.
+   Content gets extra bottom padding so it stays clear of the fade. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
   top: 0; left: 0; right: 0;
   bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   align-items: center; justify-content: center; padding: 1.25rem;
-  background: var(--pico-background-color);
+  background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, .86) 0,
+      rgba(0, 0, 0, .86) calc(100% - 5.5rem),
+      rgba(0, 0, 0, 0) 100%);
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 .lightbox-inner { max-width: 100%; text-align: center; }
 .lightbox-inner img {
@@ -296,7 +301,7 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   font-size: .85rem; padding: .55rem .9rem;
 }
 .lightbox-hint {
-  color: var(--pico-muted-color); font-size: .75rem; margin: 1rem 0 0;
+  color: rgba(255, 255, 255, .7); font-size: .75rem; margin: 1rem 0 0;
 }
 
 /* generic centring helper */
