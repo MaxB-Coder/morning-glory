@@ -455,8 +455,8 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 /* Fallback only: used when the device reports no orientation (desktop, or iOS
    with Motion & Orientation Access switched off) so the code still reads as
    foil rather than as flat dead text. Tilt readings remove this class. */
-.invite-code.holo-idle { animation: holo-drift 7s linear infinite; }
-.invite-code.holo-idle::after { animation: holo-sheen 4.5s ease-in-out infinite; }
+.invite-code.holo-idle { animation: holo-drift 16s linear infinite; }
+.invite-code.holo-idle::after { animation: holo-sheen 10s ease-in-out infinite; }
 @keyframes holo-drift {
   0%   { background-position: 0% 50%; }
   100% { background-position: 300% 50%; }

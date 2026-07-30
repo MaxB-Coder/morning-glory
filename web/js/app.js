@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.6";
+export const APP_VERSION = "1.5.7";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1167,18 +1167,21 @@ function initHolo(node) {
     if (!live) { live = true; node.classList.remove("holo-idle"); }
     // gamma: left/right tilt, the dominant axis for a foil sheen.
     // beta: front/back, offset by 45° because a phone is held tipped back.
-    targetX = clamp((e.gamma || 0) / 35);
-    targetY = clamp(((e.beta || 0) - 45) / 35);
+    // Wider divisor = less sheen travel per degree of tilt. A small wobble of
+    // the wrist used to sweep the whole gradient, which read as frantic.
+    targetX = clamp((e.gamma || 0) / 70);
+    targetY = clamp(((e.beta || 0) - 45) / 70);
   };
 
   const frame = () => {
     raf = requestAnimationFrame(frame);
     if (!live) return;
-    // exponential smoothing — kills sensor jitter without feeling laggy
-    curX += (targetX - curX) * 0.18;
-    curY += (targetY - curY) * 0.18;
-    node.style.setProperty("--holo-x", `${50 + curX * 60}%`);
-    node.style.setProperty("--holo-y", `${50 + curY * 60}%`);
+    // exponential smoothing — low factor so the sheen eases into position
+    // rather than snapping to every reading
+    curX += (targetX - curX) * 0.07;
+    curY += (targetY - curY) * 0.07;
+    node.style.setProperty("--holo-x", `${50 + curX * 35}%`);
+    node.style.setProperty("--holo-y", `${50 + curY * 35}%`);
   };
 
   const attach = () => {
