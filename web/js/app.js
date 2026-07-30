@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.14";
+export const APP_VERSION = "1.5.15";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -127,6 +127,9 @@ async function main() {
   // Every navigation goes through safeRoute, not route: previously only the
   // FIRST render was wrapped, so a later failure left a blank screen with the
   // error only in a console you can't open on a phone.
+  // Arm the motion prompt now, so the user's first touch anywhere grants it.
+  ensureMotionPermission();
+
   window.addEventListener("hashchange", safeRoute);
   showApp();
   await safeRoute();
@@ -1127,23 +1130,63 @@ async function renderSyncPanel() {
   initHolo(panel.querySelector(".invite-code"));
 }
 
+// --- motion permission ------------------------------------------------------
+// iOS 13+ refuses DeviceOrientation without an explicit grant, and only prompts
+// from inside a user gesture — calling it on load throws and shows nothing at
+// all. So this is armed during boot instead: the FIRST touch anywhere in the
+// app triggers the prompt, which normally happens long before you reach the
+// Sharing panel, and the answer is remembered so it is asked at most once.
+const MOTION_KEY = "mg.motionPermission";
+let motionPromise = null;
+
+function ensureMotionPermission() {
+  if (motionPromise) return motionPromise;
+
+  const D = window.DeviceOrientationEvent;
+  // Android/desktop: no gate at all, orientation just works (or doesn't exist,
+  // which the caller's watchdog handles).
+  if (!D || typeof D.requestPermission !== "function") {
+    motionPromise = Promise.resolve(true);
+    return motionPromise;
+  }
+
+  let remembered = null;
+  try { remembered = localStorage.getItem(MOTION_KEY); } catch {}
+  // Don't nag someone who already said no.
+  if (remembered === "denied") { motionPromise = Promise.resolve(false); return motionPromise; }
+
+  motionPromise = new Promise((resolve) => {
+    const ask = async () => {
+      try {
+        const res = await D.requestPermission();
+        const ok = res === "granted";
+        try { localStorage.setItem(MOTION_KEY, ok ? "granted" : "denied"); } catch {}
+        resolve(ok);
+      } catch (e) {
+        // Safari rejected the call as not gesture-initiated. Not fatal, and not
+        // worth remembering — re-arm and let the next touch try.
+        console.warn("[motion]", e);
+        document.addEventListener("pointerdown", ask, { once: true });
+      }
+    };
+    document.addEventListener("pointerdown", ask, { once: true });
+  });
+  return motionPromise;
+}
+
 // --- holographic invite code ------------------------------------------------
 // Tilt-driven: the foil and the specular streak are positioned from
 // --holo-x / --holo-y and nothing moves unless the phone does.
 //
-// Getting this working on iOS took three separate fixes, all of them non-obvious:
-//   * the grant is remembered in holoGranted. The Sharing panel re-renders on
-//     every sync tick, and each re-render used to reset the element to "needs a
-//     tap" — with a {once:true} listener that had already been spent, so it
-//     could never be re-armed.
-//   * the tap handler retries. A denied or failed request used to consume the
-//     only listener, leaving a permanently dead element and no way to tell.
+// The iOS permission gate lives in ensureMotionPermission() above, armed at
+// boot — this only has to deal with the sensor itself. Two things it still owns:
+//   * detaching the previous listener. The Sharing panel re-renders on every
+//     sync tick, and without this they stack up.
 //   * a watchdog. Permission can be granted and still deliver nothing (iOS has
-//     a system-level Motion & Orientation switch, and desktop browsers have no
-//     sensor at all), so if no reading arrives the idle shimmer starts and the
-//     reason is reported instead of the code just sitting there looking broken.
+//     a system-level Motion & Orientation switch, desktop has no sensor), so if
+//     no reading arrives the idle shimmer starts rather than the code sitting
+//     there looking broken.
 let holoDetach = null;
-let holoGranted = false;
 
 function initHolo(node) {
   if (holoDetach) { holoDetach(); holoDetach = null; }
@@ -1200,8 +1243,6 @@ function initHolo(node) {
   };
 
   const attach = () => {
-    node.classList.remove("holo-tappable");
-    node.removeAttribute("title");
     window.addEventListener("deviceorientation", onOrient);
     raf = requestAnimationFrame(frame);
     // no readings => no sensor, or iOS Settings › Safari › Motion & Orientation
@@ -1216,34 +1257,13 @@ function initHolo(node) {
 
   if (reduced) return;
 
-  // iOS 13+ will not hand over orientation without an explicit grant, and will
-  // only prompt from inside a user gesture. That requirement is Apple's and
-  // can't be worked around — but it doesn't have to be a tap on the code
-  // itself. Listening on the whole document means the grant rides on whatever
-  // you touch next (scrolling the page, opening a panel), so by the time you
-  // look at the code it is usually already live.
-  if (typeof D.requestPermission === "function" && !holoGranted) {
-    node.title = "Tap to tilt";
-    node.classList.add("holo-tappable");
-
-    const ask = async () => {
-      try {
-        const res = await D.requestPermission();
-        if (res === "granted") { holoGranted = true; attach(); }
-        else { toast("Motion access denied"); idle(); }
-      } catch (e) {
-        // Thrown when the call didn't originate from a gesture Safari accepts.
-        // Not fatal: the next gesture gets another go.
-        console.warn("[holo]", e);
-        document.addEventListener("pointerdown", ask, { once: true });
-      }
-    };
-
-    document.addEventListener("pointerdown", ask, { once: true });
-    holoDetach = () => document.removeEventListener("pointerdown", ask);
-  } else {
-    attach();
-  }
+  // The permission gate was armed at boot, so by now it is usually already
+  // settled — no tap on the code required.
+  ensureMotionPermission().then((ok) => {
+    if (!ok) { idle(); return; }
+    // guard against the panel having been re-rendered while we waited
+    if (node.isConnected) attach();
+  });
 }
 
 // Compare the running build against version.json on the server (fetched with

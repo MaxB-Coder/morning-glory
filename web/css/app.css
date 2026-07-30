@@ -487,7 +487,6 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
           drop-shadow(0 0 12px rgba(180,230,255,.45));
   pointer-events: none;
 }
-.invite-code.holo-tappable { cursor: pointer; }
 
 /* Fallback only: used when the device reports no orientation (desktop, or iOS
    with Motion & Orientation Access switched off) so the code still reads as
