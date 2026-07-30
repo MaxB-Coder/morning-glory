@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.21";
+export const APP_VERSION = "1.1.22";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -36,6 +36,20 @@ const starSvg = (filled) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="t
         fill="${filled ? "currentColor" : "none"}"
         stroke="currentColor" stroke-width="1.7"
         stroke-linejoin="round"/></svg>`;
+
+// Top-down mug (no handle): foam rim, cup wall, coffee surface, MG "poured"
+// into it. Colours are literal rather than currentColor so it reads as coffee.
+const logoSvg = (px = 24) => `<svg class="logo" width="${px}" height="${px}"
+     viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="12" cy="12" r="11.2" fill="#f3e3cf"/>
+  <circle cx="12" cy="12" r="10.2" fill="#3a2a1e"/>
+  <circle cx="12" cy="12" r="9.4" fill="#5e3e28"/>
+  <ellipse cx="12" cy="8.2" rx="6.2" ry="3.6" fill="#f3e3cf" opacity=".07"/>
+  <text x="12" y="12" text-anchor="middle" dominant-baseline="central"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="8.6" font-weight="700" fill="#f3e3cf"
+        opacity=".93">MG</text>
+</svg>`;
 
 const chevSvg = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
@@ -66,6 +80,12 @@ function showApp() {
 
 async function main() {
   const badge = document.getElementById("engine-badge");
+
+  // paint the logo into the header and the splash
+  const brandLogo = document.getElementById("brand-logo");
+  if (brandLogo) brandLogo.innerHTML = logoSvg(20);
+  const bootLogo = document.getElementById("boot-logo");
+  if (bootLogo) bootLogo.innerHTML = logoSvg(64);
 
   // Reveal the UI immediately. Coffee registration / setup work without the
   // engine; only the recommendation number needs Pyodide. Don't block on it.
@@ -572,9 +592,10 @@ function dialInChart(brews) {
     <svg class="dial-chart" viewBox="0 0 ${W} ${H}" role="img"
          aria-label="Grind setting over time">
       <defs>
-        <radialGradient id="dotGloss" cx="50%" cy="20%" r="60%">
-          <stop offset="0%"   stop-color="#fff" stop-opacity=".55"/>
-          <stop offset="55%"  stop-color="#fff" stop-opacity=".14"/>
+        <radialGradient id="dotGloss" cx="50%" cy="24%" r="78%">
+          <stop offset="0%"   stop-color="#fff" stop-opacity=".34"/>
+          <stop offset="38%"  stop-color="#fff" stop-opacity=".16"/>
+          <stop offset="70%"  stop-color="#fff" stop-opacity=".05"/>
           <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
         </radialGradient>
       </defs>${axis}${paths}${dots}</svg>
