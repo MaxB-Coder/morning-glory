@@ -9,7 +9,7 @@
   --star-h: 1.9rem;
   /* approximate height of the top bar's own content (padding + text), used to
      size the photo viewer's top fade so it mirrors the bottom one */
-  --header-h: 3.2rem;   /* grew with the larger wordmark */
+  --header-h: 2.8rem;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* App-shell layout: header and bottom nav are flex children that never move;
@@ -58,10 +58,13 @@ body {
   flex: none;              /* never shrinks, never scrolls away */
   z-index: 10;
 }
-/* Matches the page titles exactly. Those are plain <h2> with no size set in
-   either stylesheet, so they render at the UA default 1.5em — stated here as
-   1.5rem, which is the same thing while the root size is untouched. */
-.app-header strong { font-size: 1.5rem; line-height: 1.15; }
+/* Wordmark, deliberately smaller than the page titles below it.
+   The emoji is sized separately: at a shared font-size an emoji glyph fills
+   roughly the full em box while a capital letter only reaches ~0.7 of it, so
+   the cup always towered over the text. .8em brings its glyph height down to
+   about the cap height of the words, which is what makes them read as level. */
+.app-header strong { font-size: 1.15rem; line-height: 1.2; }
+.app-header .logo-mark { font-size: .8em; }
 
 .badge {
   font-size: .7rem; padding: .15rem .5rem; border-radius: 1rem;
