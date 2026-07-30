@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.4";
+export const APP_VERSION = "1.4.5";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -756,12 +756,12 @@ async function renderBrew(coffeeId, method) {
       </section>
 
       <section class="step">
-        <h3 class="step-title"><span class="step-num">2</span> Suggested grind</h3>
+        <h3 class="step-title"><span class="step-num">1</span> Suggested grind</h3>
         <div class="rec-wrap" id="rec"><progress></progress></div>
       </section>
 
       <section class="step">
-        <h3 class="step-title"><span class="step-num">3</span> What did you actually use?</h3>
+        <h3 class="step-title"><span class="step-num">2</span> What did you actually use?</h3>
         <label>Grind setting
           <input id="grind" type="number" step="${g.step}" min="${g.min}" max="${g.max}"
                  inputmode="decimal" value="">
@@ -771,7 +771,7 @@ async function renderBrew(coffeeId, method) {
       </section>
 
       <section class="step">
-        <h3 class="step-title"><span class="step-num">4</span> How did it taste?</h3>
+        <h3 class="step-title"><span class="step-num">3</span> How did it taste?</h3>
         <p><small>Tap one — this trains the recommendation.</small></p>
         ${method === "espresso" ? `
         <div class="verdict-row five">
