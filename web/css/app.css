@@ -264,19 +264,20 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    so the layout doesn't shift between the coffee page and the brew page */
 .thumb-spacer { display: block; width: 3rem; height: 3rem; flex: none; }
 
-/* tap-to-enlarge overlay.
-   NOT plain `inset: 0`. With viewport-fit=cover, iOS resolves a fixed element's
-   bottom edge to the SAFE-AREA boundary, so the overlay stopped ~34pt short of
-   the screen and the app (the nav strip) showed through underneath — a white
-   band in light mode, a slightly-lighter dark band in dark mode. Pulling the
-   bottom edge past the inset makes it cover the screen properly. Overshooting
-   is harmless: anything beyond the viewport is simply clipped. */
+/* Full-screen sheet for viewing a photo.
+   It uses the APP BACKGROUND rather than a dark scrim, and that's deliberate:
+   iOS reserves ~47pt below the viewport (where Safari's toolbar would sit) that
+   no element can paint into, and it only reads theme-color at launch — so a
+   dark scrim always left a visible band of app colour along the bottom edge.
+   Matching the app background makes that strip blend perfectly in both light
+   and dark mode, with no JS colour juggling. The photo and buttons carry the
+   focus instead of a dimmed backdrop. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
   top: 0; left: 0; right: 0;
   bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   align-items: center; justify-content: center; padding: 1.25rem;
-  background: #121110;   /* must match OVERLAY_BG in app.js */
+  background: var(--pico-background-color);
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
   padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
 }
@@ -295,7 +296,7 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
   font-size: .85rem; padding: .55rem .9rem;
 }
 .lightbox-hint {
-  color: rgba(255,255,255,.65); font-size: .75rem; margin: 1rem 0 0;
+  color: var(--pico-muted-color); font-size: .75rem; margin: 1rem 0 0;
 }
 
 /* generic centring helper */
@@ -358,6 +359,7 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 .brew-row:active { background: rgba(127,127,127,.12); }
 
 .sheet { background: var(--pico-background-color); padding: 1.1rem; border-radius: .8rem;
+         border: 1px solid var(--pico-muted-border-color);
          max-width: 22rem; width: 100%; }
 .detail-table { width: 100%; font-size: .85rem; }
 .detail-table th { text-align: left; color: var(--pico-muted-color); font-weight: 400;
