@@ -3,6 +3,10 @@
   /* One source of truth for the bottom bar height, so the floating + button
      can sit exactly above it instead of guessing an offset. */
   --nav-h: 3.4rem;
+  /* subtitle line height and star button height — the star's vertical offset is
+     derived from these two, so changing either keeps the alignment correct */
+  --sub-line: 1.28rem;
+  --star-h: 1.9rem;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* App-shell layout: header and bottom nav are flex children that never move;
@@ -443,15 +447,25 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
    from the photo — stayed put. Sitting in the subtitle row it is always
    vertically centred on that text, whatever the name does. */
 .subtitle-row {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: .75rem;
+  display: flex; justify-content: space-between; gap: .75rem;
+  /* top-aligned, NOT centred: centring lined the star up with the middle of the
+     whole text block, which reads low (a line's visual centre sits above its
+     box centre) and drifts further if the subtitle ever wraps. */
+  align-items: flex-start;
 }
-.subtitle-row small { min-width: 0; }        /* allow the text to shrink */
+.subtitle-row small {
+  min-width: 0;                      /* allow the text to shrink */
+  line-height: var(--sub-line);      /* fixed, so the offset below is exact */
+}
 /* 3rem wide matches the photo thumbnail, so the star's centre still lines up
-   with the photo's centre on the vertical axis. */
+   with the photo's centre on the vertical axis.
+   The negative margin pulls the star up by exactly half the difference between
+   its own height and one line of text — i.e. centred on the FIRST line, however
+   many lines the text runs to. */
 .subtitle-row .star-btn,
 .star-spacer {
   flex: none; width: 3rem; min-width: 3rem;
-  height: 1.9rem; min-height: 1.9rem;
+  height: var(--star-h); min-height: var(--star-h);
+  margin-top: calc((var(--sub-line) - var(--star-h)) / 2);
 }
 .star-spacer { display: block; }             /* keeps the brew page identical */
