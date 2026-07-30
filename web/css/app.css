@@ -428,17 +428,19 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   font-size: 1.3rem; letter-spacing: .18em; font-weight: 800;
   --holo-x: 50%;
   --holo-y: 50%;
-  /* Many thin white slivers separated by deep, dark valleys. Frequency is what
-     makes movement legible — with only a couple of broad bands the whole thing
-     can slide a long way before anything visibly changes. The darks matter as
-     much as the whites: contrast is what makes a sliver read as a glint. */
+  /* Many thin white slivers, each separated by a SATURATED mid-tone rather
+     than a near-black. The dark valleys did give contrast, but at this size
+     they read as black gaps chopping the letters up. Deep-but-coloured keeps
+     the same white-to-valley luminance step while every part of the glyph
+     stays a colour. Frequency matters as much as contrast: with only a couple
+     of broad bands the foil can slide a long way before anything changes. */
   --holo-foil: linear-gradient(115deg,
-    #2a1a10 0%,  #c9822f 5%,  #ffffff 8.5%,  #ffd98a 11%, #1d3a3f 17%,
-    #4fd6c0 23%, #ffffff 26.5%, #bff6ff 29%, #12283f 35%,
-    #3fa9f5 41%, #ffffff 44.5%, #d8ecff 47%, #241436 53%,
-    #b07cff 59%, #ffffff 62.5%, #ffe0fb 65%, #3a1030 71%,
-    #ff7ec4 77%, #ffffff 80.5%, #ffe6b0 83%, #2f1c0f 89%,
-    #e0a04a 95%, #ffffff 97.5%, #2a1a10 100%);
+    #c9822f 0%,   #ffffff 4%,   #ffd98a 7%,   #e07a2f 13%,
+    #17a89a 19%,  #ffffff 23%,  #bff6ff 26%,  #1d7fb8 32%,
+    #3fa9f5 38%,  #ffffff 42%,  #d8ecff 45%,  #5b53c9 51%,
+    #b07cff 57%,  #ffffff 61%,  #ffe0fb 64%,  #c2439a 70%,
+    #ff7ec4 76%,  #ffffff 80%,  #ffe6b0 83%,  #d1732c 89%,
+    #e0a04a 94%,  #ffffff 97%,  #c9822f 100%);
   background-image: var(--holo-foil);
   background-size: 300% 300%;
   background-position: var(--holo-x) var(--holo-y);

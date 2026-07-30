@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.12";
+export const APP_VERSION = "1.5.13";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1221,7 +1221,10 @@ function initHolo(node) {
   if (typeof D.requestPermission === "function" && !holoGranted) {
     node.title = "Tap to tilt";
     node.classList.add("holo-tappable");
-    idle();
+    // NOT idle() here. Running the fallback shimmer while waiting for the tap
+    // meant the foil crawled around on a phone sitting perfectly still, which
+    // is the opposite of the point. Static until it can actually track tilt;
+    // the shimmer is only for devices that have no sensor at all.
     node.addEventListener("click", async () => {
       try {
         const res = await D.requestPermission();
