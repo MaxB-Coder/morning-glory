@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.5";
+export const APP_VERSION = "1.5.6";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1289,8 +1289,10 @@ function toast(msg) {
 // transforms: the held card follows the finger, and the cards it has passed
 // slide out of the way by one card-height, which opens a visible gap showing
 // exactly where it will land. The DOM is reordered once, on drop.
-// (An earlier version moved the node on every crossing, which fought the
-// browser's own scroll handling and made the drop point impossible to read.)
+//
+// Positions are measured in the SCROLLER's coordinate space (offsetTop plus
+// scrollTop), not in viewport space. Viewport coordinates shift under you the
+// moment the list auto-scrolls, which made the card jump away from the finger.
 let justDragged = false;
 
 function enableReorder(container, totalCount) {
@@ -1301,11 +1303,19 @@ function enableReorder(container, totalCount) {
   // saved order would be wrong for everything hidden. Require the full list.
   if (cards.length < 2 || cards.length !== totalCount) return;
 
+  const scroller = container.closest("main") || document.scrollingElement;
+
   const HOLD_MS = 320;      // long enough not to fire on a tap
   const MOVE_CANCEL = 8;    // px of movement that means "this is a scroll"
+  const EDGE = 72;          // px from the edge where auto-scroll kicks in
+  const MAX_STEP = 14;      // px per frame at full tilt
 
   let timer = null, held = null, heldIndex = -1, startY = 0;
   let metrics = [], shift = 0, targetIndex = -1;
+  let minDy = 0, maxDy = 0, lastClientY = 0, scrollRaf = 0;
+
+  // pointer position in scroller space, so it stays valid while auto-scrolling
+  const py = (clientY) => clientY + scroller.scrollTop;
 
   // Block the page scrolling under the finger. Must be non-passive or
   // preventDefault() is ignored.
@@ -1313,18 +1323,25 @@ function enableReorder(container, totalCount) {
     { passive: false });
 
   const measure = () => {
-    metrics = cards.map((el) => {
-      const r = el.getBoundingClientRect();
-      return { el, top: r.top, height: r.height, mid: r.top + r.height / 2 };
-    });
-    // real gap between two cards, so the opened space matches the layout
+    metrics = cards.map((el) => ({
+      el, top: el.offsetTop, height: el.offsetHeight,
+      mid: el.offsetTop + el.offsetHeight / 2,
+    }));
     const gap = metrics.length > 1
       ? Math.max(0, metrics[1].top - (metrics[0].top + metrics[0].height))
       : 8;
     shift = metrics[heldIndex].height + gap;
+
+    // Travel limits: the held card may reach the first card's top edge and the
+    // last card's bottom edge, and no further. Without this it could be dragged
+    // up over the "Your coffees" heading and off the list entirely.
+    const last = metrics[metrics.length - 1];
+    minDy = metrics[0].top - metrics[heldIndex].top;
+    maxDy = (last.top + last.height) - (metrics[heldIndex].top + metrics[heldIndex].height);
   };
 
-  const paint = (dy) => {
+  const paint = (rawDy) => {
+    const dy = Math.max(minDy, Math.min(maxDy, rawDy));
     held.style.transform = `translateY(${dy}px) scale(1.03)`;
 
     const heldMid = metrics[heldIndex].mid + dy;
@@ -1341,22 +1358,41 @@ function enableReorder(container, totalCount) {
     targetIndex = heldIndex + moved;
   };
 
+  // Hold near the top or bottom edge and the list scrolls, so a card can be
+  // moved past the end of a screenful without letting go.
+  const autoScroll = () => {
+    scrollRaf = requestAnimationFrame(autoScroll);
+    if (!held) return;
+    const r = scroller.getBoundingClientRect();
+    let v = 0;
+    if (lastClientY < r.top + EDGE) v = -MAX_STEP * (r.top + EDGE - lastClientY) / EDGE;
+    else if (lastClientY > r.bottom - EDGE) v = MAX_STEP * (lastClientY - (r.bottom - EDGE)) / EDGE;
+    if (!v) return;
+    v = Math.max(-MAX_STEP, Math.min(MAX_STEP, v));
+    const before = scroller.scrollTop;
+    scroller.scrollTop += v;
+    if (scroller.scrollTop !== before) paint(py(lastClientY) - startY);
+  };
+
   const reset = () => {
     clearTimeout(timer); timer = null;
+    cancelAnimationFrame(scrollRaf); scrollRaf = 0;
     cards.forEach((c) => { c.style.transform = ""; c.classList.remove("shifting"); });
     if (held) held.classList.remove("dragging");
     held = null; heldIndex = -1; targetIndex = -1;
   };
 
-  const begin = (card, y) => {
+  const begin = (card, clientY) => {
     held = card;
     heldIndex = cards.indexOf(card);
-    startY = y;
+    lastClientY = clientY;
+    startY = py(clientY);
     measure();
     card.classList.add("dragging");
     cards.forEach((c) => { if (c !== card) c.classList.add("shifting"); });
     window.getSelection?.()?.removeAllRanges();
     if (navigator.vibrate) navigator.vibrate(15);
+    scrollRaf = requestAnimationFrame(autoScroll);
   };
 
   const drop = () => {
@@ -1373,8 +1409,7 @@ function enableReorder(container, totalCount) {
     // Swallow the click this pointer sequence is about to fire, or dropping a
     // card opens it. A 0ms timeout was too early — the click lands later.
     justDragged = true;
-    const clear = () => { justDragged = false; };
-    setTimeout(clear, 400);
+    setTimeout(() => { justDragged = false; }, 400);
 
     reset();
   };
@@ -1403,7 +1438,11 @@ function enableReorder(container, totalCount) {
       }, HOLD_MS);
     });
 
-    card.addEventListener("pointermove", (e) => { if (held) paint(e.clientY - startY); });
+    card.addEventListener("pointermove", (e) => {
+      if (!held) return;
+      lastClientY = e.clientY;
+      paint(py(e.clientY) - startY);
+    });
     card.addEventListener("pointerup", drop);
     card.addEventListener("pointercancel", reset);
   });
