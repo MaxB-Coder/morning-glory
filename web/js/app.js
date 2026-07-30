@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.0";
+export const APP_VERSION = "1.4.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -220,7 +220,6 @@ async function renderSetup() {
 // --- home -------------------------------------------------------------------
 async function renderHome() {
   const all = await db.allCoffees();
-  const anyStarred = all.some((c) => c.starred);
   const coffees = applyFilters(all);
 
   const cards = coffees.map((c) => `
@@ -252,20 +251,10 @@ async function renderHome() {
     <div>
       <div class="title-row">
         <h2>Your coffees</h2>
-        ${all.length ? `<button type="button" id="star-filter" class="star-btn"
-          aria-pressed="${starredOnly}"
-          title="${starredOnly ? "Showing starred only" : "Show starred only"}"
-          >${starSvg(starredOnly)}</button>` : ""}
       </div>
       ${list}
     </div>`));
 
-  const filter = view.querySelector("#star-filter");
-  if (filter) filter.addEventListener("click", () => {
-    starredOnly = !starredOnly;
-    if (starredOnly && !anyStarred) toast("No coffees are starred yet");
-    safeRoute();
-  });
   const clr = view.querySelector("#clear-filters");
   if (clr) clr.addEventListener("click", () => { clearFilters(); safeRoute(); });
   const first = view.querySelector("#add-first");
@@ -1063,7 +1052,7 @@ async function renderSyncPanel() {
                style="text-transform:uppercase;width:7rem">
         <button id="join" class="secondary compact-btn">Join</button>
       </div>
-      <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
+      <p class="signout-row"><a href="#" id="signout"><small>Sign out</small></a></p>`;
     panel.querySelector("#create").addEventListener("click", async () => {
       try {
         const code = await sync.createHousehold();
@@ -1092,7 +1081,7 @@ async function renderSyncPanel() {
       <strong class="invite-code">${esc(code || "—")}</strong>
     </div>
     <p class="invite-hint"><small>Share this code. They sign in and tap Join.</small></p>
-    <p><a href="#" id="signout"><small>Sign out</small></a></p>`;
+    <p class="signout-row"><a href="#" id="signout"><small>Sign out</small></a></p>`;
   panel.querySelector("#signout").addEventListener("click", async (ev) => {
     ev.preventDefault(); await sync.signOutUser(); renderSettings();
   });
@@ -1211,14 +1200,17 @@ function openFilterSheet(all) {
   const overlay = el(`
     <div class="lightbox" id="filter-sheet">
       <div class="lightbox-inner sheet filter-sheet">
-        <h3 style="margin:0 0 .75rem">Filter</h3>
+        <div class="filter-head">
+          <h3>Filter</h3>
+          ${anyStar ? `<button type="button" id="filter-star" class="star-btn"
+            aria-pressed="${starredOnly}"
+            title="${starredOnly ? "Showing starred only" : "Show starred only"}"
+            >${starSvg(starredOnly)}</button>` : ""}
+        </div>
         ${group("Roast", roasts.map((r) => pill("roast", r, r, FILTERS.roast.includes(r))).join(""))}
         ${group("Process", procs.map((x) => pill("process", x, x, FILTERS.process.includes(x))).join(""))}
         ${group("Roaster", roasters.map((r) => pill("roaster", r, r, FILTERS.roaster.includes(r))).join(""))}
-        ${group("Other", [
-          anyStar ? pill("starred", "1", "Starred", starredOnly) : "",
-          anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "",
-        ].join(""))}
+        ${group("Other", anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "")}
         <div class="filter-actions">
           <button type="button" id="filter-clear" class="link-btn">Clear all</button>
           <button type="button" id="filter-done">Show <span id="filter-n"></span></button>
@@ -1245,9 +1237,21 @@ function openFilterSheet(all) {
       refresh();
     }));
 
+  const star = overlay.querySelector("#filter-star");
+  const paintStar = () => {
+    if (!star) return;
+    star.setAttribute("aria-pressed", String(starredOnly));
+    star.innerHTML = starSvg(starredOnly);
+    star.title = starredOnly ? "Showing starred only" : "Show starred only";
+  };
+  if (star) star.addEventListener("click", () => {
+    starredOnly = !starredOnly; paintStar(); refresh();
+  });
+
   overlay.querySelector("#filter-clear").addEventListener("click", () => {
     clearFilters();
     overlay.querySelectorAll(".toggle-pill").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    paintStar();
     refresh();
   });
 
