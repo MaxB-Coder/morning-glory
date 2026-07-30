@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.3.1";
+export const APP_VERSION = "1.3.2";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -201,9 +201,11 @@ async function renderHome() {
         <article class="coffee-card" data-id="${c.id}">
           ${safePhoto(c.photo) ? `<img class="card-thumb" src="${safePhoto(c.photo)}" alt="">` : ""}
           <div class="card-body">
-            <strong>${esc(c.name)}</strong>${c.visibility === "private"
-              ? ' <span class="priv-tag">private</span>' : ""}<br>
-            ${c.roaster ? `<small class="roaster">${esc(c.roaster)}</small><br>` : ""}
+            <div class="card-title">
+              <strong>${esc(c.name)}</strong>${c.visibility === "private"
+                ? ' <span class="priv-tag">private</span>' : ""}
+              ${c.roaster ? `<small class="roaster">${esc(c.roaster)}</small>` : ""}
+            </div>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
           ${c.starred ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
@@ -426,7 +428,10 @@ async function renderCoffee(id) {
     <div>
       <p><a href="#/" class="back">← All coffees</a></p>
       <div class="title-row">
-        <h2>${esc(c.name)}</h2>
+        <div class="title-text">
+          <h2>${esc(c.name)}</h2>
+          ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
+        </div>
         <!-- photo and star stacked, centres on the same vertical axis -->
         ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
@@ -434,7 +439,6 @@ async function renderCoffee(id) {
              </button>`
           : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
-      ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
       <p class="subtitle-row">
         <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
         <button type="button" id="star-toggle" class="star-btn"
@@ -712,14 +716,16 @@ async function renderBrew(coffeeId, method) {
     <div>
       <p><a href="#/coffee/${c.id}" class="back">← All coffees</a></p>
       <div class="title-row">
-        <h2>${esc(c.name)}</h2>
+        <div class="title-text">
+          <h2>${esc(c.name)}</h2>
+          ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
+        </div>
         ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
                <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
              </button>`
           : `<span class="thumb-spacer"></span>`}
       </div>
-      ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
       <p class="subtitle-row">
         <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
         <span class="star-spacer"></span>
