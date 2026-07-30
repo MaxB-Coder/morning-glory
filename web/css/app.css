@@ -428,11 +428,17 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   font-size: 1.3rem; letter-spacing: .18em; font-weight: 800;
   --holo-x: 50%;
   --holo-y: 50%;
+  /* Many thin white slivers separated by deep, dark valleys. Frequency is what
+     makes movement legible — with only a couple of broad bands the whole thing
+     can slide a long way before anything visibly changes. The darks matter as
+     much as the whites: contrast is what makes a sliver read as a glint. */
   --holo-foil: linear-gradient(115deg,
-    #8f4f18 0%, #ffd98a 9%, #fff8e6 15%, #f0b64a 22%,
-    #64e6cd 34%, #eafcff 40%, #3fa9f5 50%,
-    #c79bff 62%, #fff0fb 68%, #ff7ec4 76%,
-    #ffd98a 88%, #8f4f18 100%);
+    #2a1a10 0%,  #c9822f 5%,  #ffffff 8.5%,  #ffd98a 11%, #1d3a3f 17%,
+    #4fd6c0 23%, #ffffff 26.5%, #bff6ff 29%, #12283f 35%,
+    #3fa9f5 41%, #ffffff 44.5%, #d8ecff 47%, #241436 53%,
+    #b07cff 59%, #ffffff 62.5%, #ffe0fb 65%, #3a1030 71%,
+    #ff7ec4 77%, #ffffff 80.5%, #ffe6b0 83%, #2f1c0f 89%,
+    #e0a04a 95%, #ffffff 97.5%, #2a1a10 100%);
   background-image: var(--holo-foil);
   background-size: 300% 300%;
   background-position: var(--holo-x) var(--holo-y);

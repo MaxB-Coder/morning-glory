@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.11";
+export const APP_VERSION = "1.5.12";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1181,17 +1181,18 @@ function initHolo(node) {
     baseG += (g - baseG) * 0.004;
     baseB += (b - baseB) * 0.004;
 
-    targetX = clamp((g - baseG) / 22);
-    targetY = clamp((b - baseB) / 22);
+    targetX = clamp((g - baseG) / 32);
+    targetY = clamp((b - baseB) / 32);
   };
 
   const frame = () => {
     raf = requestAnimationFrame(frame);
     if (!live) return;
-    // exponential smoothing — enough to kill sensor jitter, loose enough that
-    // the highlight still feels attached to the movement
-    curX += (targetX - curX) * 0.14;
-    curY += (targetY - curY) * 0.14;
+    // exponential smoothing. Low factor: the sensor delivers coarse, unevenly
+    // spaced readings, and following them closely is what read as jerky. This
+    // eases between them instead, at the cost of a few frames of lag.
+    curX += (targetX - curX) * 0.075;
+    curY += (targetY - curY) * 0.075;
     // Y inverted: tipping the top of the phone away pushes the hotspot up the
     // text, the way a reflection of a fixed light behaves.
     node.style.setProperty("--holo-x", `${50 + curX * 60}%`);
