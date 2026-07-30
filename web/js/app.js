@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.7";
+export const APP_VERSION = "1.5.8";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1335,12 +1335,21 @@ function enableReorder(container, totalCount) {
       : 8;
     shift = metrics[heldIndex].height + gap;
 
-    // Travel limits: the held card may reach the first card's top edge and the
-    // last card's bottom edge, and no further. Without this it could be dragged
-    // up over the "Your coffees" heading and off the list entirely.
+    // Travel limits. Aligning edge-to-edge with the end cards was too tight to
+    // be usable: a swap only fires once the held card's MIDDLE passes the other
+    // card's middle, and with edges flush those middles coincide (or worse, if
+    // the held card is the taller of the two) — so first place was unreachable.
+    // The limit therefore allows a deliberate overshoot past each end: enough
+    // to clear the end card's midpoint, plus a bit of give. The cards being
+    // displaced still only ever move by one slot, so nothing else leaves the
+    // list.
+    const held0 = metrics[heldIndex];
     const last = metrics[metrics.length - 1];
-    minDy = metrics[0].top - metrics[heldIndex].top;
-    maxDy = (last.top + last.height) - (metrics[heldIndex].top + metrics[heldIndex].height);
+    const overshoot = (other) =>
+      Math.max(held0.height * 0.6, (held0.height - other.height) / 2 + 8);
+
+    minDy = (metrics[0].top - held0.top) - overshoot(metrics[0]);
+    maxDy = (last.top + last.height) - (held0.top + held0.height) + overshoot(last);
   };
 
   const paint = (rawDy) => {
