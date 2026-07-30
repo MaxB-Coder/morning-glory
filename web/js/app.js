@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.1.20";
+export const APP_VERSION = "1.1.21";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -548,11 +548,13 @@ function dialInChart(brews) {
       // dots hard to read. Fills are tuned to the emoji used in the Result
       // column so the chart and the table read as the same language.
       const cx = x(idx.get(b.id)), cy = y(b.grindSetting);
+      // base fill, then a soft top-centred gloss (radial gradient, defined once
+      // in <defs>) so it blends like the emoji circles rather than reading as a
+      // second hard dot.
       dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}"
                 r="3.6" fill="${VERDICT_DOT[b.verdict] || colour}"/>` +
-              // specular highlight, mimicking the gloss on the emoji dots
-              `<circle cx="${(cx - 1.15).toFixed(1)}" cy="${(cy - 1.25).toFixed(1)}"
-                r="1.05" fill="#fff" opacity=".5"/>`;
+              `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}"
+                r="3.6" fill="url(#dotGloss)"/>`;
     });
     legend += `<span class="legend-item"><i style="background:${colour}"></i>${METHOD_LABEL[method]}</span>`;
   });
@@ -568,7 +570,14 @@ function dialInChart(brews) {
 
   return `
     <svg class="dial-chart" viewBox="0 0 ${W} ${H}" role="img"
-         aria-label="Grind setting over time">${axis}${paths}${dots}</svg>
+         aria-label="Grind setting over time">
+      <defs>
+        <radialGradient id="dotGloss" cx="50%" cy="20%" r="60%">
+          <stop offset="0%"   stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="55%"  stop-color="#fff" stop-opacity=".14"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>${axis}${paths}${dots}</svg>
     <div class="legend">${legend}</div>
     <div class="chart-stats">
       <span><strong>${brews.length}</strong> brew${brews.length === 1 ? "" : "s"}</span>
