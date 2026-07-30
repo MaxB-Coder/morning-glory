@@ -35,12 +35,16 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <!-- iOS standalone paints the strip BELOW the web viewport (where Safari's
-       toolbar would be) using theme-color. It must match the bottom nav's
-       background exactly, or it shows up as a coloured band under the nav
-       that no CSS can reach — the viewport simply doesn't extend there. -->
+       toolbar would be) from theme-color, read at LAUNCH. No CSS can reach it.
+       DARK: set to #040303 = the dark app background as it appears under the
+       photo viewer's 86% scrim, so that overlay needs no band or gradient. The
+       strip is then marginally darker than the app in normal use — invisible on
+       a dark palette. Recompute if the scrim opacity or dark bg changes.
+       LIGHT: left as the app background; a dark strip under a light app would
+       be obvious in normal use. -->
   <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#1c1714" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#1c1714" />
+  <meta name="theme-color" content="#040303" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#040303" />
   <title>Morning Glory</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
