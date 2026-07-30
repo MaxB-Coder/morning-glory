@@ -272,36 +272,36 @@ input[type="date"] { min-height: 2.6rem; }   /* match text inputs on iOS */
    so the layout doesn't shift between the coffee page and the brew page */
 .thumb-spacer { display: block; width: 3rem; height: 3rem; flex: none; }
 
-/* Full-screen dim scrim for viewing a photo.
-   iOS reserves ~47pt below the viewport (where Safari's toolbar would sit).
-   Nothing can paint into it and it takes its colour from theme-color at LAUNCH,
-   so it is always the app's background — a flat dark scrim therefore left a
-   visible band along the bottom edge.
-   Fix: two stacked background layers.
-     top layer  — transparent for most of the height, then an OPAQUE band of the
-                  app background across the bottom. That hides the nav and ends
-                  in exactly the colour of the OS strip below, so there is no
-                  seam and no light patch.
-     under it   — the translucent dark scrim, so the app is still visible-but-
-                  dimmed everywhere above the band.
-   Fading to *transparent* instead was wrong: it revealed the light nav.
-   Content gets bottom padding so it stays above the band. */
+/* Photo viewer.
+   iOS reserves ~47pt below the viewport, paints it from theme-color at LAUNCH,
+   and no element can draw there — so that strip is ALWAYS the app background.
+   Since the app background is light, any dark backdrop that runs to the bottom
+   of the screen leaves a light band under it, and every attempt to recolour
+   that band failed (runtime theme-color changes are ignored in standalone).
+   So: the scrim deliberately stops at the top of the nav bar. The nav and the
+   strip below it are both app-coloured and sit flush, which reads as a modal
+   over a tab bar rather than a stray band. The element itself still covers the
+   whole screen so a tap anywhere — including on the nav — closes it. */
 .lightbox {
   position: fixed; z-index: 80; display: flex;
   top: 0; left: 0; right: 0;
   bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
-  align-items: center; justify-content: center; padding: 1.25rem;
-  background:
-    linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent calc(100% - 6.5rem),
-      var(--pico-background-color) calc(100% - 3rem),
-      var(--pico-background-color) 100%),
-    rgba(0, 0, 0, .86);
+  align-items: center; justify-content: center;
+  background: transparent;              /* the ::before draws the scrim */
+  padding: 1.25rem;
   padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--nav-h) + 1.75rem + env(safe-area-inset-bottom, 0px));
 }
+/* the dimmed region: everything above the nav bar */
+.lightbox::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  background: rgba(0, 0, 0, .86);
+  pointer-events: none;
+}
+/* content sits above the scrim layer */
+.lightbox > * { position: relative; z-index: 1; }
 .lightbox-inner { max-width: 100%; text-align: center; }
 .lightbox-inner img {
   max-width: 100%; max-height: 60vh; border-radius: .7rem; display: block;
