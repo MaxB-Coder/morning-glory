@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.4.7";
+export const APP_VERSION = "1.4.8";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -938,20 +938,20 @@ async function renderSettings() {
   view.replaceChildren(el(`
     <div>
       <h2>Settings</h2>
-      <article>
-        <div><strong>Grinder:</strong> ${esc(g.name)} (${g.min}–${g.max}, step ${g.step})</div>
-        ${g.calibration
-          ? `<div><strong>Calibrated:</strong> ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}</div>`
-          : `<div><small>Not calibrated</small></div>`}
-        <div class="center-link"><a href="#/setup">Edit grinder</a></div>
-      </article>
-      <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
       <article class="inline-row">
         <span>
           <strong>Version</strong> ${APP_VERSION}
           <br><small id="update-status">Checking for updates…</small>
         </span>
         <button id="force-update" class="secondary compact-btn" hidden>Update</button>
+      </article>
+      <article id="sync-panel"><strong>Sharing</strong><p><small>Loading…</small></p></article>
+      <article>
+        <div><strong>Grinder:</strong> ${esc(g.name)} (${g.min}–${g.max}, step ${g.step})</div>
+        ${g.calibration
+          ? `<div><strong>Calibrated:</strong> ${METHOD_LABEL[g.calibration.method]} @ ${g.calibration.setting}</div>`
+          : `<div><small>Not calibrated</small></div>`}
+        <div class="center-link"><a href="#/setup">Edit grinder</a></div>
       </article>
       <article>
         <strong>Backup</strong>
