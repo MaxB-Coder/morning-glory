@@ -107,23 +107,33 @@ export async function allCoffeesIncludingArchived() {
 export async function migrateRoaster() {
   const os = await store("coffee", "readwrite");
   const all = await p(os.getAll());
-  let changed = 0;
+  const recs = [];
   for (const c of all) {
     if (c.roaster !== undefined) continue;
-    const i = String(c.name || "").lastIndexOf(" - ");
-    if (i > 0) {
-      const roaster = c.name.slice(i + 3).trim();
-      const name = c.name.slice(0, i).trim();
-      if (name && roaster) { c.name = name; c.roaster = roaster.slice(0, 80); }
-      else c.roaster = null;
-    } else {
-      c.roaster = null;
-    }
+    const [name, roaster] = splitNameRoaster(c.name);
+    c.name = name; c.roaster = roaster;
     c.updatedAt = now(); c.dirty = 1;
-    await p(os.put(c));
-    changed++;
+    recs.push(c);
   }
-  return changed;
+  // Collect first, write second: issuing put() after awaiting a previous put
+  // can land outside the transaction's active window, which throws
+  // TransactionInactiveError and aborts the whole migration silently.
+  for (const c of recs) await p(os.put(c));
+  return recs.length;
+}
+
+// Accepts every separator that shows up in real bag names: hyphen, en dash,
+// em dash, slash, and "by". Requires surrounding spaces so hyphenated names
+// ("Kii AA-2", "Yirgacheffe-Kochere") are left intact. Splits on the LAST
+// separator, since the coffee name is likelier to contain one than the roaster.
+export function splitNameRoaster(raw) {
+  const full = String(raw || "").trim();
+  const m = [...full.matchAll(/\s+(?:[-\u2010-\u2015\u2212/|]|by)\s+/gi)].pop();
+  if (!m) return [full, null];
+  const name = full.slice(0, m.index).trim();
+  const roaster = full.slice(m.index + m[0].length).trim();
+  if (!name || !roaster) return [full, null];
+  return [name, roaster.slice(0, 80)];
 }
 
 // --- brew ------------------------------------------------------------------

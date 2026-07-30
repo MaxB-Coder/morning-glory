@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.3.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -145,6 +145,7 @@ async function route() {
 
   if (parts[0] === "setup") return renderSetup();
   if (parts[0] === "coffee" && parts[1] === "new") return renderCoffeeForm();
+  if (parts[0] === "coffee" && parts[1] && parts[2] === "edit") return renderCoffeeForm(parts[1]);
   if (parts[0] === "coffee" && parts[1]) return renderCoffee(parts[1]);
   if (parts[0] === "brew") return renderBrew(params.get("coffee"), params.get("method"));
   if (parts[0] === "history") return renderHistory();
@@ -248,13 +249,21 @@ async function renderHome() {
 }
 
 // --- coffee form ------------------------------------------------------------
-function renderCoffeeForm() {
-  let photoData = null;   // resized JPEG data URL, set when a photo is chosen
+// Doubles as the edit screen: pass a coffee id and every field is prefilled and
+// the submit updates in place instead of creating. Visibility is deliberately
+// NOT editable here — it must go through setCoffeeVisibility on the coffee page,
+// which moves the record between the household and the owner's private store.
+async function renderCoffeeForm(editId) {
+  const ex = editId ? await db.getCoffee(editId) : null;
+  if (editId && !ex) { location.hash = "#/"; return; }
+  let photoData = ex ? (safePhoto(ex.photo) || null) : null;
+  const val = (k) => esc(ex && ex[k] != null ? ex[k] : "");
+  const sel = (k, v) => (ex ? (ex[k] === v ? " selected" : "") : "");
 
   view.replaceChildren(el(`
     <article>
       <div class="title-row">
-        <h2>Register coffee</h2>
+        <h2>${ex ? "Edit coffee" : "Register coffee"}</h2>
         <button type="button" id="photo-btn" class="icon-btn" title="Add a photo of the bag">📷</button>
       </div>
       <input type="file" id="photo-input" accept="image/*" hidden>
@@ -264,33 +273,33 @@ function renderCoffeeForm() {
       </div>
 
       <form id="coffee-form">
-        <label>Name <input name="name" required placeholder="e.g. Songbird"></label>
-        <label>Roaster <input name="roaster" placeholder="e.g. Kin"></label>
+        <label>Name <input name="name" required placeholder="e.g. Songbird" value="${val("name")}"></label>
+        <label>Roaster <input name="roaster" placeholder="e.g. Kin" value="${val("roaster")}"></label>
         <div class="grid">
           <label>Roast
-            <select name="roast"><option>light</option><option selected>medium</option><option>dark</option></select>
+            <select name="roast"><option${sel("roast","light")}>light</option><option${ex ? sel("roast","medium") : " selected"}>medium</option><option${sel("roast","dark")}>dark</option></select>
           </label>
           <label>Process
-            <select name="process"><option selected>washed</option><option>honey</option><option>natural</option></select>
+            <select name="process"><option${ex ? sel("process","washed") : " selected"}>washed</option><option${sel("process","honey")}>honey</option><option${sel("process","natural")}>natural</option></select>
           </label>
         </div>
         <details>
           <summary>More detail (optional)</summary>
-          <label>Roast date <input name="roastDate" type="date" class="full-width"></label>
-          <label>Origin <input name="origin"></label>
-          <label>Variety <input name="variety"></label>
-          <label>Altitude (masl) <input name="altitudeMasl" type="number" inputmode="numeric"></label>
+          <label>Roast date <input name="roastDate" type="date" class="full-width" value="${val("roastDate")}"></label>
+          <label>Origin <input name="origin" value="${val("origin")}"></label>
+          <label>Variety <input name="variety" value="${val("variety")}"></label>
+          <label>Altitude (masl) <input name="altitudeMasl" type="number" inputmode="numeric" value="${val("altitudeMasl")}"></label>
 
           <div class="toggle-row">
-            <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="false">Decaf</button>
-            <button type="button" id="private-pill" class="toggle-pill" aria-pressed="false">Private</button>
+            <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="${ex && ex.decaf ? "true" : "false"}">Decaf</button>
+            ${ex ? "" : `<button type="button" id="private-pill" class="toggle-pill" aria-pressed="false">Private</button>`}
           </div>
-          <p class="explain" style="text-align:center">Private coffees stay on your
-          devices only — they aren't shared and don't train anyone else's recommendations.</p>
+          ${ex ? "" : `<p class="explain" style="text-align:center">Private coffees stay on your
+          devices only — they aren't shared and don't train anyone else's recommendations.</p>`}
 
-          <label>Notes <textarea name="notes" rows="3"></textarea></label>
+          <label>Notes <textarea name="notes" rows="3">${val("notes")}</textarea></label>
         </details>
-        <button type="submit">Save coffee</button>
+        <button type="submit">${ex ? "Save changes" : "Save coffee"}</button>
       </form>
     </article>`));
 
@@ -298,6 +307,7 @@ function renderCoffeeForm() {
   const input = view.querySelector("#photo-input");
   const preview = view.querySelector("#photo-preview");
   const img = view.querySelector("#photo-img");
+  if (photoData) { img.src = photoData; preview.hidden = false; }
   view.querySelector("#photo-btn").addEventListener("click", () => input.click());
   view.querySelector("#photo-remove").addEventListener("click", () => {
     photoData = null; input.value = ""; preview.hidden = true;
@@ -325,22 +335,31 @@ function renderCoffeeForm() {
     return pill;
   };
   const decafPill = togglePill("#decaf-pill");
-  const privatePill = togglePill("#private-pill");
+  const privatePill = ex ? null : togglePill("#private-pill");
 
   view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
-    const c = await db.addCoffee({
+    const fields = {
       name: f.get("name"), roaster: f.get("roaster") || null,
       roast: f.get("roast"), process: f.get("process"),
       roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
       variety: f.get("variety") || null,
       altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
       decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
-      visibility: privatePill.getAttribute("aria-pressed") === "true" ? "private" : "shared",
       notes: f.get("notes") || null,
       photo: photoData,
-    });
+    };
+    let c;
+    if (ex) {
+      c = await db.updateCoffee({ ...ex, ...fields });
+      toast("Saved");
+    } else {
+      c = await db.addCoffee({
+        ...fields,
+        visibility: privatePill.getAttribute("aria-pressed") === "true" ? "private" : "shared",
+      });
+    }
     location.hash = `#/coffee/${c.id}`;
   });
 }
@@ -449,7 +468,8 @@ async function renderCoffee(id) {
         ? "Only on your devices. Not shared, and not training anyone else's recommendations."
         : "Shared with your household."}</p>
 
-      <div class="center-row" style="margin-top:1.5rem">
+      <div class="center-row" style="margin-top:1.5rem; gap:.6rem">
+        <button id="edit-coffee" class="link-btn">Edit details</button>
         <button id="archive-coffee" class="danger-link">Archive this coffee</button>
       </div>
     </div>`));
@@ -472,6 +492,9 @@ async function renderCoffee(id) {
       const brew = brews.find((b) => String(b.id) === row.dataset.id);
       if (brew) openBrewDetail(brew, c, g);
     }));
+
+  view.querySelector("#edit-coffee").addEventListener("click",
+    () => { location.hash = `#/coffee/${id}/edit`; });
 
   view.querySelector("#toggle-visibility").addEventListener("click", async () => {
     const goingPrivate = c.visibility !== "private";
