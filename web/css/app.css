@@ -508,8 +508,15 @@ td.truncate .roaster { font-size: .78em; }
 /* invite hint: short line, and if it does wrap, split it evenly rather than
    leaving one orphan word (and never break mid-dash at the line end) */
 .invite-hint { margin-top: .35rem; text-wrap: balance; }
-/* Edit sits beside Archive: same height so the pair reads as one row */
-#edit-coffee { font-size: .85rem; padding: .45rem .9rem; }
+/* Edit sits beside Archive. .link-btn and .danger-link were written separately
+   and disagreed on padding, radius and line-height, so the two boxes rendered
+   at different heights. Sizing is stated once here for both, and the row is
+   centre-aligned so they sit on the same axis. */
+.center-row { align-items: center; }
+#edit-coffee, #archive-coffee {
+  margin: 0; font-size: .85rem; line-height: 1.4;
+  padding: .45rem .9rem; border-width: 1px; border-radius: .35rem;
+}
 
 /* Optical nudge only: the name/roaster block sat a touch high against the
    thumbnail. position:relative moves the paint, not the layout, so the card
