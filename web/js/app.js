@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.2";
+export const APP_VERSION = "1.5.3";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1128,44 +1128,55 @@ async function renderSyncPanel() {
 }
 
 // --- holographic invite code ------------------------------------------------
-// Idle state is a slow drifting foil gradient. If the device reports
-// orientation, the sheen tracks tilt instead — the panel re-renders often, so
-// the previous listener is always detached first rather than stacking up.
+// Tilt-driven only: the foil and the specular streak are positioned from
+// --holo-x / --holo-y and nothing moves unless the phone does. Raw
+// deviceorientation is noisy and fires faster than a frame, so readings are
+// smoothed and written once per rAF rather than on every event.
 let holoDetach = null;
 
 function initHolo(node) {
   if (holoDetach) { holoDetach(); holoDetach = null; }
   if (!node || !node.textContent.trim() || node.textContent.trim() === "—") return;
 
-  // the sheen layer is a ::after that re-renders the same text, so it needs the
-  // string in an attribute
+  // the ::after sheen re-renders the same text, so it needs it as an attribute
   node.dataset.code = node.textContent.trim();
 
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    node.classList.add("holo-still");
-    return;
-  }
-
   const D = window.DeviceOrientationEvent;
-  if (!D) return;
+  if (!D || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const clamp = (v) => Math.max(-1, Math.min(1, v));
-  const apply = (e) => {
+  let targetX = 0, targetY = 0, curX = 0, curY = 0, raf = 0, live = false;
+
+  const onOrient = (e) => {
     if (e.gamma == null && e.beta == null) return;
-    // gamma: left/right tilt. beta: front/back, offset by 45° because a phone
-    // is usually held tipped back, not flat.
-    node.style.setProperty("--holo-x", `${50 + clamp((e.gamma || 0) / 40) * 60}%`);
-    node.style.setProperty("--holo-y", `${50 + clamp(((e.beta || 0) - 45) / 40) * 60}%`);
-    node.classList.add("holo-tilt");
+    live = true;
+    // gamma: left/right tilt, the dominant axis for a foil sheen.
+    // beta: front/back, offset by 45° because a phone is held tipped back.
+    targetX = clamp((e.gamma || 0) / 35);
+    targetY = clamp(((e.beta || 0) - 45) / 35);
+  };
+
+  const frame = () => {
+    raf = requestAnimationFrame(frame);
+    if (!live) return;
+    // exponential smoothing — enough to kill sensor jitter without feeling laggy
+    curX += (targetX - curX) * 0.18;
+    curY += (targetY - curY) * 0.18;
+    node.style.setProperty("--holo-x", `${50 + curX * 60}%`);
+    node.style.setProperty("--holo-y", `${50 + curY * 60}%`);
   };
 
   const attach = () => {
-    window.addEventListener("deviceorientation", apply);
-    holoDetach = () => window.removeEventListener("deviceorientation", apply);
+    window.addEventListener("deviceorientation", onOrient);
+    raf = requestAnimationFrame(frame);
+    holoDetach = () => {
+      window.removeEventListener("deviceorientation", onOrient);
+      cancelAnimationFrame(raf);
+    };
   };
 
-  // iOS 13+ only delivers orientation after an explicit permission grant, and
-  // only from a user gesture — so it is requested on tap, not on render.
+  // iOS 13+ only delivers orientation after an explicit grant, and only from a
+  // user gesture — so it is requested on tap, not on render.
   if (typeof D.requestPermission === "function") {
     node.title = "Tap to tilt";
     node.classList.add("holo-tappable");

@@ -415,12 +415,13 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 .fab span { display: block; transform: translateY(-.06em); }
 /* Holographic invite code — foil-card look rather than flat accent.
    Two stacked layers, both using background-clip:text:
-     base   = rainbow foil, slowly drifting
-     ::after = a narrow white specular streak that sweeps across
+     base   = rainbow foil
+     ::after = a narrow white specular streak
    The ::after repeats the text via attr(), so the streak is clipped to the
-   glyphs and not to the box. --holo-x/-y are set by the tilt handler; when the
-   device reports orientation the animations are switched off and the sheen is
-   driven by those variables instead. */
+   glyphs and not to the box.
+   There is NO timed animation: both layers are positioned purely from
+   --holo-x / --holo-y, which the tilt handler writes. A looping keyframe drift
+   ran independently of the phone and made the two motions fight each other. */
 .invite-code {
   position: relative;
   font-size: 1.25rem; letter-spacing: .18em; font-weight: 700;
@@ -435,7 +436,6 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: holo-drift 7s linear infinite;
 }
 .invite-code::after {
   content: attr(data-code);
@@ -448,27 +448,9 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: holo-sheen 4.5s ease-in-out infinite;
   pointer-events: none;
 }
-/* tilt takes over: kill the timed drift so the two don't fight */
-.invite-code.holo-tilt,
-.invite-code.holo-tilt::after { animation: none; }
-/* still legible with motion turned off */
-.invite-code.holo-still,
-.invite-code.holo-still::after { animation: none; }
 .invite-code.holo-tappable { cursor: pointer; }
-
-@keyframes holo-drift {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes holo-sheen {
-  0%, 100% { background-position: 140% 50%; }
-  50%      { background-position: -40% 50%; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .invite-code, .invite-code::after { animation: none; }
 }
 
 /* small "private" marker on coffee cards */
