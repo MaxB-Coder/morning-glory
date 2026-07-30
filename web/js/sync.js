@@ -208,28 +208,39 @@ function startSubscriptions() {
   const { collection, onSnapshot, doc } = fb.fs;
 
   // Watch BOTH the shared household collections and this user's private ones.
-  const watch = (name, path) => {
+  //
+  // `scope` matters on REMOVALS. Making a coffee private deletes it from the
+  // household — and the shared watcher sees that as "removed". Without the
+  // check below, the owner's own device would delete its private copy too, so
+  // the coffee (and all its brews) vanished on the next sign-in. Only act on a
+  // removal that comes from the collection the record actually lives in.
+  const watch = (name, path, scope) => {
     const col = collection(fb.dbf, path);
     unsub.push(onSnapshot(col, async (snap) => {
       let changed = false;
       for (const d of snap.docChanges()) {
         if (d.type === "removed") {
-          // Gone from the server — e.g. the owner made it private. Drop it
-          // locally without a tombstone, or we'd sync the deletion back.
-          await hardDelete(name, d.doc.id);
-          changed = true;
+          if (await belongsTo(name, d.doc.id, scope)) {
+            await hardDelete(name, d.doc.id);
+            changed = true;
+          }
           continue;
         }
         const rec = { ...d.doc.data(), id: d.doc.id };
         if (await upsertFromRemote(name, rec)) changed = true;
       }
       if (changed) state.onData();
+    }, (err) => {
+      // A listener that dies silently looks exactly like "my data vanished".
+      console.error(`[sync] ${scope} ${name} listener failed`, err.code || err);
+      state.lastAuthError = `${scope} ${name}: ${err.code || err.message}`;
+      state.onChange(status());
     }));
   };
 
   for (const name of ["coffee", "brew"]) {
-    watch(name, colPath(name));
-    watch(name, privPath(name));
+    watch(name, colPath(name), "shared");
+    watch(name, privPath(name), "private");
   }
   // shared grinder is a single doc on the household
   const hdoc = doc(fb.dbf, "households", state.householdId);
@@ -241,6 +252,32 @@ function startSubscriptions() {
   flush(); // push anything queued
 }
 function stopSubscriptions() { unsub.forEach((u) => u && u()); unsub = []; }
+
+/**
+ * Should a removal reported by `scope` ("shared" | "private") delete the local
+ * record?
+ *
+ * Only if the record actually belongs to that scope. A private coffee is
+ * deliberately absent from the household, so the shared watcher reporting it
+ * as "removed" is expected and must be ignored — otherwise flipping a coffee
+ * to private destroyed the owner's own copy.
+ *
+ * Records with unsynced local changes (dirty) are never dropped either: those
+ * edits haven't reached the server yet, so a removal can't be about them.
+ */
+async function belongsTo(name, id, scope) {
+  const rec = name === "coffee"
+    ? await getCoffee(id)
+    : (await allBrews()).find((b) => String(b.id) === String(id));
+  if (!rec) return true;              // nothing local -> nothing to protect
+  if (rec.dirty) return false;        // pending upload, keep it
+
+  const owner = name === "coffee"
+    ? rec
+    : await getCoffee(rec.coffeeId);
+  const recScope = owner && owner.visibility === "private" ? "private" : "shared";
+  return recScope === scope;
+}
 
 // Is this coffee private? Brews inherit the visibility of their coffee, so a
 // private bag's brews never reach the household either.
