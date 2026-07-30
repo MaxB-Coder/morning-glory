@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.10";
+export const APP_VERSION = "1.5.11";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -1161,30 +1161,41 @@ function initHolo(node) {
 
   const clamp = (v) => Math.max(-1, Math.min(1, v));
   let targetX = 0, targetY = 0, curX = 0, curY = 0, raf = 0, live = false;
+  let baseG = null, baseB = null;
 
   const onOrient = (e) => {
     if (e.gamma == null && e.beta == null) return;
     if (!live) { live = true; node.classList.remove("holo-idle"); }
-    // gamma: left/right tilt, the dominant axis for a foil sheen.
-    // beta: front/back, offset by 45° because a phone is held tipped back.
-    // Wider divisor = less sheen travel per degree of tilt. A small wobble of
-    // the wrist used to sweep the whole gradient, which read as frantic.
-    targetX = clamp((e.gamma || 0) / 70);
-    targetY = clamp(((e.beta || 0) - 45) / 70);
+
+    const g = e.gamma || 0, b = e.beta || 0;
+
+    // Calibrate to however the phone is being held RIGHT NOW, then respond to
+    // change from there. Reading gamma/beta absolutely (with a hardcoded "45°
+    // is neutral") meant the sheen sat pinned at one extreme for anyone not
+    // holding the phone at exactly that angle, so small movements did nothing —
+    // which is what made it feel unresponsive.
+    if (baseG === null) { baseG = g; baseB = b; }
+
+    // Baseline creeps toward the current pose, so holding still returns the
+    // hotspot to the middle and the next movement always has room to travel.
+    baseG += (g - baseG) * 0.004;
+    baseB += (b - baseB) * 0.004;
+
+    targetX = clamp((g - baseG) / 22);
+    targetY = clamp((b - baseB) / 22);
   };
 
   const frame = () => {
     raf = requestAnimationFrame(frame);
     if (!live) return;
-    // exponential smoothing — low factor so the sheen eases into position
-    // rather than snapping to every reading
-    curX += (targetX - curX) * 0.07;
-    curY += (targetY - curY) * 0.07;
-    // Both axes drive both layers. Y is inverted so tipping the top of the
-    // phone away pushes the hotspot up the text, the way a real reflection of
-    // a fixed light behaves.
-    node.style.setProperty("--holo-x", `${50 + curX * 55}%`);
-    node.style.setProperty("--holo-y", `${50 - curY * 55}%`);
+    // exponential smoothing — enough to kill sensor jitter, loose enough that
+    // the highlight still feels attached to the movement
+    curX += (targetX - curX) * 0.14;
+    curY += (targetY - curY) * 0.14;
+    // Y inverted: tipping the top of the phone away pushes the hotspot up the
+    // text, the way a reflection of a fixed light behaves.
+    node.style.setProperty("--holo-x", `${50 + curX * 60}%`);
+    node.style.setProperty("--holo-y", `${50 - curY * 60}%`);
   };
 
   const attach = () => {

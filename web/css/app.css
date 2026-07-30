@@ -414,23 +414,26 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 /* the glyph's own box, nudged to optical centre */
 .fab span { display: block; transform: translateY(-.06em); }
 /* Holographic invite code — foil-card look rather than flat accent.
-   Two stacked layers, both using background-clip:text:
-     base    = rainbow foil, sized 300% x 300% so it has travel on BOTH axes
-     ::after = a radial specular hotspot, i.e. a point light sitting behind the
-               glyphs; moving it in 2D is what sells "there's something under
-               the text" rather than a stripe wiping sideways
-   Both are positioned from --holo-x / --holo-y, which the tilt handler writes.
-   The earlier version sized them 300% x 100%: with the layer exactly as tall as
-   the box there was no vertical travel available, so --holo-y did nothing and
-   the sheen could only ever slide horizontally. */
+   THREE stacked layers, all background-clip:text so every one is shaped by the
+   glyphs, all positioned from --holo-x / --holo-y (written by the tilt handler):
+     ::before = the same foil, blurred and over-saturated => bloom/glow behind
+     base     = the foil itself, with near-white bands for specular punch
+     ::after  = a tight radial hotspot, i.e. a point light behind the glass
+   Sized 300%/240% on BOTH axes so there is travel vertically as well as
+   horizontally — at 100% height the layer is exactly as tall as the box and
+   --holo-y has nothing to move. */
 .invite-code {
   position: relative;
-  font-size: 1.25rem; letter-spacing: .18em; font-weight: 700;
+  display: inline-block;                 /* so the pseudo layers can be placed */
+  font-size: 1.3rem; letter-spacing: .18em; font-weight: 800;
   --holo-x: 50%;
   --holo-y: 50%;
-  background-image: linear-gradient(115deg,
-    #b26a2a 0%, #d8a13d 12%, #6fd2c0 26%, #4aa3e0 40%,
-    #a06fd0 54%, #e06fa8 68%, #d8a13d 84%, #b26a2a 100%);
+  --holo-foil: linear-gradient(115deg,
+    #8f4f18 0%, #ffd98a 9%, #fff8e6 15%, #f0b64a 22%,
+    #64e6cd 34%, #eafcff 40%, #3fa9f5 50%,
+    #c79bff 62%, #fff0fb 68%, #ff7ec4 76%,
+    #ffd98a 88%, #8f4f18 100%);
+  background-image: var(--holo-foil);
   background-size: 300% 300%;
   background-position: var(--holo-x) var(--holo-y);
   -webkit-background-clip: text;
@@ -438,12 +441,29 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
+/* bloom: a blurred copy of the same foil sitting behind the text */
+.invite-code::before {
+  content: attr(data-code);
+  position: absolute; left: 0; top: 0; z-index: -1;
+  background-image: var(--holo-foil);
+  background-size: 300% 300%;
+  background-position: var(--holo-x) var(--holo-y);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: blur(7px) saturate(2.2) brightness(1.3);
+  opacity: .9;
+  pointer-events: none;
+}
+/* specular hotspot, plus its own white glow via drop-shadow (which follows the
+   glyph alpha, so it haloes the letters rather than the box) */
 .invite-code::after {
   content: attr(data-code);
   position: absolute; left: 0; top: 0;
   background-image: radial-gradient(circle at center,
-    rgba(255,255,255,.95) 0%, rgba(255,255,255,.55) 10%,
-    rgba(255,255,255,.15) 24%, rgba(255,255,255,0) 40%);
+    #fff 0%, rgba(255,255,255,.85) 7%, rgba(255,255,255,.35) 18%,
+    rgba(255,255,255,.08) 30%, rgba(255,255,255,0) 42%);
   background-size: 240% 240%;
   background-repeat: no-repeat;
   background-position: var(--holo-x) var(--holo-y);
@@ -451,6 +471,8 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,.7))
+          drop-shadow(0 0 12px rgba(180,230,255,.45));
   pointer-events: none;
 }
 .invite-code.holo-tappable { cursor: pointer; }
@@ -458,7 +480,8 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
 /* Fallback only: used when the device reports no orientation (desktop, or iOS
    with Motion & Orientation Access switched off) so the code still reads as
    foil rather than as flat dead text. Tilt readings remove this class. */
-.invite-code.holo-idle { animation: holo-drift 16s linear infinite; }
+.invite-code.holo-idle,
+.invite-code.holo-idle::before { animation: holo-drift 16s linear infinite; }
 .invite-code.holo-idle::after { animation: holo-sheen 10s ease-in-out infinite; }
 @keyframes holo-drift {
   0%   { background-position: 10% 20%; }
