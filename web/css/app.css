@@ -42,10 +42,7 @@ body {
   align-items: center; justify-content: center; gap: .5rem;
   background: var(--pico-background-color); z-index: 50; text-align: center;
 }
-.boot-logo { line-height: 0; }
-#brand { display: inline-flex; align-items: center; gap: .4rem; }
-#brand-logo { display: inline-flex; line-height: 0; }
-.logo { display: block; }
+.boot-logo { font-size: 3rem; }
 .boot progress { width: 12rem; }
 
 /* iOS: keep the header clear of the notch / Dynamic Island. Requires
