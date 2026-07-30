@@ -428,13 +428,13 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   font-size: 1.3rem; letter-spacing: .18em; font-weight: 800;
   --holo-x: 50%;
   --holo-y: 50%;
-  /* Irregular white slivers over saturated mid-tones. Real foil doesn't glint
-     on a metronome: the stops are deliberately unevenly spaced and of varying
-     width and intensity (some pure #fff and hard-edged, some a soft off-white),
-     with the occasional twin glint close together. Evenly spaced identical
-     bands read as a printed stripe pattern sliding past, which is exactly what
-     it looked like. No near-blacks — the valleys are deep COLOURS, so the
-     luminance step survives without black gaps chopping up the letters. */
+  /* THREE gradients at three different angles, stacked. One linear-gradient can
+     only ever make parallel bands — every glint marching the same way is what
+     read as a printed stripe pattern. The two upper layers are mostly
+     transparent with a few white slivers cutting across at 62° and 158°, so
+     glints cross each other instead of queueing up.
+     Within each layer the stops are unevenly spaced and vary in width and
+     intensity, because real foil doesn't glint on a metronome. */
   --holo-foil: linear-gradient(115deg,
     #c9822f 0%,    #ffffff 2.6%,  #ffe7b4 4.2%,  #e07a2f 8%,
     #f3f9ff 10.4%, #17a89a 14%,   #ffffff 15.2%, #7fe8dd 16.4%,
@@ -445,9 +445,29 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
     #fff3dc 74.6%, #e0a04a 78%,   #ffffff 79%,   #ffcf7a 81%,
     #b8641f 86%,   #fdf6ea 90.2%, #d99b48 93%,   #ffffff 94.1%,
     #c9822f 100%);
-  background-image: var(--holo-foil);
-  background-size: 300% 300%;
-  background-position: var(--holo-x) var(--holo-y);
+  --holo-cross-a: linear-gradient(62deg,
+    transparent 0%,     transparent 9%,   rgba(255,255,255,.95) 10.6%,
+    transparent 12.4%,  transparent 27%,  rgba(255,255,255,.45) 28.2%,
+    transparent 30%,    transparent 33%,  rgba(255,255,255,.7) 34%,
+    transparent 35.4%,  transparent 55%,  rgba(255,255,255,.85) 57%,
+    transparent 59.5%,  transparent 78%,  rgba(255,255,255,.4) 79.3%,
+    transparent 81%,    transparent 100%);
+  --holo-cross-b: linear-gradient(158deg,
+    transparent 0%,     transparent 17%,  rgba(255,255,255,.6) 18.6%,
+    transparent 20%,    transparent 44%,  rgba(255,255,255,.9) 45.4%,
+    transparent 47.6%,  transparent 63%,  rgba(255,255,255,.35) 64%,
+    transparent 65.4%,  transparent 88%,  rgba(255,255,255,.75) 89.5%,
+    transparent 91%,    transparent 100%);
+
+  background-image: var(--holo-cross-b), var(--holo-cross-a), var(--holo-foil);
+  /* different scales => the layers travel at different rates, so tilting never
+     slides them as one rigid sheet */
+  background-size: 170% 170%, 230% 230%, 300% 300%;
+  /* and different mappings: one mirrored, one with its axes swapped */
+  background-position:
+    calc(100% - var(--holo-x)) calc(100% - var(--holo-y)),
+    var(--holo-y) var(--holo-x),
+    var(--holo-x) var(--holo-y);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
