@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.7.2";
+export const APP_VERSION = "1.7.3";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -815,48 +815,48 @@ function openPhotoLightbox(coffee) {
 
 // --- brew (the core screen) -------------------------------------------------
 
-// The suggestion's uncertainty, drawn rather than written.
+// The suggestion's uncertainty, drawn as a ruler of real grinder clicks.
 //
-// The scale is FIXED (a set number of clicks either side of the suggestion),
-// not fitted to the range — a self-scaling track would always look the same
-// width and the whole point is watching the band shrink as a bag gets dialled
-// in. When the engine stops sending a range the band is simply absent and the
-// dot sits alone, which is the "locked in" state.
+// Every tick is one step of the user's own grinder, so the width of the dark
+// band is literally "how many clicks you might still have to move" — the unit
+// they physically turn, rather than an abstract bar. The centre tick is the
+// suggestion. Ticks inside the plausible range stay accented; the rest fade to
+// the border colour to give the ruler its extent without shouting.
+//
+// The scale is FIXED at one tick per step. A self-scaling widget would look
+// identical at every level of certainty, and the entire point is watching the
+// band narrow to a single tick as a bag gets dialled in.
 function recTrack(setting, range, grinder) {
   const step = Number(grinder.step) || 0.5;
-  const HALF = 8 * step;                       // window either side of the dot
-  const lo = setting - HALF, hi = setting + HALF;
-  const W = 240, H = 26, padX = 8, cy = H / 2;
-  const usable = W - padX * 2;
-  const x = (v) => padX + ((v - lo) / (hi - lo)) * usable;
+  const N = 17;                          // odd, so there is a true centre tick
+  const half = (N - 1) / 2;
+  const gap = 10, W = N * gap, H = 26, baseY = 21;
+  const cx = W / 2;
 
-  let band = "";
-  if (Array.isArray(range) && range.length === 2) {
-    const bx = Math.max(padX, x(range[0]));
-    const bw = Math.min(W - padX, x(range[1])) - bx;
-    if (bw > 0) {
-      band = `<rect x="${bx.toFixed(1)}" y="${cy - 5}" width="${bw.toFixed(1)}" height="10"
-                    rx="5" fill="var(--gw-accent)" opacity=".22"/>`;
-    }
+  // how many steps either side are plausible (0 once dialled in)
+  const reach = Array.isArray(range) && range.length === 2
+    ? Math.max(Math.abs(setting - range[0]), Math.abs(range[1] - setting)) / step
+    : 0;
+
+  let ticks = "";
+  for (let i = 0; i < N; i++) {
+    const k = i - half;
+    const x = (cx + k * gap).toFixed(1);
+    const centre = k === 0;
+    const inBand = Math.abs(k) <= reach + 0.001;
+    const h = centre ? 17 : (inBand ? 10 : 6);
+    const stroke = centre ? "var(--gw-accent)"
+      : (inBand ? "var(--gw-accent)" : "var(--pico-muted-border-color)");
+    const op = centre ? 1 : (inBand ? 0.45 : 1);
+    ticks += `<line x1="${x}" y1="${baseY - h}" x2="${x}" y2="${baseY}"
+                    stroke="${stroke}" stroke-opacity="${op}"
+                    stroke-width="${centre ? 3 : 1.6}" stroke-linecap="round"/>`;
   }
 
-  return `
-    <svg class="rec-track" viewBox="0 0 ${W} ${H}" role="img"
-         aria-label="${range ? `likely ${range[0]} to ${range[1]}` : "dialled in"}">
-      <defs>
-        <radialGradient id="recGloss" cx="50%" cy="24%" r="78%">
-          <stop offset="0%"   stop-color="#fff" stop-opacity=".34"/>
-          <stop offset="38%"  stop-color="#fff" stop-opacity=".16"/>
-          <stop offset="70%"  stop-color="#fff" stop-opacity=".05"/>
-          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <rect x="${padX}" y="${cy - 1}" width="${usable}" height="2" rx="1"
-            fill="var(--pico-muted-border-color)"/>
-      ${band}
-      <circle cx="${x(setting).toFixed(1)}" cy="${cy}" r="5" fill="var(--gw-accent)"/>
-      <circle cx="${x(setting).toFixed(1)}" cy="${cy}" r="5" fill="url(#recGloss)"/>
-    </svg>`;
+  const label = Array.isArray(range)
+    ? `likely ${range[0]} to ${range[1]}` : "dialled in";
+  return `<svg class="rec-track" viewBox="0 0 ${W} ${H}" role="img"
+               aria-label="${label}">${ticks}</svg>`;
 }
 
 async function renderBrew(coffeeId, method) {
@@ -964,8 +964,8 @@ async function renderBrew(coffeeId, method) {
     // ("how sure are you?"), and the track above answers it without words.
     const hasRange = Array.isArray(rec.range) && rec.range.length === 2;
     const detail = [
-      ["Likely range", hasRange ? `${rec.range[0]}–${rec.range[1]}` : "dialled in"],
       ["Confidence", rec.confidence],
+      ["Likely range", hasRange ? `${rec.range[0]}–${rec.range[1]}` : "dialled in"],
       ["Based on", rec.nudge || "coffee characteristics"],
       ...(rec.explanation || []).map((x) =>
         [x.label, `${x.delta > 0 ? "+" : ""}${x.delta}`]),

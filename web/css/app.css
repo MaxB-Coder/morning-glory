@@ -750,9 +750,9 @@ td.truncate .roaster { font-size: .78em; }
 .settings-head { align-items: baseline; }
 .badge-row { display: flex; gap: .4rem; flex: none; }
 
-/* Uncertainty track under the suggested number. Fixed height whether or not a
-   band is present, so nothing below it jumps when a bag becomes dialled in. */
-.rec-track { display: block; width: 15rem; max-width: 80%; height: 1.6rem; margin: .35rem auto 0; }
+/* Click ruler under the suggested number. Fixed height whatever the range, so
+   nothing below it jumps when a bag becomes dialled in. */
+.rec-track { display: block; width: 11rem; max-width: 70%; height: 1.7rem; margin: .4rem auto 0; }
 
 /* "why?" holds everything that used to be stacked in the open */
 .rec-why { margin-top: .5rem; }

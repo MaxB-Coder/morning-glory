@@ -326,7 +326,7 @@ def _local_dial_in(last, grinder, method, n_cm, n_m):  # noqa: C901
     nudges = {
         "gusher": f"{used} ran through → going much finer",
         "under":  f"{used} was sour → going finer",
-        "good":   f"{used} was good last time — sticking with it",
+        "good":   f"{used} was good last time",
         "over":   f"{used} was bitter → going coarser",
         "choked": f"{used} choked → going much coarser",
     }
