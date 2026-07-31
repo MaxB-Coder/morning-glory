@@ -752,3 +752,11 @@ td.truncate .roaster { font-size: .78em; }
    the badges sit on the heading's baseline rather than floating mid-cap. */
 .settings-head { align-items: baseline; }
 .badge-row { display: flex; gap: .4rem; flex: none; }
+
+/* The plausible window under the suggested number. Deliberately quiet: the
+   single number is still the answer, this is the hedge. The engine stops
+   sending a range once the bag is dialled in, so it removes itself. */
+.rec-range {
+  font-size: .8rem; color: var(--pico-muted-color);
+  margin-top: .1rem; letter-spacing: .01em;
+}

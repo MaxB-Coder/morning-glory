@@ -257,3 +257,103 @@ def test_run_is_json_roundtrip():
     out = R.run(json.dumps(_payload([_coffee()], [], 1, "v60")))
     parsed = json.loads(out)
     assert isinstance(parsed["setting"], (int, float))
+
+
+# --- similar-coffee prior ----------------------------------------------------
+
+def _sim_setup():
+    """Two light naturals from one roaster that landed fine, two darks that
+    landed coarse. A new bag should start near its own kind, not between them."""
+    grinder = {"min": 0, "max": 40, "step": 0.5,
+               "calibration": {"method": "espresso", "setting": 12}}
+    coffees = [
+        {"id": "1", "roast": "light", "process": "natural", "roaster": "Kin"},
+        {"id": "2", "roast": "light", "process": "natural", "roaster": "Kin"},
+        {"id": "3", "roast": "dark", "process": "washed", "roaster": "Other"},
+        {"id": "4", "roast": "dark", "process": "washed", "roaster": "Other"},
+    ]
+    brews = [
+        {"coffeeId": "1", "method": "espresso", "grindSetting": 9.0,
+         "verdict": "good", "shotTimeS": 27, "createdAt": "2026-01-01"},
+        {"coffeeId": "2", "method": "espresso", "grindSetting": 9.5,
+         "verdict": "good", "shotTimeS": 27, "createdAt": "2026-01-02"},
+        {"coffeeId": "3", "method": "espresso", "grindSetting": 13.0,
+         "verdict": "good", "shotTimeS": 27, "createdAt": "2026-01-03"},
+        {"coffeeId": "4", "method": "espresso", "grindSetting": 13.5,
+         "verdict": "good", "shotTimeS": 27, "createdAt": "2026-01-04"},
+    ]
+    return grinder, coffees, brews
+
+
+def _ask(grinder, coffees, brews, new_coffee):
+    payload = {"grinder": grinder, "coffees": coffees + [new_coffee],
+               "brews": brews, "request": {"coffeeId": "99", "method": "espresso"}}
+    return R.recommend(payload)
+
+
+def test_new_bag_starts_near_similar_coffees_not_between_them():
+    grinder, coffees, brews = _sim_setup()
+    light = _ask(grinder, coffees, brews,
+                 {"id": "99", "roast": "light", "process": "natural", "roaster": "Kin"})
+    dark = _ask(grinder, coffees, brews,
+                {"id": "99", "roast": "dark", "process": "washed", "roaster": "Other"})
+    # each lands on its own cluster, and they stay well apart
+    assert light["setting"] < 11.0, light
+    assert dark["setting"] > 11.5, dark
+    assert dark["setting"] - light["setting"] >= 2.0
+
+
+def test_similar_prior_is_reported_and_ranged():
+    grinder, coffees, brews = _sim_setup()
+    r = _ask(grinder, coffees, brews,
+             {"id": "99", "roast": "light", "process": "natural", "roaster": "Kin"})
+    assert r["nudge"], "should say where the starting point came from"
+    lo, hi = r["range"]
+    assert lo <= r["setting"] <= hi
+
+
+def test_cold_start_has_a_wider_range_than_a_similar_backed_guess():
+    grinder, coffees, brews = _sim_setup()
+    new = {"id": "99", "roast": "light", "process": "natural", "roaster": "Kin"}
+    warm = _ask(grinder, coffees, brews, new)
+    cold = R.recommend({"grinder": grinder, "coffees": [new], "brews": [],
+                      "request": {"coffeeId": "99", "method": "espresso"}})
+    span = lambda r: r["range"][1] - r["range"][0]
+    assert span(cold) > span(warm), (cold["range"], warm["range"])
+
+
+def test_decaf_is_not_treated_as_similar_to_regular():
+    grinder, coffees, brews = _sim_setup()
+    reg = _ask(grinder, coffees, brews,
+               {"id": "99", "roast": "light", "process": "natural", "roaster": "Kin"})
+    dec = _ask(grinder, coffees, brews,
+               {"id": "99", "roast": "light", "process": "natural",
+                "roaster": "Kin", "decaf": True})
+    assert dec["setting"] != reg["setting"]
+
+
+# --- espresso is on target across a WINDOW, not at an instant -----------------
+
+def test_shot_time_anywhere_in_the_window_counts_as_on_target():
+    assert R._shot_time_error(25) == 0.0
+    assert R._shot_time_error(27) == 0.0
+    assert R._shot_time_error(30) == 0.0
+    assert R._shot_time_error(20) > 0.0
+    assert R._shot_time_error(40) > R._shot_time_error(33)
+
+
+def test_range_disappears_once_the_bag_is_dialled_in():
+    grinder = {"min": 0, "max": 40, "step": 0.5}
+    coffee = {"id": "9", "roast": "medium", "process": "washed"}
+
+    def ask(brews):
+        return R.recommend({"grinder": grinder, "coffees": [coffee], "brews": brews,
+                          "request": {"coffeeId": "9", "method": "espresso"}})
+
+    mk = lambda i, v, t: {"coffeeId": "9", "method": "espresso", "grindSetting": 9.0,
+                          "verdict": v, "shotTimeS": t, "createdAt": f"2026-02-{i:02d}"}
+
+    assert ask([mk(1, "over", 22)])["range"] is not None      # still hunting
+    two_good = ask([mk(1, "good", 26), mk(2, "good", 27)])
+    assert two_good["range"] is None                          # dialled in
+    assert two_good["setting"] == 9.0                         # and stays put

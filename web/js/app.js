@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.6.1";
+export const APP_VERSION = "1.7.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -920,6 +920,8 @@ async function renderBrew(coffeeId, method) {
     recEl.replaceChildren(el(`
       <div>
         <div class="rec-number">${rec.setting}</div>
+        ${Array.isArray(rec.range) && rec.range.length === 2
+          ? `<div class="rec-range">likely ${rec.range[0]}–${rec.range[1]}</div>` : ""}
         <div class="conf ${rec.confidence}">${rec.confidence} confidence</div>
         ${rec.nudge ? `<div class="nudge">${esc(rec.nudge)}</div>` : ""}
         ${exp ? `<details><summary class="explain">why?</summary><p class="explain">${esc(exp)}</p></details>` : ""}
