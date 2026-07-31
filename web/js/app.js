@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.5.23";
+export const APP_VERSION = "1.6.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -43,7 +43,7 @@ function clearFilters() {
 // "light OR medium roast, AND washed process".
 function applyFilters(list) {
   return list.filter((c) =>
-    (!starredOnly || c.starred)
+    (!starredOnly || isStarred(c.id))
     && (!FILTERS.decaf || c.decaf)
     && (!FILTERS.roast.length || FILTERS.roast.includes(c.roast))
     && (!FILTERS.process.length || FILTERS.process.includes(c.process))
@@ -55,6 +55,46 @@ function applyFilters(list) {
 // preference. Syncing it would mean two people silently reshuffling each
 // other's list, and it would need a conflict rule for a purely cosmetic value.
 const ORDER_KEY = "mg.coffeeOrder";
+
+// Favourites are per person, not per household — same reasoning as the manual
+// order. They used to be a `starred` field on the shared coffee record, so one
+// of you starring a bag starred it on the other's phone too.
+const STAR_KEY = "mg.starred";
+let starredIds = null;
+
+function loadStars(all) {
+  if (starredIds) return starredIds;   // already loaded this session
+  let raw = null;
+  try { raw = localStorage.getItem(STAR_KEY); } catch {}
+  if (raw == null) {
+    // First run since favourites went local: seed from whatever was already
+    // starred on the shared records, so nobody loses their picks. Read only —
+    // the old field is left alone rather than migrated away.
+    starredIds = new Set((all || []).filter((c) => c.starred).map((c) => c.id));
+    // Only commit a non-empty seed. On a fresh install the coffees haven't
+    // synced down yet, and writing an empty set now would permanently claim
+    // "seeded" before there was anything to seed from.
+    if (starredIds.size) saveStars(); else starredIds = null;
+  } else {
+    try {
+      const arr = JSON.parse(raw);
+      starredIds = new Set(Array.isArray(arr) ? arr.filter((x) => typeof x === "string") : []);
+    } catch { starredIds = new Set(); }
+  }
+  return starredIds;
+}
+function saveStars() {
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starredIds])); } catch (e) {
+    console.warn("[stars]", e);
+  }
+}
+const isStarred = (id) => !!starredIds && starredIds.has(id);
+function toggleStar(id) {
+  if (!starredIds) starredIds = new Set();
+  if (starredIds.has(id)) starredIds.delete(id); else starredIds.add(id);
+  saveStars();
+  return starredIds.has(id);
+}
 
 function loadOrder() {
   try {
@@ -271,6 +311,7 @@ async function renderSetup() {
 // --- home -------------------------------------------------------------------
 async function renderHome() {
   const all = sortByOrder(await db.allCoffees());
+  loadStars(all);
   const coffees = applyFilters(all);
 
   const cards = coffees.map((c) => `
@@ -284,7 +325,7 @@ async function renderHome() {
             </div>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
-          ${c.starred ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
+          ${isStarred(c.id) ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
           <span class="chev">${chevSvg}</span>
         </article>`).join("");
 
@@ -482,6 +523,7 @@ function resizeImage(file, maxSide = 700, quality = 0.65) {
 async function renderCoffee(id) {
   const c = await db.getCoffee(id);
   if (!c) { location.hash = "#/"; return; }
+  loadStars();                       // needed before the star renders below
   const brews = (await db.brewsForCoffee(id)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const g = await db.getGrinder();
 
@@ -515,9 +557,9 @@ async function renderCoffee(id) {
       <p class="subtitle-row">
         <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
         <button type="button" id="star-toggle" class="star-btn"
-                aria-pressed="${c.starred ? "true" : "false"}"
-                title="${c.starred ? "Starred" : "Star this coffee"}"
-          >${starSvg(!!c.starred)}</button>
+                aria-pressed="${isStarred(c.id) ? "true" : "false"}"
+                title="${isStarred(c.id) ? "Starred" : "Star this coffee"}"
+          >${starSvg(isStarred(c.id))}</button>
       </p>
 
       <section class="step method-step">
@@ -592,14 +634,13 @@ async function renderCoffee(id) {
     location.hash = "#/";
   });
 
-  // star toggle — optimistic: flip the glyph immediately, then persist
+  // star toggle — local to this device, so it never touches the shared record
   const star = view.querySelector("#star-toggle");
-  star.addEventListener("click", async () => {
-    const nowStarred = !c.starred;
+  star.addEventListener("click", () => {
+    const nowStarred = toggleStar(c.id);
     star.innerHTML = starSvg(nowStarred);
     star.setAttribute("aria-pressed", String(nowStarred));
-    await db.updateCoffee({ ...c, starred: nowStarred ? 1 : 0 });
-    c.starred = nowStarred ? 1 : 0;
+    star.title = nowStarred ? "Starred" : "Star this coffee";
   });
 
   // photo: thumbnail opens the lightbox; camera button adds one
@@ -1593,7 +1634,7 @@ function openFilterSheet(all) {
   const roasts = ["light", "medium", "dark"].filter((r) => all.some((c) => c.roast === r));
   const procs = ["washed", "honey", "natural"].filter((x) => all.some((c) => c.process === x));
   const anyDecaf = all.some((c) => c.decaf);
-  const anyStar = all.some((c) => c.starred);
+  const anyStar = all.length > 0;
 
   const pill = (facet, value, label, on) =>
     `<button type="button" class="toggle-pill" data-facet="${facet}"
