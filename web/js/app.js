@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.7.3";
+export const APP_VERSION = "1.7.4";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -817,46 +817,42 @@ function openPhotoLightbox(coffee) {
 
 // The suggestion's uncertainty, drawn as a ruler of real grinder clicks.
 //
-// Every tick is one step of the user's own grinder, so the width of the dark
-// band is literally "how many clicks you might still have to move" — the unit
-// they physically turn, rather than an abstract bar. The centre tick is the
-// suggestion. Ticks inside the plausible range stay accented; the rest fade to
-// the border colour to give the ruler its extent without shouting.
+// Every tick is one step of the user's own grinder, so the number of ticks IS
+// "how many clicks you might still have to move" — the unit they physically
+// turn. The centre tick is the suggestion.
 //
-// The scale is FIXED at one tick per step. A self-scaling widget would look
-// identical at every level of certainty, and the entire point is watching the
-// band narrow to a single tick as a bag gets dialled in.
+// Only the plausible clicks are drawn. An earlier version padded the ruler out
+// with faded out-of-range ticks to keep a constant width, which buried the
+// signal in decoration and made every range look alike. The SVG is now exactly
+// as wide as the range, so a bag getting dialled in visibly shrinks the ruler
+// down to a single tick.
+//
+// The two sides are measured independently: rounding a range to whole steps
+// often lands asymmetrically (say 9.5-11.0 around 10.0), and showing that
+// honestly is better than averaging it away.
 function recTrack(setting, range, grinder) {
   const step = Number(grinder.step) || 0.5;
-  const N = 17;                          // odd, so there is a true centre tick
-  const half = (N - 1) / 2;
-  const gap = 10, W = N * gap, H = 26, baseY = 21;
-  const cx = W / 2;
+  const has = Array.isArray(range) && range.length === 2;
+  const left = has ? Math.max(0, Math.round((setting - range[0]) / step)) : 0;
+  const right = has ? Math.max(0, Math.round((range[1] - setting) / step)) : 0;
 
-  // how many steps either side are plausible (0 once dialled in)
-  const reach = Array.isArray(range) && range.length === 2
-    ? Math.max(Math.abs(setting - range[0]), Math.abs(range[1] - setting)) / step
-    : 0;
+  const gap = 10, H = 26, baseY = 21;
+  const W = (left + right) * gap + gap;          // one gap of padding overall
+  const cx = left * gap + gap / 2;
 
   let ticks = "";
-  for (let i = 0; i < N; i++) {
-    const k = i - half;
+  for (let k = -left; k <= right; k++) {
     const x = (cx + k * gap).toFixed(1);
     const centre = k === 0;
-    const inBand = Math.abs(k) <= reach + 0.001;
-    const h = centre ? 17 : (inBand ? 10 : 6);
-    const stroke = centre ? "var(--gw-accent)"
-      : (inBand ? "var(--gw-accent)" : "var(--pico-muted-border-color)");
-    const op = centre ? 1 : (inBand ? 0.45 : 1);
+    const h = centre ? 17 : 10;
     ticks += `<line x1="${x}" y1="${baseY - h}" x2="${x}" y2="${baseY}"
-                    stroke="${stroke}" stroke-opacity="${op}"
+                    stroke="var(--gw-accent)" stroke-opacity="${centre ? 1 : 0.4}"
                     stroke-width="${centre ? 3 : 1.6}" stroke-linecap="round"/>`;
   }
 
-  const label = Array.isArray(range)
-    ? `likely ${range[0]} to ${range[1]}` : "dialled in";
   return `<svg class="rec-track" viewBox="0 0 ${W} ${H}" role="img"
-               aria-label="${label}">${ticks}</svg>`;
+               aria-label="${has ? `likely ${range[0]} to ${range[1]}` : "dialled in"}"
+               style="width:${(W / H * 1.7).toFixed(2)}rem">${ticks}</svg>`;
 }
 
 async function renderBrew(coffeeId, method) {

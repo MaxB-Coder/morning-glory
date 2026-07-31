@@ -752,7 +752,10 @@ td.truncate .roaster { font-size: .78em; }
 
 /* Click ruler under the suggested number. Fixed height whatever the range, so
    nothing below it jumps when a bag becomes dialled in. */
-.rec-track { display: block; width: 11rem; max-width: 70%; height: 1.7rem; margin: .4rem auto 0; }
+/* Click ruler under the suggested number. Width is set inline per render (it
+   is exactly as wide as the range); only the height is fixed here, so the rows
+   below never shift as the ruler shrinks. */
+.rec-track { display: block; height: 1.7rem; max-width: 90%; margin: .4rem auto 0; }
 
 /* "why?" holds everything that used to be stacked in the open */
 .rec-why { margin-top: .5rem; }
