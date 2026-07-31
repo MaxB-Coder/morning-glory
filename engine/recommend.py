@@ -69,11 +69,17 @@ ESPRESSO_TARGET_TIME = 27.5          # band centre, used only for scaling
 SIMILAR_MIN_WEIGHT = 1.2
 SIMILAR_SHRINK_K = 0.6
 
-# Uncertainty of the suggestion, in normalised dial units, used to draw the
-# range. Cold start is deliberately wide: a first guess at an unknown bag really
-# is worth about +/- 3 clicks, and saying so is more useful than false precision.
-SIGMA_COLD = 0.045
-SIGMA_SIMILAR_FLOOR = 0.018
+# --- uncertainty -------------------------------------------------------------
+# The range is derived, not declared. Three things feed it:
+#   1. how noisy this person's own brewing is       (residual variance)
+#   2. how far this bag sits from anything logged   (ridge leverage)
+#   3. how much similar coffees disagreed           (weighted spread / sqrt n)
+# SIGMA_PRIOR is only the starting belief about (1) before there is any real
+# data to measure it from — roughly +/- 3 clicks on a typical dial.
+SIGMA_PRIOR = 0.045
+RESID_PRIOR_K = 4.0        # pseudo-observations of the prior noise level
+SIGMA_FLOOR_STEPS = 0.75   # never claim finer than ~1 step of the grinder
+SIGMA_CAP = 0.11           # and never sprawl across the whole dial
 
 
 def _shot_time_error(shot_time) -> float:
@@ -220,7 +226,7 @@ def _similarity(a: dict, b: dict) -> float:
 def _similar_prior(coffee, brews, grinder, method):
     """Weighted mean target setting from past brews of *similar* coffees.
 
-    Returns (y, weight, spread) in normalised dial units, or None.
+    Returns (y, weight, spread, n_eff) in normalised dial units, or None.
     """
     step = float(grinder["step"])
     span = float(grinder["max"]) - float(grinder["min"])
@@ -252,7 +258,46 @@ def _similar_prior(coffee, brews, grinder, method):
 
     mean = sum(p * w for p, w in zip(pts, wts)) / total
     var = sum(w * (p - mean) ** 2 for p, w in zip(pts, wts)) / total
-    return mean, total, var ** 0.5
+    # Kish effective sample size: five near-identical bags count for more than
+    # two, but five where one dominates the weighting do not.
+    n_eff = (total ** 2) / sum(w * w for w in wts)
+    return mean, total, var ** 0.5, n_eff
+
+
+def _real_residual_var(beta, grinder, real_brews):
+    """Weighted variance of the model's error on THIS user's real brews.
+
+    Synthetic rows are excluded on purpose: they are our own invention, and
+    fitting them well says nothing about how well the model predicts reality.
+    Shrunk toward SIGMA_PRIOR so a couple of lucky brews can't collapse the
+    range to nothing.
+    """
+    step = float(grinder["step"])
+    span = float(grinder["max"]) - float(grinder["min"])
+    delta = 2.0 * step / span if span > 0 else 0.05
+
+    sq, wsum = 0.0, 0.0
+    for b in real_brews:
+        x = F.encode(b["_coffee"], b["method"], brew=b)
+        step_mult = VERDICT_STEPS.get(b.get("verdict", "good"), 0.0)
+        y_t = max(0.0, min(1.0,
+                  F.normalize_setting(b["grindSetting"], grinder) + step_mult * delta))
+        wt = REAL_WEIGHT_GOOD if step_mult == 0.0 else REAL_WEIGHT_ADJUSTED
+        sq += wt * (y_t - ridge.predict(beta, x)) ** 2
+        wsum += wt
+
+    prior = SIGMA_PRIOR ** 2
+    if wsum <= 0:
+        return prior
+    n_eff = wsum / REAL_WEIGHT_GOOD          # in "good brews" units
+    observed = sq / wsum
+    return (n_eff * observed + RESID_PRIOR_K * prior) / (n_eff + RESID_PRIOR_K)
+
+
+def _clamp_sigma(sigma, grinder):
+    span = float(grinder["max"]) - float(grinder["min"])
+    floor = SIGMA_FLOOR_STEPS * float(grinder["step"]) / span if span > 0 else 0.01
+    return max(floor, min(SIGMA_CAP, sigma))
 
 
 def _per_coffee_bias(beta, grinder, coffee_brews):
@@ -337,38 +382,51 @@ def _local_dial_in(last, grinder, method, n_cm, n_m):  # noqa: C901
     # and, for espresso, pulled inside the 25-30s window — there is nothing left
     # to hedge about, so the range disappears entirely.
     span = float(grinder["max"]) - float(grinder["min"])
+    unit = float(grinder["step"]) / span if span > 0 else 0.0125
     on_target = verdict == "good" and (
         method != "espresso"
         or not last.get("shotTimeS")
         or _shot_time_error(last["shotTimeS"]) == 0.0
     )
+
+    # Asymmetric on purpose. A correction tells you which way the answer lies;
+    # the open question is only whether we have moved far ENOUGH, so the window
+    # opens in the direction of travel and stays tight behind it.
     if on_target and n_cm >= 2:
-        sigma = None
+        lo_s = hi_s = None
     elif on_target:
-        sigma = (1.0 * float(grinder["step"])) / span if span else None
+        lo_s = hi_s = unit
+    elif verdict in ("under", "gusher"):      # went finer
+        lo_s, hi_s = 2.0 * unit, 0.5 * unit
+    elif verdict in ("over", "choked"):       # went coarser
+        lo_s, hi_s = 0.5 * unit, 2.0 * unit
     else:
-        sigma = (2.0 * float(grinder["step"])) / span if span else None
+        lo_s = hi_s = 1.5 * unit
 
     return {
         "setting": float(setting),
-        "range": _range(y, sigma, grinder),
+        "range": _range(y, lo_s, hi_s, grinder),
         "confidence": _confidence(n_cm, n_m),
         "explanation": [],
         "nudge": nudges.get(verdict, nudges["good"]),
     }
 
 
-def _range(y, sigma, grinder):
+def _range(y, lo_sigma, hi_sigma, grinder):
     """A plausible window around the suggestion, in real dial units.
 
-    Deliberately returns None once it would be noise: the range exists to say
-    "this is a starting guess, expect to move" and should disappear as soon as
-    that stops being true.
+    Takes the two half-widths separately: evidence is often one-sided. After a
+    choked shot you know the answer is at or coarser than the new suggestion,
+    so a symmetric window would claim a finer setting is equally likely when it
+    plainly isn't.
+
+    Returns None once the window would be noise — the range exists to say "this
+    is a guess, expect to move", and should disappear when that stops being true.
     """
-    if sigma is None or sigma <= 0:
+    if not lo_sigma and not hi_sigma:
         return None
-    lo = F.round_to_step(F.denormalize_setting(max(0.0, y - sigma), grinder), grinder)
-    hi = F.round_to_step(F.denormalize_setting(min(1.0, y + sigma), grinder), grinder)
+    lo = F.round_to_step(F.denormalize_setting(max(0.0, y - (lo_sigma or 0)), grinder), grinder)
+    hi = F.round_to_step(F.denormalize_setting(min(1.0, y + (hi_sigma or 0)), grinder), grinder)
     if hi - lo < float(grinder["step"]):
         return None
     return [float(lo), float(hi)]
@@ -448,7 +506,7 @@ def recommend(payload: dict) -> dict:
         return _local_dial_in(same[-1], grinder, method, n_cm, n_m)
 
     X, y, w = _build_training_set(grinder, coffee, brews, method)
-    beta = ridge.fit(X, y, w)
+    beta, A_inv = ridge.fit_cov(X, y, w)
 
     bias = _per_coffee_bias(beta, grinder, coffee_brews)
 
@@ -470,24 +528,39 @@ def recommend(payload: dict) -> dict:
     # knows coffee science; this knows YOUR machine. As soon as there is real
     # evidence it should dominate, because the alternative is a generic anchor
     # that lands on the same number for every new bag.
+    # --- uncertainty of the model's own answer -----------------------------
+    # Textbook predictive variance for a new observation: resid_var * (1 + h),
+    # where h is the leverage. Both halves earn their keep — resid_var is how
+    # noisy this person's brewing actually is (measured, not assumed), and h
+    # grows when the requested bag sits outside the cloud of what's been logged.
+    resid_var = _real_residual_var(beta, grinder, brews)
+    h = ridge.leverage(A_inv, x_req)
+    sigma_model = (resid_var * (1.0 + max(0.0, h))) ** 0.5
+
     sim = _similar_prior(coffee, brews, grinder, method)
     nudge = None
     if sim is not None:
-        y_sim, weight, spread = sim
+        y_sim, weight, spread, n_eff = sim
         share = weight / (weight + SIMILAR_SHRINK_K)
         y_hat = (1.0 - share) * y_model + share * y_sim
-        sigma = max(SIGMA_SIMILAR_FLOOR, spread) * (1.0 - 0.4 * share)
+        # standard error of the similar-coffee mean, not the raw spread: five
+        # bags agreeing within a click is far stronger evidence than two.
+        sigma_sim = (spread / max(1.0, n_eff) ** 0.5) if spread else 0.0
+        # the two estimates are near enough independent to add in quadrature
+        sigma = ((1.0 - share) ** 2 * sigma_model ** 2 + share ** 2 * sigma_sim ** 2) ** 0.5
         nudge = "starting from similar coffees you've brewed"
     else:
         y_hat = y_model
-        sigma = SIGMA_COLD
+        sigma = sigma_model
+
+    sigma = _clamp_sigma(sigma, grinder)
 
     y_hat = max(0.0, min(1.0, y_hat))
     setting = F.round_to_step(F.denormalize_setting(y_hat, grinder), grinder)
 
     return {
         "setting": float(setting),
-        "range": _range(y_hat, sigma, grinder),
+        "range": _range(y_hat, sigma, sigma, grinder),
         "confidence": _confidence(n_cm, n_m),
         "explanation": _explanation(beta, x_req, grinder),
         "nudge": nudge,

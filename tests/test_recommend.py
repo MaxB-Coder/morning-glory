@@ -357,3 +357,83 @@ def test_range_disappears_once_the_bag_is_dialled_in():
     two_good = ask([mk(1, "good", 26), mk(2, "good", 27)])
     assert two_good["range"] is None                          # dialled in
     assert two_good["setting"] == 9.0                         # and stays put
+
+
+# --- the range is derived from evidence, not declared ------------------------
+
+_G = {"min": 0, "max": 40, "step": 0.5,
+      "calibration": {"method": "espresso", "setting": 12}}
+
+
+def _c(i, roast="light", process="natural", roaster="Kin", **kw):
+    base = {"id": str(i), "roast": roast, "process": process, "roaster": roaster,
+            "decaf": False, "roastDate": None, "altitudeMasl": None}
+    base.update(kw)
+    return base
+
+
+def _width(res):
+    return None if not res["range"] else res["range"][1] - res["range"][0]
+
+
+def _ask_new(coffees, brews, new):
+    return R.recommend({"grinder": _G, "coffees": coffees + [new], "brews": brews,
+                        "request": {"coffeeId": "99", "method": "espresso"}})
+
+
+def test_range_narrows_when_similar_coffees_agree():
+    hist = [_c(i) for i in range(1, 6)]
+    agree = [{"coffeeId": str(i), "method": "espresso", "grindSetting": 9.0 + 0.5 * (i % 2),
+              "verdict": "good", "shotTimeS": 27, "createdAt": f"2026-01-0{i}"}
+             for i in range(1, 6)]
+    scatter = [{"coffeeId": str(i), "method": "espresso",
+                "grindSetting": [7, 9, 11, 13, 15][i - 1],
+                "verdict": "good", "shotTimeS": 27, "createdAt": f"2026-01-0{i}"}
+               for i in range(1, 6)]
+
+    tight = _ask_new(hist, agree, _c(99))
+    loose = _ask_new(hist, scatter, _c(99))
+    assert _width(tight) < _width(loose), (tight["range"], loose["range"])
+
+
+def test_range_widens_for_a_bag_unlike_anything_logged():
+    hist = [_c(i) for i in range(1, 6)]
+    brews = [{"coffeeId": str(i), "method": "espresso", "grindSetting": 9.0,
+              "verdict": "good", "shotTimeS": 27, "createdAt": f"2026-01-0{i}"}
+             for i in range(1, 6)]
+
+    familiar = _ask_new(hist, brews, _c(99))
+    strange = _ask_new(hist, brews,
+                       _c(99, roast="dark", process="honey", roaster="Nobody",
+                          altitudeMasl=1900, decaf=True))
+    assert _width(strange) > _width(familiar), (strange["range"], familiar["range"])
+
+
+def test_range_never_claims_finer_than_the_grinder_can_turn():
+    hist = [_c(i) for i in range(1, 9)]
+    brews = [{"coffeeId": str(i), "method": "espresso", "grindSetting": 9.0,
+              "verdict": "good", "shotTimeS": 27, "createdAt": f"2026-01-0{i}"}
+             for i in range(1, 9)]
+    r = _ask_new(hist, brews, _c(99))
+    if r["range"]:
+        assert _width(r) >= _G["step"]
+
+
+def _dial_in(verdict, shot_time):
+    brews = [{"coffeeId": "99", "method": "espresso", "grindSetting": 10.0,
+              "verdict": verdict, "shotTimeS": shot_time, "createdAt": "2026-02-01"}]
+    return R.recommend({"grinder": _G, "coffees": [_c(99)], "brews": brews,
+                        "request": {"coffeeId": "99", "method": "espresso"}})
+
+
+def test_range_leans_the_way_the_correction_is_going():
+    """A verdict tells you the direction; the only open question is whether the
+    step went far enough. So the window should open that way, not both ways."""
+    bitter = _dial_in("over", 34)      # too fine -> going coarser
+    sour = _dial_in("under", 19)       # too coarse -> going finer
+
+    lo, hi = bitter["range"]
+    assert hi - bitter["setting"] > bitter["setting"] - lo, bitter["range"]
+
+    lo, hi = sour["range"]
+    assert sour["setting"] - lo > hi - sour["setting"], sour["range"]
