@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.6.0";
+export const APP_VERSION = "1.6.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -166,9 +166,6 @@ async function main() {
   // Every navigation goes through safeRoute, not route: previously only the
   // FIRST render was wrapped, so a later failure left a blank screen with the
   // error only in a console you can't open on a phone.
-  // Arm the motion prompt now, so the user's first touch anywhere grants it.
-  ensureMotionPermission();
-
   window.addEventListener("hashchange", safeRoute);
   showApp();
   await safeRoute();
@@ -1198,12 +1195,24 @@ async function renderSyncPanel() {
 
 // --- motion permission ------------------------------------------------------
 // iOS 13+ refuses DeviceOrientation without an explicit grant, and only prompts
-// from inside a user gesture — calling it on load throws and shows nothing at
-// all. So this is armed during boot instead: the FIRST touch anywhere in the
-// app triggers the prompt, which normally happens long before you reach the
-// Sharing panel, and the answer is remembered so it is asked at most once.
+// from inside a user gesture.
+//
+// The grant CANNOT be made to stick: Safari re-prompts on every page load, and
+// storing "granted" doesn't help because it is the requestPermission() call
+// itself that raises the dialog. Arming this at boot therefore meant a system
+// prompt every single launch — for a decorative shimmer. So it is now asked for
+// only when someone deliberately taps the invite code, and the stored "denied"
+// stops it being offered again at all.
 const MOTION_KEY = "mg.motionPermission";
 let motionPromise = null;
+
+const needsNoPermission = () => {
+  const D = window.DeviceOrientationEvent;
+  return !D || typeof D.requestPermission !== "function";
+};
+const motionDenied = () => {
+  try { return localStorage.getItem(MOTION_KEY) === "denied"; } catch { return false; }
+};
 
 function ensureMotionPermission() {
   if (motionPromise) return motionPromise;
@@ -1259,8 +1268,8 @@ function ensureMotionPermission() {
 // Tilt-driven: the foil and the specular streak are positioned from
 // --holo-x / --holo-y and nothing moves unless the phone does.
 //
-// The iOS permission gate lives in ensureMotionPermission() above, armed at
-// boot — this only has to deal with the sensor itself. Two things it still owns:
+// The iOS permission gate lives in ensureMotionPermission() above, asked for
+// on tap — this only has to deal with the sensor itself. Two things it still owns:
 //   * detaching the previous listener. The Sharing panel re-renders on every
 //     sync tick, and without this they stack up.
 //   * a watchdog. Permission can be granted and still deliver nothing (iOS has
@@ -1338,17 +1347,29 @@ function initHolo(node) {
 
   if (reduced) return;
 
-  // The permission gate was armed at boot, so by now it is usually already
-  // settled — no tap on the code required. It can still be waiting on the very
-  // first interaction of a fresh load, though, so don't sit on a dead-looking
-  // code in the meantime: shimmer, and swap to tilt the moment it lands.
-  const waiting = setTimeout(idle, 1200);
-  ensureMotionPermission().then((ok) => {
-    clearTimeout(waiting);
-    if (!ok) { idle(); return; }
-    // the panel may have been re-rendered while we waited
-    if (node.isConnected) attach();
-  });
+  // Default state is the shimmer — it looks like foil without asking for
+  // anything. Tilt is opt-in, per launch, by tapping the code.
+  if (motionPromise || needsNoPermission()) {
+    // already settled this session (or no gate on this platform)
+    ensureMotionPermission().then((ok) => {
+      if (!ok) { idle(); return; }
+      if (node.isConnected) attach();
+    });
+    return;
+  }
+
+  idle();
+  if (motionDenied()) return;                 // asked before, said no
+  node.title = "Tap for tilt";
+  node.classList.add("holo-tappable");
+  node.addEventListener("click", () => {
+    ensureMotionPermission().then((ok) => {
+      if (!ok || !node.isConnected) return;
+      node.classList.remove("holo-tappable", "holo-idle");
+      node.removeAttribute("title");
+      attach();
+    });
+  }, { once: true });
 }
 
 // Compare the running build against version.json on the server (fetched with

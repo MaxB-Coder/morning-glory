@@ -490,6 +490,7 @@ table.compact th, table.compact td { padding: .4rem .35rem; }
   -webkit-text-fill-color: transparent;
 }
 /* bloom: a blurred copy of the same foil sitting behind the text */
+.invite-code.holo-tappable { cursor: pointer; }
 .invite-code::before {
   content: attr(data-code);
   position: absolute; left: 0; top: 0; z-index: -1;
