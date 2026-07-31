@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.7.1";
+export const APP_VERSION = "1.7.2";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -903,14 +903,12 @@ async function renderBrew(coffeeId, method) {
         <label>Grind setting
           <input id="grind" type="number" step="${g.step}" min="${g.min}" max="${g.max}"
                  inputmode="decimal" value="">
-          <small class="explain">${g.min}–${g.max} on your ${esc(g.name)}</small>
         </label>
         <details id="extras"></details>
       </section>
 
       <section class="step">
         <h3 class="step-title"><span class="step-num">3</span> How did it taste?</h3>
-        <p><small>Tap one — this trains the recommendation.</small></p>
         ${method === "espresso" ? `
         <div class="verdict-row five">
           <button class="v-gusher" data-v="gusher">💨<br>Ran<br>through</button>
@@ -1030,16 +1028,14 @@ function renderExtras(method, last = null) {
         <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"${dose}></label>
         <label>Yield (g) <input id="yieldG" type="number" step="any" inputmode="decimal"></label>
         <label>Time (s) <input id="shotTimeS" type="number" step="any" inputmode="decimal"></label>
-      </div>
-      ${dose ? '<p class="explain">Dose carried over from your last shot.</p>' : ""}`;
+      </div>`;
   } else {
     d.innerHTML = `<summary>Brew detail (optional)</summary>
       <div class="grid">
         <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"${dose}></label>
         <label>Time (s) <input id="brewTimeS" type="number" step="any" inputmode="decimal"></label>
         <label>Water (°C) <input id="waterTempC" type="number" step="any" inputmode="decimal"${temp}></label>
-      </div>
-      ${dose || temp ? '<p class="explain">Carried over from your last brew.</p>' : ""}`;
+      </div>`;
   }
 }
 function collectExtras(method) {
