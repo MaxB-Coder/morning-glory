@@ -171,9 +171,6 @@ main > * { max-width: 34rem; margin-left: auto; margin-right: auto; }
   color: var(--gw-accent);
 }
 .rec-wrap { text-align: center; margin: 1rem 0; }
-.conf { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
-.conf.low { color: #b71c1c; } .conf.med { color: #ef6c00; } .conf.high { color: #2e7d32; }
-.nudge { font-size: .85rem; color: var(--pico-muted-color); margin-top: .3rem; }
 
 /* Step sections give the brew screen an obvious top-to-bottom order */
 .step { margin: 1.25rem 0; }
@@ -753,10 +750,12 @@ td.truncate .roaster { font-size: .78em; }
 .settings-head { align-items: baseline; }
 .badge-row { display: flex; gap: .4rem; flex: none; }
 
-/* The plausible window under the suggested number. Deliberately quiet: the
-   single number is still the answer, this is the hedge. The engine stops
-   sending a range once the bag is dialled in, so it removes itself. */
-.rec-range {
-  font-size: .8rem; color: var(--pico-muted-color);
-  margin-top: .1rem; letter-spacing: .01em;
-}
+/* Uncertainty track under the suggested number. Fixed height whether or not a
+   band is present, so nothing below it jumps when a bag becomes dialled in. */
+.rec-track { display: block; width: 15rem; max-width: 80%; height: 1.6rem; margin: .35rem auto 0; }
+
+/* "why?" holds everything that used to be stacked in the open */
+.rec-why { margin-top: .5rem; }
+.rec-why[open] { text-align: left; }
+.rec-why summary { cursor: pointer; }
+.rec-why .detail-table { max-width: 20rem; margin: .5rem auto 0; }

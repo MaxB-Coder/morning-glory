@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.7.0";
+export const APP_VERSION = "1.7.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -814,6 +814,51 @@ function openPhotoLightbox(coffee) {
 }
 
 // --- brew (the core screen) -------------------------------------------------
+
+// The suggestion's uncertainty, drawn rather than written.
+//
+// The scale is FIXED (a set number of clicks either side of the suggestion),
+// not fitted to the range — a self-scaling track would always look the same
+// width and the whole point is watching the band shrink as a bag gets dialled
+// in. When the engine stops sending a range the band is simply absent and the
+// dot sits alone, which is the "locked in" state.
+function recTrack(setting, range, grinder) {
+  const step = Number(grinder.step) || 0.5;
+  const HALF = 8 * step;                       // window either side of the dot
+  const lo = setting - HALF, hi = setting + HALF;
+  const W = 240, H = 26, padX = 8, cy = H / 2;
+  const usable = W - padX * 2;
+  const x = (v) => padX + ((v - lo) / (hi - lo)) * usable;
+
+  let band = "";
+  if (Array.isArray(range) && range.length === 2) {
+    const bx = Math.max(padX, x(range[0]));
+    const bw = Math.min(W - padX, x(range[1])) - bx;
+    if (bw > 0) {
+      band = `<rect x="${bx.toFixed(1)}" y="${cy - 5}" width="${bw.toFixed(1)}" height="10"
+                    rx="5" fill="var(--gw-accent)" opacity=".22"/>`;
+    }
+  }
+
+  return `
+    <svg class="rec-track" viewBox="0 0 ${W} ${H}" role="img"
+         aria-label="${range ? `likely ${range[0]} to ${range[1]}` : "dialled in"}">
+      <defs>
+        <radialGradient id="recGloss" cx="50%" cy="24%" r="78%">
+          <stop offset="0%"   stop-color="#fff" stop-opacity=".34"/>
+          <stop offset="38%"  stop-color="#fff" stop-opacity=".16"/>
+          <stop offset="70%"  stop-color="#fff" stop-opacity=".05"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect x="${padX}" y="${cy - 1}" width="${usable}" height="2" rx="1"
+            fill="var(--pico-muted-border-color)"/>
+      ${band}
+      <circle cx="${x(setting).toFixed(1)}" cy="${cy}" r="5" fill="var(--gw-accent)"/>
+      <circle cx="${x(setting).toFixed(1)}" cy="${cy}" r="5" fill="url(#recGloss)"/>
+    </svg>`;
+}
+
 async function renderBrew(coffeeId, method) {
   method = method || "espresso";
   const c = await db.getCoffee(coffeeId);
@@ -915,16 +960,28 @@ async function renderBrew(coffeeId, method) {
 
   const recEl = view.querySelector("#rec");
   if (rec) {
-    const exp = (rec.explanation || []).map((x) =>
-      `${x.label} ${x.delta > 0 ? "+" : ""}${x.delta}`).join(" · ");
+    // Everything that used to stack up under the number — confidence, the range
+    // in words, where the starting point came from, the feature contributions —
+    // now lives behind "why?". Three of those were answers to the same question
+    // ("how sure are you?"), and the track above answers it without words.
+    const hasRange = Array.isArray(rec.range) && rec.range.length === 2;
+    const detail = [
+      ["Likely range", hasRange ? `${rec.range[0]}–${rec.range[1]}` : "dialled in"],
+      ["Confidence", rec.confidence],
+      ["Based on", rec.nudge || "coffee characteristics"],
+      ...(rec.explanation || []).map((x) =>
+        [x.label, `${x.delta > 0 ? "+" : ""}${x.delta}`]),
+    ];
     recEl.replaceChildren(el(`
       <div>
         <div class="rec-number">${rec.setting}</div>
-        ${Array.isArray(rec.range) && rec.range.length === 2
-          ? `<div class="rec-range">likely ${rec.range[0]}–${rec.range[1]}</div>` : ""}
-        <div class="conf ${rec.confidence}">${rec.confidence} confidence</div>
-        ${rec.nudge ? `<div class="nudge">${esc(rec.nudge)}</div>` : ""}
-        ${exp ? `<details><summary class="explain">why?</summary><p class="explain">${esc(exp)}</p></details>` : ""}
+        ${recTrack(rec.setting, rec.range, g)}
+        <details class="rec-why">
+          <summary class="explain">why?</summary>
+          <table class="detail-table"><tbody>
+            ${detail.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}
+          </tbody></table>
+        </details>
       </div>`));
     view.querySelector("#grind").value = rec.setting;
   } else {
