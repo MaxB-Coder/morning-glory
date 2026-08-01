@@ -437,3 +437,44 @@ def test_range_leans_the_way_the_correction_is_going():
 
     lo, hi = sour["range"]
     assert sour["setting"] - lo > hi - sour["setting"], sour["range"]
+
+
+# --- a stray brew must not erase a proven setting ----------------------------
+
+def _dialin(brews, step=0.1, mx=14):
+    g = {"min": 0, "max": mx, "step": step}
+    c = {"id": "1", "roast": "medium", "process": "washed"}
+    return R.recommend({"grinder": g, "coffees": [c], "brews": brews,
+                        "request": {"coffeeId": "1", "method": "espresso"}})
+
+
+def _brew(day, setting, verdict, shot=None):
+    b = {"coffeeId": "1", "method": "espresso", "grindSetting": setting,
+         "verdict": verdict, "createdAt": f"2026-08-{day:02d}"}
+    if shot is not None:
+        b["shotTimeS"] = shot
+    return b
+
+
+def test_one_bad_brew_elsewhere_returns_to_the_known_good_setting():
+    """Dialled in at 8.1, then a stray 8.8 that ran sour. The answer is 8.1 —
+    the mistake says nothing about the setting already proven."""
+    r = _dialin([_brew(1, 8.1, "good", 27), _brew(2, 8.8, "under")])
+    assert r["setting"] == 8.1, r
+    assert r["range"] is None
+
+
+def test_bad_brew_AT_the_good_setting_still_corrects():
+    """Same setting failing now means the bag has moved on, not that the user
+    slipped — so correct from it rather than returning to it."""
+    r = _dialin([_brew(1, 8.1, "good", 27), _brew(2, 8.1, "under", 19)])
+    assert r["setting"] < 8.1, r
+
+
+def test_missing_shot_time_does_not_halve_the_correction():
+    """No shot time is absence of evidence, not evidence of a good shot."""
+    with_time = _dialin([_brew(1, 8.8, "under", 20)])
+    without = _dialin([_brew(1, 8.8, "under")])
+    # both move a full step or more finer; the untimed one is not a token nudge
+    assert 8.8 - without["setting"] >= 0.2, without
+    assert with_time["setting"] <= without["setting"]

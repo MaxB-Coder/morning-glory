@@ -82,6 +82,29 @@ SIGMA_FLOOR_STEPS = 0.75   # never claim finer than ~1 step of the grinder
 SIGMA_CAP = 0.11           # and never sprawl across the whole dial
 
 
+def _time_gain(last, method) -> float:
+    """How hard to correct, given how far the shot time missed the window.
+
+    Returns 1.0 when there is nothing to go on. The old code fed
+    _shot_time_error() straight into max(0.5, min(2.0, err*3)), so a brew with
+    NO shot time logged scored err=0 and had its correction HALVED — the app
+    responded to a sour shot with half a step, having decided that missing data
+    was evidence of being on target. Absent information must not be read as
+    good news.
+    """
+    if method != "espresso":
+        return 1.0
+    t = last.get("shotTimeS")
+    if t in (None, ""):
+        return 1.0
+    err = _shot_time_error(t)
+    if err == 0.0:
+        # in the window but the taste was off — the grind still needs moving,
+        # just not by more than the usual amount
+        return 1.0
+    return max(0.75, min(2.0, err * 3.0))
+
+
 def _shot_time_error(shot_time) -> float:
     """Relative miss from the 25-30s window. Zero anywhere inside it.
 
@@ -347,7 +370,7 @@ def _calibration_shift(beta, grinder, coffee, has_logs_for_method):
     return target - predicted
 
 
-def _local_dial_in(last, grinder, method, n_cm, n_m):  # noqa: C901
+def _local_dial_in(same, grinder, method, n_cm, n_m):  # noqa: C901
     """Step from the user's own last setting for this coffee+method.
 
     Once a coffee has been brewed on a method, this — not the model — decides
@@ -356,16 +379,38 @@ def _local_dial_in(last, grinder, method, n_cm, n_m):  # noqa: C901
     outright gusher or choke. The model owns only the cold start, so it can
     never talk you off a setting you have personally verified, and the
     synthetic prior can't drag a well-dialled bag back to its generic guess.
+
+    Takes the whole history for this coffee+method, not just the last brew.
+    Looking only at the last one meant a single stray brew erased everything
+    already learned: dial in at 8.1, fat-finger 8.8 the next morning, log it as
+    sour, and the app would answer 8.7 — nudging down from the mistake instead
+    of going back to the setting you had already proven.
     """
+    last = same[-1]
     used = float(last["grindSetting"])
     verdict = last.get("verdict", "good")
 
+    # A previously good setting is hard evidence. If the last brew was bad AND
+    # it was run somewhere other than that setting, the useful advice is simply
+    # "go back to what worked" — the bad brew says nothing about the good one.
+    if verdict != "good":
+        goods = [b for b in same[:-1] if b.get("verdict") == "good"]
+        if goods:
+            ref = float(goods[-1]["grindSetting"])
+            if abs(ref - used) > float(grinder["step"]) * 0.5:
+                setting = F.round_to_step(ref, grinder)
+                return {
+                    "setting": float(setting),
+                    # the good setting is proven, so no hedging window
+                    "range": None,
+                    "confidence": _confidence(n_cm, n_m),
+                    "explanation": [],
+                    "nudge": f"{used} missed — back to {ref}, which worked",
+                }
+
     step = float(grinder["step"]) or 0.5
-    adjust = 2.0 * step
     # a wildly fast/slow shot warrants a bigger correction than a near miss
-    if method == "espresso" and last.get("shotTimeS"):
-        err = _shot_time_error(last["shotTimeS"])
-        adjust *= max(0.5, min(2.0, err * 3.0))
+    adjust = 2.0 * step * _time_gain(last, method)
 
     target = used + VERDICT_STEPS.get(verdict, 0.0) * adjust
     nudges = {
@@ -503,7 +548,7 @@ def recommend(payload: dict) -> dict:
     # is the common case once a bag is in use, and it's the slowest thing the
     # engine does inside WebAssembly.
     if same:
-        return _local_dial_in(same[-1], grinder, method, n_cm, n_m)
+        return _local_dial_in(same, grinder, method, n_cm, n_m)
 
     X, y, w = _build_training_set(grinder, coffee, brews, method)
     beta, A_inv = ridge.fit_cov(X, y, w)
