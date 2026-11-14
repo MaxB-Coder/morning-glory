@@ -1,5 +1,6 @@
 """Behavioral tests — these encode what the product must actually do."""
 import json
+from datetime import date
 
 import pytest
 
@@ -50,8 +51,11 @@ def test_dark_coarser_than_light_same_method():
 def test_fresh_beans_coarser_than_aged():
     """Fresh coffee is full of CO2 which slows the flow -> coarser. As it
     degasses, flow speeds up and beans get brittle -> grind finer."""
-    fresh = rec([_coffee(id=1, roastDate="2026-07-24")], [], 1, "espresso")["setting"]
-    aged = rec([_coffee(id=2, roastDate="2026-06-01")], [], 2, "espresso")["setting"]
+    today = date(2026, 7, 27)
+    fresh = R.recommend(_payload([_coffee(id=1, roastDate="2026-07-24")], [], 1, "espresso"),
+                        today=today)["setting"]
+    aged = R.recommend(_payload([_coffee(id=2, roastDate="2026-06-01")], [], 2, "espresso"),
+                       today=today)["setting"]
     assert fresh > aged
 
 
@@ -478,3 +482,164 @@ def test_missing_shot_time_does_not_halve_the_correction():
     # both move a full step or more finer; the untimed one is not a token nudge
     assert 8.8 - without["setting"] >= 0.2, without
     assert with_time["setting"] <= without["setting"]
+
+
+# --- v1.9 dial-in and first-recommendation fixes ------------------------------
+
+FINE = {"min": 1, "max": 90, "step": 0.1}
+NOW = date(2026, 11, 14)
+
+
+def _eb(coffee_id, g, verdict, day, shot=None, hour=8, dose=None):
+    b = {"coffeeId": coffee_id, "method": "espresso", "grindSetting": g,
+         "verdict": verdict, "createdAt": f"2026-11-{day:02d}T{hour:02d}:00:00.000Z"}
+    if shot is not None:
+        b["shotTimeS"] = shot
+    if dose is not None:
+        b["doseG"] = dose
+    return b
+
+
+def _rec_fine(coffees, brews, cid, grinder=None, today=NOW):
+    return R.recommend(_payload(coffees, brews, cid, "espresso", grinder or FINE), today=today)
+
+
+def test_calibration_does_not_erase_bean_differences():
+    """With calibration on the same method every new bag used to land on the
+    calibration setting, so bean attributes stopped mattering."""
+    g = dict(FINE, calibration={"method": "espresso", "setting": 9.0})
+    light = _rec_fine([_coffee(id=1, roast="light", altitudeMasl=1900)], [], 1, g)["setting"]
+    medium = _rec_fine([_coffee(id=2)], [], 2, g)["setting"]
+    dark = _rec_fine([_coffee(id=3, roast="dark", decaf=True)], [], 3, g)["setting"]
+    assert light < medium < dark
+    assert medium == 9.0
+
+
+def test_calibration_fades_once_real_brews_exist():
+    """Calibration is a starting point; ten coffees of real good brews must
+    outweigh it or a new bag stays pinned to the one reference setting."""
+    g = dict(FINE, calibration={"method": "espresso", "setting": 9.0})
+    coffees = [_coffee(id=i, roast="light") for i in range(1, 11)] + [_coffee(id=99, roast="dark")]
+    brews = [_eb(i, 12.0, "good", d) for i in range(1, 11) for d in (1, 2, 3)]
+    assert _rec_fine(coffees, brews, 99, g)["setting"] > 11.0
+
+
+def test_proven_setting_is_not_returned_to_after_it_failed():
+    """A bag that aged past its old sweet spot must keep moving finer instead
+    of bouncing back to the setting that has since stopped working."""
+    brews = [_eb(1, 10.6, "good", 1, shot=27), _eb(1, 10.6, "under", 9, shot=21),
+             _eb(1, 10.4, "under", 10, shot=22)]
+    r = _rec_fine([_coffee(id=1)], brews, 1)
+    assert r["setting"] < 10.4
+    assert "back to" not in (r["nudge"] or "")
+
+
+def test_bracketed_answer_stays_inside_the_bracket():
+    """Once bitter and sour settings are known, the answer lies between them;
+    a large correction must not jump back outside."""
+    brews = [_eb(1, 10.0, "over", 1, shot=38), _eb(1, 11.0, "under", 2, shot=19)]
+    r = _rec_fine([_coffee(id=1)], brews, 1)
+    assert 10.0 < r["setting"] < 11.0
+    assert "between" in r["nudge"]
+
+
+def test_shot_time_sizes_the_correction():
+    """A 41 s shot needs a much bigger move than an unlabelled bitter one;
+    without a time we only know the direction."""
+    timed = _rec_fine([_coffee(id=1)], [_eb(1, 11.0, "over", 1, shot=41)], 1)["setting"]
+    untimed = _rec_fine([_coffee(id=1)], [_eb(1, 11.0, "over", 1)], 1)["setting"]
+    assert timed >= 11.5
+    assert 11.0 < untimed < 11.5
+
+
+def test_time_contradicting_taste_falls_back_to_taste():
+    """A slow shot that tastes sour contradicts itself; the tasted verdict sets
+    the direction."""
+    r = _rec_fine([_coffee(id=1)], [_eb(1, 11.0, "under", 1, shot=36)], 1)
+    assert r["setting"] < 11.0
+
+
+def test_similar_prior_ignores_the_dial_in_trail():
+    """A new bag is brewed fresh and needs the settled setting, not an average
+    dragged finer by the bad brews that preceded it."""
+    kin = dict(roast="medium", process="washed", roaster="Kin")
+    coffees = [_coffee(id=1, **kin), _coffee(id=2, **kin)]
+    brews = [_eb(1, 9.0, "over", 1), _eb(1, 9.4, "over", 2), _eb(1, 9.8, "over", 3),
+             _eb(1, 10.2, "good", 4), _eb(1, 10.2, "good", 5)]
+    assert _rec_fine(coffees, brews, 2)["setting"] >= 10.0
+
+
+def test_similar_prior_matches_bag_age():
+    """The same coffee needs a different grind fresh than aged, so a new bag
+    should follow the brew made at a similar age."""
+    kin = dict(roast="medium", process="washed", roaster="Kin")
+    coffees = [_coffee(id=1, roastDate="2026-10-01", **kin),
+               _coffee(id=2, roastDate="2026-11-08", **kin)]
+    brews = [{"coffeeId": 1, "method": "espresso", "grindSetting": 11.0, "verdict": "good",
+              "createdAt": "2026-10-07T08:00:00.000Z"},
+             {"coffeeId": 1, "method": "espresso", "grindSetting": 10.0, "verdict": "good",
+              "createdAt": "2026-10-26T08:00:00.000Z"}]
+    s = _rec_fine(coffees, brews, 2, today=date(2026, 11, 14))["setting"]
+    assert abs(s - 11.0) < abs(s - 10.0)
+
+
+def test_real_brews_are_aged_as_of_the_brew_not_today():
+    """Encoding with today's date made every historical brew look like an old
+    bag and taught the model the wrong age effect."""
+    from engine import features as F
+    coffee = _coffee(id=1, roastDate="2026-10-01")
+    b = {"coffeeId": "1", "method": "espresso", "grindSetting": 10.0, "verdict": "good",
+         "createdAt": "2026-10-04T08:00:00.000Z", "_coffee": coffee}
+    x = R._encode_real(b)
+    expected = F.encode_age("2026-10-01", today=date(2026, 10, 4))
+    assert x[F.FEATURES.index("age")] == pytest.approx(expected)
+
+
+def test_learn_dial_recovers_kappa():
+    """Step sizes are only trustworthy if the learned shot-time response matches
+    the grinder it was learned from."""
+    series = []
+    for i, g in enumerate([10.0, 10.5, 11.0, 11.5, 12.0]):
+        verdict = "over" if g < 11.0 else ("good" if g == 11.0 else "under")
+        series.append({"coffeeId": "1", "method": "espresso", "grindSetting": g,
+                       "verdict": verdict,
+                       "shotTimeS": round(27.5 * ((g - 1) / 10.0) ** -6, 1),
+                       "doseG": 18, "createdAt": f"2026-11-{i + 1:02d}T08:00:00.000Z"})
+    dial = R._learn_dial({"1": series}, FINE)
+    assert abs(dial["kappa"] - 6.0) < 0.3
+
+
+def test_bad_verdict_always_moves_at_least_one_step():
+    """On a coarse-step dial a small correction rounds back to the failed
+    setting, which would repeat the same bad shot."""
+    g = {"min": 0, "max": 40, "step": 0.5}
+    r = _rec_fine([_coffee(id=1)], [_eb(1, 9.0, "over", 1, shot=30.5)], 1, g)
+    assert r["setting"] >= 9.5
+
+
+# --- age-matched similar-coffee prior ----------------------------------------
+
+def test_similar_point_is_shifted_toward_the_new_bags_age():
+    """A similar coffee's good brew is older than a just-opened bag, so its
+    point must move coarser by the age coefficient."""
+    a = {"id": "A", "roast": "medium", "process": "washed", "roastDate": "2026-10-01"}
+    b = {"id": "B", "roast": "medium", "process": "washed", "roastDate": "2026-11-09"}
+    grinder = {"min": 1, "max": 90, "step": 0.1}
+    brew = {"coffeeId": "A", "method": "espresso", "grindSetting": 10.0,
+            "verdict": "good", "createdAt": "2026-10-13T08:00:00.000Z", "_coffee": a}
+    series = {"A": [brew]}
+    dial = R._learn_dial(series, grinder)
+    today = date(2026, 11, 14)
+    shifted = R._similar_prior(b, series, grinder, "espresso", dial, today,
+                               age_coef=-0.05, first_brews={})[0]
+    flat = R._similar_prior(b, series, grinder, "espresso", dial, today,
+                            age_coef=0.0, first_brews={})[0]
+    assert shifted > flat
+    assert abs((1 + flat * (90 - 1)) - 10.0) < 1e-6
+
+
+def test_bag_age_falls_back_to_days_since_first_brew():
+    assert R._bag_age_days({"roast": "medium"}, date(2026, 11, 14), date(2026, 11, 11)) == 10.0
+    assert R._bag_age_days({"roastDate": "2026-11-04"}, date(2026, 11, 14), date(2026, 11, 11)) == 10
+    assert R._bag_age_days({}, None, None) is None
+    assert R._bag_age_days({}, date(2026, 11, 14), None) == 7.0

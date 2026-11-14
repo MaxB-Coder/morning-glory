@@ -17,26 +17,33 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.8.1";
+export const APP_VERSION = "1.9.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
 const bootStatus = document.getElementById("boot-status");
+
+// True while a save is in flight, so a double tap can't store a record twice.
+// Module-level, not per render: a route can render twice in a row, and each
+// render would otherwise attach its own handler (and its own flag) to the same
+// buttons. Every form screen resets it when it renders.
+let saving = false;
 
 // Home filters. Module-level rather than persisted: they're transient view
 // preferences, and they survive re-renders (including ones caused by incoming
 // sync) because this module isn't reloaded between navigations.
 // Empty array = no constraint on that facet (NOT "match nothing").
 let starredOnly = false;
-const FILTERS = { roast: [], process: [], roaster: [], decaf: false };
+// `archived` swaps the list for the archived coffees, so an archive can be undone.
+const FILTERS = { roast: [], process: [], roaster: [], decaf: false, archived: false };
 
 const filterCount = () =>
   FILTERS.roast.length + FILTERS.process.length + FILTERS.roaster.length
-  + (FILTERS.decaf ? 1 : 0) + (starredOnly ? 1 : 0);
+  + (FILTERS.decaf ? 1 : 0) + (FILTERS.archived ? 1 : 0) + (starredOnly ? 1 : 0);
 
 function clearFilters() {
   FILTERS.roast = []; FILTERS.process = []; FILTERS.roaster = [];
-  FILTERS.decaf = false; starredOnly = false;
+  FILTERS.decaf = false; FILTERS.archived = false; starredOnly = false;
 }
 
 // AND across facets, OR within one — the way people read a filter panel:
@@ -291,25 +298,41 @@ async function renderSetup() {
         <button type="submit">Save</button>
       </form>
     </article>`));
+  saving = false;
   view.querySelector("#setup-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const f = new FormData(e.target);
-    const cm = f.get("calMethod");
-    const cs = f.get("calSetting");
-    const calibration = (cm && cs !== "") ? { method: cm, setting: +cs } : null;
-    await db.saveGrinder({
-      name: f.get("name"), min: +f.get("min"), max: +f.get("max"), step: +f.get("step"),
-      calibration,
-    });
+    if (saving) return;
+    saving = true;
+    try {
+      const f = new FormData(e.target);
+      const cm = f.get("calMethod");
+      const cs = f.get("calSetting");
+      const calibration = (cm && cs !== "") ? { method: cm, setting: +cs } : null;
+      await db.saveGrinder({
+        name: f.get("name"), min: +f.get("min"), max: +f.get("max"), step: +f.get("step"),
+        calibration,
+      });
+    } catch (err) { saving = false; throw err; }
     location.hash = "#/";
   });
 }
 
 // --- home -------------------------------------------------------------------
 async function renderHome() {
-  const all = sortByOrder(await db.allCoffees());
+  // Archived coffees are loaded too, so an archive can be undone from here.
+  const everything = sortByOrder(await db.allCoffeesIncludingArchived());
+  const all = everything.filter((c) => !c.archived);
+  const archivedList = everything.filter((c) => c.archived);
+  // nothing left to show under the Archived filter: fall back to the normal view
+  if (FILTERS.archived && !archivedList.length) FILTERS.archived = false;
   loadStars(all);
-  const coffees = applyFilters(all);
+  const coffees = applyFilters(FILTERS.archived ? archivedList : all);
+  // one read for the whole list: a card opens straight into brewing with the
+  // method its coffee was last brewed with
+  const lastMethod = {};
+  for (const b of (await db.allBrews()).sort((a, z) => a.createdAt.localeCompare(z.createdAt))) {
+    lastMethod[String(b.coffeeId)] = b.method;
+  }
 
   const cards = coffees.map((c) => `
         <article class="coffee-card" data-id="${c.id}">
@@ -317,7 +340,8 @@ async function renderHome() {
           <div class="card-body">
             <div class="card-title">
               <strong>${esc(c.name)}</strong>${c.visibility === "private"
-                ? ' <span class="priv-tag">private</span>' : ""}
+                ? ' <span class="priv-tag">private</span>' : ""}${c.archived
+                ? ' <span class="priv-tag">archived</span>' : ""}
               ${c.roaster ? `<small class="roaster">${esc(c.roaster)}</small>` : ""}
             </div>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
@@ -326,7 +350,7 @@ async function renderHome() {
           <span class="chev">${chevSvg}</span>
         </article>`).join("");
 
-  const list = all.length === 0
+  const list = (all.length === 0 && !FILTERS.archived)
     ? `<article class="empty">
          <p><strong>No coffees yet.</strong></p>
          <p><small>Add a bag to get your first grind recommendation.</small></p>
@@ -351,11 +375,16 @@ async function renderHome() {
   view.querySelectorAll(".coffee-card").forEach((c) =>
     c.addEventListener("click", () => {
       if (justDragged) return;            // the drag's own click, not a tap
-      location.hash = `#/coffee/${c.dataset.id}`;
+      const m = lastMethod[c.dataset.id];
+      const archived = archivedList.some((a) => String(a.id) === c.dataset.id);
+      location.hash = (m && !archived)
+        ? `#/brew?coffee=${c.dataset.id}&method=${m}`
+        : `#/coffee/${c.dataset.id}`;
     }));
-  enableReorder(view.querySelector(".coffee-card")?.parentElement, all.length);
+  // reordering describes the active list only, so never in the archived view
+  if (!FILTERS.archived) enableReorder(view.querySelector(".coffee-card")?.parentElement, all.length);
   addFab("#/coffee/new", "+");
-  if (all.length) addFilterFab(all);
+  if (everything.length) addFilterFab(everything);
 }
 
 // --- coffee form ------------------------------------------------------------
@@ -393,9 +422,9 @@ async function renderCoffeeForm(editId) {
             <select name="process"><option${ex ? sel("process","washed") : " selected"}>washed</option><option${sel("process","honey")}>honey</option><option${sel("process","natural")}>natural</option></select>
           </label>
         </div>
+        <label>Roast date <input name="roastDate" type="date" class="full-width" value="${val("roastDate")}"></label>
         <details>
           <summary>More detail (optional)</summary>
-          <label>Roast date <input name="roastDate" type="date" class="full-width" value="${val("roastDate")}"></label>
           <label>Origin <input name="origin" value="${val("origin")}"></label>
           <label>Variety <input name="variety" value="${val("variety")}"></label>
           <label>Altitude (masl) <input name="altitudeMasl" type="number" inputmode="numeric" value="${val("altitudeMasl")}"></label>
@@ -447,30 +476,35 @@ async function renderCoffeeForm(editId) {
   const decafPill = togglePill("#decaf-pill");
   const privatePill = ex ? null : togglePill("#private-pill");
 
+  saving = false;
   view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const f = new FormData(e.target);
-    const fields = {
-      name: f.get("name"), roaster: f.get("roaster") || null,
-      roast: f.get("roast"), process: f.get("process"),
-      roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
-      variety: f.get("variety") || null,
-      altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
-      decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
-      notes: f.get("notes") || null,
-      photo: photoData,
-    };
-    let c;
-    if (ex) {
-      c = await db.updateCoffee({ ...ex, ...fields });
-      toast("Saved");
-    } else {
-      c = await db.addCoffee({
-        ...fields,
-        visibility: privatePill.getAttribute("aria-pressed") === "true" ? "private" : "shared",
-      });
-    }
-    location.hash = `#/coffee/${c.id}`;
+    if (saving) return;
+    saving = true;
+    try {
+      const f = new FormData(e.target);
+      const fields = {
+        name: f.get("name"), roaster: f.get("roaster") || null,
+        roast: f.get("roast"), process: f.get("process"),
+        roastDate: f.get("roastDate") || null, origin: f.get("origin") || null,
+        variety: f.get("variety") || null,
+        altitudeMasl: f.get("altitudeMasl") ? +f.get("altitudeMasl") : null,
+        decaf: decafPill.getAttribute("aria-pressed") === "true" ? 1 : 0,
+        notes: f.get("notes") || null,
+        photo: photoData,
+      };
+      let c;
+      if (ex) {
+        c = await db.updateCoffee({ ...ex, ...fields });
+        toast("Saved");
+      } else {
+        c = await db.addCoffee({
+          ...fields,
+          visibility: privatePill.getAttribute("aria-pressed") === "true" ? "private" : "shared",
+        });
+      }
+      location.hash = `#/coffee/${c.id}`;
+    } catch (err) { saving = false; throw err; }
   });
 }
 
@@ -583,7 +617,9 @@ async function renderCoffee(id) {
 
       <div class="center-row" style="margin-top:1.5rem; gap:.6rem">
         <button id="edit-coffee" class="link-btn">Edit details</button>
-        <button id="archive-coffee" class="danger-link">Archive this coffee</button>
+        ${c.archived
+          ? '<button id="restore-coffee" class="link-btn">Restore this coffee</button>'
+          : '<button id="archive-coffee" class="danger-link">Archive this coffee</button>'}
       </div>
     </div>`));
 
@@ -625,9 +661,19 @@ async function renderCoffee(id) {
     }
   });
 
-  view.querySelector("#archive-coffee").addEventListener("click", async () => {
+  const archiveBtn = view.querySelector("#archive-coffee");
+  if (archiveBtn) archiveBtn.addEventListener("click", async () => {
     if (!confirm(`Archive "${c.name}"? Its brews stay in history but it leaves your list.`)) return;
     await db.updateCoffee({ ...c, archived: 1 });
+    location.hash = "#/";
+  });
+
+  // Archiving was one-way: an archived coffee had no screen to come back from.
+  // Leave the Archived filter off so home shows the restored coffee.
+  const restoreBtn = view.querySelector("#restore-coffee");
+  if (restoreBtn) restoreBtn.addEventListener("click", async () => {
+    await db.updateCoffee({ ...c, archived: 0 });
+    FILTERS.archived = false;
     location.hash = "#/";
   });
 
@@ -866,7 +912,7 @@ async function renderBrew(coffeeId, method) {
   // coffee page to here doesn't visually shift the pills.
   view.replaceChildren(el(`
     <div>
-      <p><a href="#/coffee/${c.id}" class="back">← All coffees</a></p>
+      <p><a href="#/coffee/${c.id}" class="back">← Coffee details</a></p>
       <div class="title-row">
         <div class="title-text">
           <h2>${esc(c.name)}</h2>
@@ -989,8 +1035,10 @@ async function renderBrew(coffeeId, method) {
     if (rb) rb.addEventListener("click", () => safeRoute());
   }
 
+  saving = false;
   view.querySelectorAll(".verdict-row button").forEach((btn) =>
     btn.addEventListener("click", async () => {
+      if (saving) return;
       const input = view.querySelector("#grind");
       const grind = parseFloat(input.value);
       if (isNaN(grind)) {
@@ -999,8 +1047,19 @@ async function renderBrew(coffeeId, method) {
         toast("Enter the grind setting you used");
         return;
       }
-      const extra = collectExtras(method);
-      await db.addBrew({ coffeeId: String(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
+      // the input's min/max aren't enforced outside a form submit, so a typo
+      // like 999 would be stored and then train the model
+      if (grind < g.min || grind > g.max) {
+        input.focus();
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+        toast(`Grind must be between ${g.min} and ${g.max}`);
+        return;
+      }
+      saving = true;
+      try {
+        const extra = collectExtras(method);
+        await db.addBrew({ coffeeId: String(coffeeId), method, grindSetting: grind, verdict: btn.dataset.v, ...extra });
+      } catch (err) { saving = false; throw err; }
       toast(`Logged ${grind} · ${verdictLabel(btn.dataset.v)}`);
       location.hash = `#/coffee/${coffeeId}`;
     }));
@@ -1019,6 +1078,9 @@ function renderExtras(method, last = null) {
     d.open = true;   // show it, so the carried-over values are visible
   }
   if (method === "espresso") {
+    // Shot time now sizes the grind correction, so keep the field in view
+    // rather than hidden behind a disclosure that most people never open.
+    d.open = true;
     d.innerHTML = `<summary>Shot detail (optional)</summary>
       <div class="grid">
         <label>Dose (g) <input id="doseG" type="number" step="any" inputmode="decimal"${dose}></label>
@@ -1701,7 +1763,11 @@ function addFilterFab(all) {
 
 // Filter sheet. Facets are built from the coffees you actually have, so you
 // can never select a roaster or roast that would return nothing.
-function openFilterSheet(all) {
+// `everything` includes archived coffees; facets and counts follow the scope
+// (active or archived) the list is currently showing.
+function openFilterSheet(everything) {
+  const all = everything.filter((c) => !!c.archived === FILTERS.archived);
+  const anyArchived = everything.some((c) => c.archived);
   const roasters = [...new Set(all.map((c) => c.roaster).filter(Boolean))].sort();
   const roasts = ["light", "medium", "dark"].filter((r) => all.some((c) => c.roast === r));
   const procs = ["washed", "honey", "natural"].filter((x) => all.some((c) => c.process === x));
@@ -1728,7 +1794,8 @@ function openFilterSheet(all) {
         ${group("Roast", roasts.map((r) => pill("roast", r, r, FILTERS.roast.includes(r))).join(""))}
         ${group("Process", procs.map((x) => pill("process", x, x, FILTERS.process.includes(x))).join(""))}
         ${group("Roaster", roasters.map((r) => pill("roaster", r, r, FILTERS.roaster.includes(r))).join(""))}
-        ${group("Other", anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "")}
+        ${group("Other", (anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "")
+          + (anyArchived ? pill("archived", "1", "Archived", FILTERS.archived) : ""))}
         <div class="filter-actions">
           <button type="button" id="filter-clear" class="link-btn">Clear all</button>
           <button type="button" id="filter-done">Show <span id="filter-n"></span></button>
@@ -1748,6 +1815,19 @@ function openFilterSheet(all) {
       const { facet, value } = b.dataset;
       const on = b.getAttribute("aria-pressed") !== "true";
       b.setAttribute("aria-pressed", String(on));
+      if (facet === "archived") {
+        // the other facets are built from the scope, so switch scope by
+        // reopening the sheet, dropping selections the new scope can't match
+        FILTERS.archived = on;
+        const scope = everything.filter((c) => !!c.archived === on);
+        FILTERS.roast = FILTERS.roast.filter((v) => scope.some((c) => c.roast === v));
+        FILTERS.process = FILTERS.process.filter((v) => scope.some((c) => c.process === v));
+        FILTERS.roaster = FILTERS.roaster.filter((v) => scope.some((c) => c.roaster === v));
+        if (!scope.some((c) => c.decaf)) FILTERS.decaf = false;
+        overlay.remove();
+        openFilterSheet(everything);
+        return;
+      }
       if (facet === "starred") starredOnly = on;
       else if (facet === "decaf") FILTERS.decaf = on;
       else if (on) FILTERS[facet].push(value);
@@ -1767,7 +1847,9 @@ function openFilterSheet(all) {
   });
 
   overlay.querySelector("#filter-clear").addEventListener("click", () => {
+    const wasArchived = FILTERS.archived;
     clearFilters();
+    if (wasArchived) { overlay.remove(); openFilterSheet(everything); return; }   // scope changed
     overlay.querySelectorAll(".toggle-pill").forEach((b) => b.setAttribute("aria-pressed", "false"));
     paintStar();
     refresh();
