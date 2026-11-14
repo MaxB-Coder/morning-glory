@@ -643,3 +643,17 @@ def test_bag_age_falls_back_to_days_since_first_brew():
     assert R._bag_age_days({"roastDate": "2026-11-04"}, date(2026, 11, 14), date(2026, 11, 11)) == 10
     assert R._bag_age_days({}, None, None) is None
     assert R._bag_age_days({}, date(2026, 11, 14), None) == 7.0
+
+
+def test_recent_similar_bags_outweigh_old_ones():
+    """Settings drift coarser over months on one grinder, so last month's good
+    brew should steer a new bag more than an April brew does."""
+    coffees = [_coffee(id="A"), _coffee(id="B"), _coffee(id="N")]
+    brews = [
+        {"coffeeId": "A", "method": "espresso", "grindSetting": 9.0,
+         "verdict": "good", "createdAt": "2026-04-28T08:00:00.000Z"},
+        {"coffeeId": "B", "method": "espresso", "grindSetting": 11.0,
+         "verdict": "good", "createdAt": "2026-11-04T08:00:00.000Z"},
+    ]
+    r = _rec_fine(coffees, brews, "N", FINE, today=date(2026, 11, 14))
+    assert r["setting"] >= 11.0, r

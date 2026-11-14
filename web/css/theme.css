@@ -220,3 +220,75 @@ td.truncate .roaster { font-family: -apple-system, system-ui, sans-serif; font-s
   .invite-code::after { filter: none; opacity: .45; }
   .invite-code { filter: saturate(1.5) brightness(.8); }
 }
+
+/* ===== calmer scale =========================================================
+   First cut on a real phone read as loud: display sizes pulled down about a
+   fifth and rows given back some air. Later in the file, so it wins. */
+.app-header { padding-top: .7rem; padding-bottom: .45rem; }
+.app-header strong { font-size: 1.22rem; }
+#view h2 { font-size: 1.8rem; }
+#view .title-text h2 { font-size: 1.6rem; }
+#view > div > h2:first-child::after,
+#view > div > .title-row:first-child h2::after,
+.title-text h2::after { width: 1.8rem; height: 1.5px; margin-top: .45rem; }
+.back { font-size: .88rem; }
+.coffee-card { padding: .85rem 0; }
+.coffee-card strong { font-size: 1.08rem; }
+.coffee-card::before { font-size: .78rem; padding-top: .2rem; }
+.card-title .roaster { font-size: .78rem; }
+.card-body > small, .subtitle-row small { font-size: .58rem; letter-spacing: .12em; }
+.step-title { font-size: .64rem; letter-spacing: .13em; margin-bottom: .6rem; }
+.step-num { font-size: .95rem; }
+.rec-wrap { padding: 1rem 0 .7rem; margin: .1rem 0 1.2rem; }
+.rec-number { font-size: 4.9rem; }
+.rec-why summary, .explain, summary { font-size: .82rem; }
+.day-head { font-size: 1rem; margin: 1.15rem 0 .1rem; }
+td.truncate { font-size: .95rem; }
+.sheet h3 { font-size: 1.3rem; }
+.detail-table td { font-size: .92rem; }
+#view > div > article strong:not(.invite-code),
+#view > div > article:not(.coffee-card) > strong:first-child, .panel-head strong { font-size: 1.02rem; }
+.center-link a { font-size: .9rem; }
+.chart-stats strong { font-size: .98rem; }
+button { font-size: .72rem; padding: .78rem 1rem; }
+label input, label select, label textarea { font-size: 1rem; }
+
+/* the + sat right of centre: letter-spacing on buttons adds trailing space
+   after the glyph, which shifts a single character sideways */
+.fab, .fab span, .icon-btn, .star-btn, .del-brew { letter-spacing: 0; }
+
+/* Tabs sit on the bottom edge. With pills the bar looked full; bare text
+   centred in the same tall bar left a visible band underneath it. The marker
+   moves to the top of the active tab, against the rule. */
+:root { --nav-h: 2.5rem; }
+.bottom-nav { min-height: var(--nav-h); align-items: stretch; padding: 0 .75rem; }
+.bottom-nav a { display: flex; align-items: center; padding: .15rem .1rem 0; }
+.bottom-nav a.active { box-shadow: inset 0 2px 0 var(--gw-accent); }
+
+/* no accent ring on a focused field: the underline darkening to ink is enough */
+input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: var(--pico-color); }
+
+/* ===== coffee header: name, roaster and details read as one block ==========
+   The details line used to sit a full paragraph-gap below the roaster, and the
+   photo was smaller than the text beside it. The photo is now as tall as the
+   name + roaster block, the details tuck straight under the roaster, and the
+   star is centred on that same line, under the photo. */
+.title-row { align-items: flex-start; }
+.thumb-btn img, .thumb-spacer, .title-row > .icon-btn { width: 3.9rem; height: 3.9rem; }
+.subtitle-row { margin: .1rem 0 0; align-items: center; }
+.subtitle-row small { line-height: 1.4; }
+.subtitle-row .star-btn, .star-spacer {
+  width: 3.9rem; min-width: 3.9rem; margin-top: 0; height: 1.9rem; min-height: 1.9rem; }
+.roaster-line { margin: 0; }
+
+/* method tags centred under their label */
+.method-pills, .step.method-step .method-pills { justify-content: center; }
+
+/* ===== waiting for a suggestion ============================================
+   Changing method redraws the screen and the engine answers in a few
+   milliseconds, so the progress bar used to flash and the steps below jumped.
+   The slot keeps its final height, and the bar only fades in if the wait is
+   long enough to be worth showing (a cold engine start). */
+.rec-wrap { min-height: 10.2rem; display: flex; flex-direction: column; justify-content: center; }
+.rec-wrap > progress { width: 40%; margin: 0 auto; opacity: 0; animation: rec-wait .25s ease .5s forwards; }
+@keyframes rec-wait { to { opacity: .7; } }

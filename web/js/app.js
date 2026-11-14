@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.11.0";
+export const APP_VERSION = "1.11.1";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -978,7 +978,7 @@ async function renderBrew(coffeeId, method) {
         <h3 class="step-title"><span class="step-num">3</span> How did it taste?</h3>
         ${method === "espresso" ? `
         <div class="verdict-row five">
-          <button class="v-gusher" data-v="gusher">💨<br>Ran<br>through</button>
+          <button class="v-gusher" data-v="gusher">💨<br>Gushed</button>
           <button class="v-under" data-v="under">🟠<br>Sour</button>
           <button class="v-good" data-v="good">🟢<br>Good</button>
           <button class="v-over" data-v="over">🔴<br>Bitter</button>
@@ -1560,7 +1560,7 @@ async function checkForUpdate() {
 
 
 // --- helpers ----------------------------------------------------------------
-function verdictLabel(v) { return { gusher: "💨 Ran through", under: "🟠 Sour",
+function verdictLabel(v) { return { gusher: "💨 Gushed", under: "🟠 Sour",
   good: "🟢 Good", over: "🔴 Bitter", choked: "🧱 Choked" }[v] || v; }
 // Chart dot colours, matched to the Result-column emoji (🟠 🟢 🔴 💨 🧱) so the
 // two views agree at a glance.

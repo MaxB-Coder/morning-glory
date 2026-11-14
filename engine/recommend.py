@@ -126,8 +126,11 @@ MILD_FRACTION = 0.03
 BEAN_DELTA_CAP = 0.15
 # Scale of the roast-age gap (days) over which a similar coffee's evidence fades.
 SIMILAR_AGE_TAU_DAYS = 12.0
-# Older similar-coffee brews are reweighted by 0.5 ** (age / this).
-SIMILAR_RECENCY_HALFLIFE_DAYS = 180.0
+# Older similar-coffee brews are reweighted by 0.5 ** (age / this). Replaying a real
+# five-month history showed settled settings on the same grinder drifting coarser
+# (about 8.5 in July to about 10.8 in October), so a bag from months ago is weaker
+# evidence than last month's. 60 days tracked that drift; 30 began to overshoot.
+SIMILAR_RECENCY_HALFLIFE_DAYS = 60.0
 # Reference bean used to read calibration without any bean effect in it.
 NEUTRAL_COFFEE = {"roast": "medium", "process": "washed"}
 
@@ -643,7 +646,7 @@ def _local_dial_in(same, grinder, method, n_cm, n_m, dial):  # noqa: C901
     move = _correction(last, method, dial, grinder)
     target = used + move
     nudges = {
-        "gusher": f"{used} ran through → going much finer",
+        "gusher": f"{used} gushed → going much finer",
         "under":  f"{used} was sour → going finer",
         "good":   f"{used} was good last time",
         "over":   f"{used} was bitter → going coarser",
