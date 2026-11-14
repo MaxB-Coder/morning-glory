@@ -292,3 +292,18 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
 .rec-wrap { min-height: 10.2rem; display: flex; flex-direction: column; justify-content: center; }
 .rec-wrap > progress { width: 40%; margin: 0 auto; opacity: 0; animation: rec-wait .25s ease .5s forwards; }
 @keyframes rec-wait { to { opacity: .7; } }
+
+/* ===== header without the star; favourites as a tint =======================
+   The details line now lives inside the title block, directly under the
+   roaster, so the three lines are one paragraph and the photo can stand as
+   tall as all of them. */
+.title-row { align-items: center; }
+.meta-line { margin: .12rem 0 0; line-height: 1.3; }
+.meta-line small { font-size: .58rem; text-transform: uppercase; letter-spacing: .12em;
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roaster-line { line-height: 1.25; }
+.thumb-btn img, .thumb-spacer, .title-row > .icon-btn { width: 4.9rem; height: 4.9rem; }
+
+/* a favourite is a warm wash across its row, not an icon */
+.coffee-card.fav { background: rgba(200, 121, 58, .11); margin: 0 -.6rem; padding-left: .6rem; padding-right: .6rem; }
+.center-row { gap: .5rem; }

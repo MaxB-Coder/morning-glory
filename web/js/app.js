@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.11.1";
+export const APP_VERSION = "1.12.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -126,15 +126,9 @@ function sortByOrder(list) {
   });
 }
 
-// Icons are inline SVG, not text glyphs. ★ and › sit at different heights
+// Icons are inline SVG, not text glyphs: glyphs sit at different heights
 // inside their own font boxes, so no amount of flex centring could line them
 // up; an SVG's geometry is exact, so equal-sized boxes align perfectly.
-const starSvg = (filled) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-        fill="${filled ? "currentColor" : "none"}"
-        stroke="currentColor" stroke-width="1.7"
-        stroke-linejoin="round"/></svg>`;
-
 const filterSvg = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M3 5h18l-7 8v6l-4 2v-8z" fill="none" stroke="currentColor"
         stroke-width="1.8" stroke-linejoin="round"/></svg>`;
@@ -361,7 +355,7 @@ async function renderHome() {
   }
 
   const cards = coffees.map((c) => `
-        <article class="coffee-card" data-id="${c.id}">
+        <article class="coffee-card${isStarred(c.id) ? " fav" : ""}" data-id="${c.id}">
           ${safePhoto(c.photo) ? `<img class="card-thumb" src="${safePhoto(c.photo)}" alt="">` : ""}
           <div class="card-body">
             <div class="card-title">
@@ -372,7 +366,6 @@ async function renderHome() {
             </div>
             <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}</small>
           </div>
-          ${isStarred(c.id) ? `<span class="star-mark">${starSvg(true)}</span>` : ""}
           <span class="chev">${chevSvg}</span>
         </article>`).join("");
 
@@ -579,7 +572,7 @@ function resizeImage(file, maxSide = 700, quality = 0.65) {
 async function renderCoffee(id) {
   const c = await db.getCoffee(id);
   if (!c) { location.hash = "#/"; return; }
-  loadStars();                       // needed before the star renders below
+  loadStars();                       // needed before the Favourite toggle renders below
   const brews = (await db.brewsForCoffee(id)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const g = await db.getGrinder();
 
@@ -602,21 +595,14 @@ async function renderCoffee(id) {
         <div class="title-text">
           <h2>${esc(c.name)}</h2>
           ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
+          <p class="meta-line"><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
         </div>
-        <!-- photo and star stacked, centres on the same vertical axis -->
         ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
                <img src="${safePhoto(c.photo)}" alt="${esc(c.name)}">
              </button>`
           : `<button type="button" id="photo-add" class="icon-btn" title="Add a photo">📷</button>`}
       </div>
-      <p class="subtitle-row">
-        <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
-        <button type="button" id="star-toggle" class="star-btn"
-                aria-pressed="${isStarred(c.id) ? "true" : "false"}"
-                title="${isStarred(c.id) ? "Starred" : "Star this coffee"}"
-          >${starSvg(isStarred(c.id))}</button>
-      </p>
 
       <section class="step method-step">
         <h3 class="step-title">Brew this — pick a method</h3>
@@ -634,6 +620,8 @@ async function renderCoffee(id) {
                 aria-pressed="${c.visibility === "private"}">
           ${c.visibility === "private" ? "Private" : "Shared"}
         </button>
+        <button id="toggle-favourite" class="toggle-pill"
+                aria-pressed="${isStarred(c.id) ? "true" : "false"}">Favourite</button>
       </div>
       <p class="explain" style="text-align:center">${c.visibility === "private"
         ? "Only on your devices. Not shared."
@@ -702,13 +690,10 @@ async function renderCoffee(id) {
     location.hash = "#/";
   });
 
-  // star toggle — local to this device, so it never touches the shared record
-  const star = view.querySelector("#star-toggle");
-  star.addEventListener("click", () => {
-    const nowStarred = toggleStar(c.id);
-    star.innerHTML = starSvg(nowStarred);
-    star.setAttribute("aria-pressed", String(nowStarred));
-    star.title = nowStarred ? "Starred" : "Star this coffee";
+  // favourite toggle — local to this device, so it never touches the shared record
+  const favBtn = view.querySelector("#toggle-favourite");
+  favBtn.addEventListener("click", () => {
+    favBtn.setAttribute("aria-pressed", String(toggleStar(c.id)));
   });
 
   // photo: thumbnail opens the lightbox; camera button adds one
@@ -933,7 +918,7 @@ async function renderBrew(coffeeId, method) {
   if (!c) { location.hash = "#/"; return; }
 
   // NOTE: this header block deliberately mirrors renderCoffee() exactly — same
-  // back link, title row, subtitle and method section — so navigating from the
+  // back link, title row (details line included) and method section — so navigating from the
   // coffee page to here doesn't visually shift the pills.
   view.replaceChildren(el(`
     <div>
@@ -942,6 +927,7 @@ async function renderBrew(coffeeId, method) {
         <div class="title-text">
           <h2>${esc(c.name)}</h2>
           ${c.roaster ? `<p class="roaster-line"><small class="roaster">${esc(c.roaster)}</small></p>` : ""}
+          <p class="meta-line"><small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small></p>
         </div>
         ${safePhoto(c.photo)
           ? `<button type="button" id="photo-thumb" class="thumb-btn" title="View photo">
@@ -949,10 +935,6 @@ async function renderBrew(coffeeId, method) {
              </button>`
           : `<span class="thumb-spacer"></span>`}
       </div>
-      <p class="subtitle-row">
-        <small>${c.roast} · ${c.process}${c.origin ? " · " + esc(c.origin) : ""}${c.decaf ? " · decaf" : ""}</small>
-        <span class="star-spacer"></span>
-      </p>
 
       <section class="step method-step">
         <h3 class="step-title">Brew this — pick a method</h3>
@@ -1820,7 +1802,7 @@ function openFilterSheet(everything) {
   const roasts = ["light", "medium", "dark"].filter((r) => all.some((c) => c.roast === r));
   const procs = ["washed", "honey", "natural"].filter((x) => all.some((c) => c.process === x));
   const anyDecaf = all.some((c) => c.decaf);
-  const anyStar = all.length > 0;
+  const anyFav = all.some((c) => isStarred(c.id));   // no tag when it would match nothing
 
   const pill = (facet, value, label, on) =>
     `<button type="button" class="toggle-pill" data-facet="${facet}"
@@ -1834,16 +1816,13 @@ function openFilterSheet(everything) {
       <div class="lightbox-inner sheet filter-sheet">
         <div class="filter-head">
           <h3>Filter</h3>
-          ${anyStar ? `<button type="button" id="filter-star" class="star-btn"
-            aria-pressed="${starredOnly}"
-            title="${starredOnly ? "Showing starred only" : "Show starred only"}"
-            >${starSvg(starredOnly)}</button>` : ""}
         </div>
         ${group("Roast", roasts.map((r) => pill("roast", r, r, FILTERS.roast.includes(r))).join(""))}
         ${group("Process", procs.map((x) => pill("process", x, x, FILTERS.process.includes(x))).join(""))}
         ${group("Roaster", roasters.map((r) => pill("roaster", r, r, FILTERS.roaster.includes(r))).join(""))}
         ${group("Other", (anyDecaf ? pill("decaf", "1", "Decaf", FILTERS.decaf) : "")
-          + (anyArchived ? pill("archived", "1", "Archived", FILTERS.archived) : ""))}
+          + (anyArchived ? pill("archived", "1", "Archived", FILTERS.archived) : "")
+          + (anyFav ? pill("starred", "1", "Favourites", starredOnly) : ""))}
         <div class="filter-actions">
           <button type="button" id="filter-clear" class="link-btn">Clear all</button>
           <button type="button" id="filter-done">Show <span id="filter-n"></span></button>
@@ -1883,23 +1862,11 @@ function openFilterSheet(everything) {
       refresh();
     }));
 
-  const star = overlay.querySelector("#filter-star");
-  const paintStar = () => {
-    if (!star) return;
-    star.setAttribute("aria-pressed", String(starredOnly));
-    star.innerHTML = starSvg(starredOnly);
-    star.title = starredOnly ? "Showing starred only" : "Show starred only";
-  };
-  if (star) star.addEventListener("click", () => {
-    starredOnly = !starredOnly; paintStar(); refresh();
-  });
-
   overlay.querySelector("#filter-clear").addEventListener("click", () => {
     const wasArchived = FILTERS.archived;
     clearFilters();
     if (wasArchived) { overlay.remove(); openFilterSheet(everything); return; }   // scope changed
     overlay.querySelectorAll(".toggle-pill").forEach((b) => b.setAttribute("aria-pressed", "false"));
-    paintStar();
     refresh();
   });
 
