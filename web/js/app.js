@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.10.0";
+export const APP_VERSION = "1.11.0";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -230,10 +230,17 @@ function paintBadges() {
 }
 
 // --- router -----------------------------------------------------------------
+// A screen can finish rendering after the user has already moved on (the brew
+// screen waits on the engine). Tag each navigation with a sequence number so a
+// late render is never reported as an error, and gets redrawn over if it landed
+// on top of the newer screen.
+let routeSeq = 0, routeDone = 0;
 async function safeRoute() {
+  const my = ++routeSeq;
   try {
     await route();
   } catch (e) {
+    if (my !== routeSeq) return redrawIfStale(my);   // abandoned screen failed: not the user's problem
     console.error("[route]", e);
     view.replaceChildren(el(`
       <article>
@@ -243,6 +250,25 @@ async function safeRoute() {
       </article>`));
     const b = view.querySelector("#err-home");
     if (b) b.addEventListener("click", () => { location.hash = "#/"; });
+  }
+  return redrawIfStale(my);
+}
+
+function redrawIfStale(my) {
+  if (my === routeSeq) { routeDone = my; return; }   // this was the latest navigation
+  if (routeDone === routeSeq) return safeRoute();    // finished late, over the current screen: redraw it
+  // otherwise the latest navigation is still rendering and will overwrite when it lands
+}
+
+// Keep a title on one line: shrink the font until it fits, but never below
+// 20px (the theme truncates with an ellipsis beyond that). Capped so it can't
+// spin, and skipped when there is no layout yet.
+function fitTitle(h2) {
+  if (!h2 || !h2.clientWidth) return;
+  let size = parseFloat(getComputedStyle(h2).fontSize);
+  for (let i = 0; i < 20 && h2.scrollWidth > h2.clientWidth && size > 20; i++) {
+    size -= 1;
+    h2.style.fontSize = size + "px";
   }
 }
 
@@ -433,8 +459,7 @@ async function renderCoffeeForm(editId) {
             <button type="button" id="decaf-pill" class="toggle-pill" aria-pressed="${ex && ex.decaf ? "true" : "false"}">Decaf</button>
             ${ex ? "" : `<button type="button" id="private-pill" class="toggle-pill" aria-pressed="false">Private</button>`}
           </div>
-          ${ex ? "" : `<p class="explain" style="text-align:center">Private coffees stay on your
-          devices only — they aren't shared and don't train anyone else's recommendations.</p>`}
+          ${ex ? "" : `<p class="explain" style="text-align:center">Private coffees stay on your devices only.</p>`}
 
           <label>Notes <textarea name="notes" rows="3">${val("notes")}</textarea></label>
         </details>
@@ -594,15 +619,14 @@ async function renderCoffee(id) {
       </p>
 
       <section class="step method-step">
-        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
+        <h3 class="step-title">Brew this — pick a method</h3>
         <div class="method-pills">${METHODS.map((m) =>
           `<button data-m="${m}">${METHOD_LABEL[m]}</button>`).join("")}</div>
       </section>
 
-      <h3 class="step-title" style="margin-top:1.5rem"><span class="step-num">📈</span> Dial-in history</h3>
+      <h3 class="step-title" style="margin-top:1.5rem">Dial-in history</h3>
       ${strip || "<p><small>No brews logged yet.</small></p>"}
-      ${brews.length ? `<p class="scale-hint"><span>taller bar = coarser grind</span></p>
-        <table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th><th></th></tr></thead>
+      ${brews.length ? `<table><thead><tr><th>Date</th><th>Method</th><th>Grind</th><th>Result</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table>` : ""}
 
       <div class="center-row" style="margin-top:2rem">
@@ -612,7 +636,7 @@ async function renderCoffee(id) {
         </button>
       </div>
       <p class="explain" style="text-align:center">${c.visibility === "private"
-        ? "Only on your devices. Not shared, and not training anyone else's recommendations."
+        ? "Only on your devices. Not shared."
         : "Shared with your household."}</p>
 
       <div class="center-row" style="margin-top:1.5rem; gap:.6rem">
@@ -622,6 +646,7 @@ async function renderCoffee(id) {
           : '<button id="archive-coffee" class="danger-link">Archive this coffee</button>'}
       </div>
     </div>`));
+  fitTitle(view.querySelector(".title-text h2"));
 
   view.querySelectorAll(".method-pills button").forEach((btn) =>
     btn.addEventListener("click", () => location.hash = `#/brew?coffee=${id}&method=${btn.dataset.m}`));
@@ -800,7 +825,7 @@ function pickPhoto(coffee) {
 // omitted rather than shown blank.
 function openBrewDetail(b, coffee, grinder) {
   const rows = [
-    ["Date", new Date(b.createdAt).toLocaleString()],
+    ["Date", new Date(b.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })],
     ["Coffee", coffee.name],
     ["Roaster", coffee.roaster || null],
     ["Method", METHOD_LABEL[b.method]],
@@ -930,7 +955,7 @@ async function renderBrew(coffeeId, method) {
       </p>
 
       <section class="step method-step">
-        <h3 class="step-title"><span class="step-num">☕</span> Brew this — pick a method</h3>
+        <h3 class="step-title">Brew this — pick a method</h3>
         <div class="method-pills" id="pills">${METHODS.map((m) =>
           `<button data-m="${m}" ${m === method ? 'aria-current="true"' : ""}>${METHOD_LABEL[m]}</button>`).join("")}</div>
       </section>
@@ -967,6 +992,7 @@ async function renderBrew(coffeeId, method) {
         <p class="scale-hint"><span>← grind finer</span><span>grind coarser →</span></p>
       </section>
     </div>`));
+  fitTitle(view.querySelector(".title-text h2"));
 
   // carry forward the settings from the last brew of this coffee+method
   const priorBrews = (await db.brewsForCoffee(coffeeId))
@@ -1111,19 +1137,41 @@ async function renderHistory() {
   // include archived coffees here so old brews still show a name, not "?"
   const all = await db.allCoffeesIncludingArchived();
   const coffees = Object.fromEntries(all.map((c) => [String(c.id), c]));
-  const rows = brews.map((b) =>
+  const dayKey = (iso) => {
+    const d = new Date(iso);
+    return isNaN(d) ? String(iso).slice(0, 10) : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  };
+  const dayLabel = (iso) => {
+    const d = new Date(iso);
+    if (isNaN(d)) return String(iso).slice(0, 10);
+    const now = new Date();
+    if (dayKey(iso) === dayKey(now.toISOString())) return "Today";
+    const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    if (dayKey(iso) === dayKey(y.toISOString())) return "Yesterday";
+    return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  };
+  const rowHtml = (b) =>
     `<tr class="brew-row" data-id="${b.id}">
-       <td class="nowrap">${fmtDate(b.createdAt)}</td>
        <td class="truncate">${esc(coffees[String(b.coffeeId)]?.name || "—")}${
          coffees[String(b.coffeeId)]?.roaster
            ? `<br><small class="roaster">${esc(coffees[String(b.coffeeId)].roaster)}</small>` : ""}</td>
        <td class="nowrap">${METHOD_SHORT[b.method] || METHOD_LABEL[b.method]}</td>
        <td class="nowrap">${Number(b.grindSetting)}</td>
        <td class="nowrap">${verdictIcon(b.verdict)}</td>
-     </tr>`
+     </tr>`;
+  // brews are already newest-first, so days and rows within a day come out in order
+  const days = [];
+  for (const b of brews) {
+    const k = dayKey(b.createdAt);
+    if (!days.length || days[days.length - 1].k !== k) days.push({ k, label: dayLabel(b.createdAt), items: [] });
+    days[days.length - 1].items.push(b);
+  }
+  const groups = days.map((d) =>
+    `<h3 class="day-head">${esc(d.label)}</h3>
+     <table class="compact day-table"><tbody>${d.items.map(rowHtml).join("")}</tbody></table>`
   ).join("");
   view.replaceChildren(el(`<div><h2>History</h2>${brews.length
-    ? `<table class="compact"><thead><tr><th>Date</th><th>Coffee</th><th>Method</th><th>Grind</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    ? `${groups}
        <p class="explain" style="text-align:center">Tap a brew for full detail.</p>`
     : "<p><small>No brews logged yet.</small></p>"}</div>`));
 
@@ -1167,7 +1215,7 @@ async function renderSettings() {
       </article>
       <article>
         <strong>Backup</strong>
-        <p><small>Your phone can clear local data. Export a JSON backup now and then.</small></p>
+        <p><small>Phones clear local data. Export now and then.</small></p>
         <button id="export">Export backup</button>
         <div class="inline-row">
           <span>Import backup</span>

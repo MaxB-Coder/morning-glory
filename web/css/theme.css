@@ -1,0 +1,222 @@
+/* Morning Glory — theme ("Roastery").
+   Everything about how the app LOOKS lives here; app.css keeps layout and
+   behaviour. Loaded after app.css, so these rules win by order.
+
+   The idea: a coffee-bag label. Serif display type, cream ink on espresso (ink
+   on cream paper in light mode), hairlines instead of boxes, small-caps labels,
+   stamped square tags, one copper accent.
+
+   Fonts are the system's own (New York via ui-serif), so nothing is downloaded
+   and the app stays fully offline. */
+
+/* ===== shared details ===== */
+.rec-number, table, input[type="number"], .chart-stats, .detail-table td { font-variant-numeric: tabular-nums; }
+body { -webkit-font-smoothing: antialiased; }
+.del-brew { border-color: transparent; background: transparent; color: var(--pico-muted-color); opacity: .65; padding: .2rem .5rem; }
+.day-head { margin: 1.1rem 0 .1rem; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--pico-muted-color); }
+.day-head:first-of-type { margin-top: .4rem; }
+.day-table { margin-top: 0; }
+.day-table td { padding-top: .55rem; padding-bottom: .55rem; }
+.day-table td:nth-child(3), .day-table td:nth-child(4) { text-align: right; width: 1%; }
+.day-table td:nth-child(2) { color: var(--pico-muted-color); width: 1%; }
+.truncate { max-width: 11.5rem; }
+label { font-size: .82rem; color: var(--pico-muted-color); }
+label input, label select, label textarea { margin-top: .3rem; color: var(--pico-color); }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--gw-accent); outline-offset: 1px; }
+
+/* ===== palette, type, surfaces ===== */
+:root { --gw-accent: #c8793a; --pico-primary: #c8793a; }
+@media (prefers-color-scheme: dark) { :root {
+  --pico-background-color: #15100c; --pico-color: #f3e9dc; --pico-muted-color: #a39384; --pico-muted-border-color: #2e241d; } }
+:root { --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif; }
+
+.app-header { border-bottom: 0; padding-bottom: .2rem; }
+.app-header strong { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 1.15rem; letter-spacing: 0; }
+h2 { font-family: var(--serif); font-weight: 500; font-size: 2.05rem; letter-spacing: -.02em; line-height: 1.08; }
+.roaster, .roaster-line small { font-style: italic; }
+
+/* cards become rows on the page */
+article, .step.method-step { background: none; border: 0; border-radius: 0; padding: 0; }
+.coffee-card { padding: .95rem 0; margin: 0; border-bottom: 1px solid var(--pico-muted-border-color); }
+.coffee-card strong { font-family: var(--serif); font-weight: 500; font-size: 1.22rem; letter-spacing: -.01em; }
+.card-thumb, .thumb-btn, .thumb-btn img { border-radius: .3rem; }
+#view > div > article:not(.coffee-card) { padding: 1.05rem 0; margin: 0; border-top: 1px solid var(--pico-muted-border-color); }
+#view > div > article:not(.coffee-card) > strong:first-child,
+.panel-head strong { font-family: var(--serif); font-weight: 500; font-size: 1.2rem; }
+#view > article { padding: 0; }
+
+/* labels: small caps */
+.step-title { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--pico-muted-color); }
+.step.method-step { text-align: left; margin-top: 1.1rem; }
+.step.method-step .step-title, .method-pills { justify-content: flex-start; }
+.step-num { background: none; color: var(--gw-accent); border: 1px solid var(--gw-accent); font-family: var(--serif); width: 1.3rem; height: 1.3rem; font-size: .75rem; }
+th { font-size: .66rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--pico-muted-color); }
+
+.rec-number { font-family: var(--serif); font-weight: 400; font-size: 5.6rem; letter-spacing: -.04em; color: var(--pico-color); }
+.rec-wrap { margin: .4rem 0 1.2rem; }
+
+button { border-radius: .35rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: .78rem; padding: .85rem 1rem; }
+.method-pills button, .toggle-pill { text-transform: none; letter-spacing: 0; border-radius: 99px; font-size: .8rem; font-weight: 400; padding: .36rem .85rem; }
+.verdict-row button { text-transform: none; letter-spacing: 0; border-radius: .35rem; }
+.link-btn, .danger-link, .compact-btn, .star-btn, .del-brew { text-transform: none; letter-spacing: 0; }
+.icon-btn { background: none; border: 1px solid var(--pico-muted-border-color); border-radius: .35rem; color: var(--pico-color); }
+input, select, textarea { background: transparent; border: 0; border-bottom: 1px solid var(--pico-muted-border-color); border-radius: 0; padding: .55rem 0; }
+.chart-stats { border-color: var(--pico-muted-border-color); }
+
+/* tabs, not pills */
+.bottom-nav { gap: 1.9rem; border-top: 1px solid var(--pico-muted-border-color); }
+.bottom-nav a { border: 0; border-radius: 0; padding: .55rem .1rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--pico-muted-color); }
+.bottom-nav a.active { background: none; color: var(--pico-color); box-shadow: inset 0 -2px 0 var(--gw-accent); }
+.badge { background: none; border: 1px solid var(--pico-muted-border-color); font-size: .64rem; letter-spacing: .06em; }
+.badge.ok { background: none; color: #6fbf73; border-color: rgba(111,191,115,.4); }
+.fab-filter { background: var(--pico-background-color); }
+.sheet { border-radius: .5rem; }
+
+/* ===== label details ===== */
+/* --- paper grain ---------------------------------------------------------- */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: .07;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .95  0 0 0 0 .88  0 0 0 .7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* --- masthead ------------------------------------------------------------- */
+.app-header { justify-content: center; padding-top: .95rem; padding-bottom: .6rem;
+  border-bottom: 3px double var(--pico-muted-border-color); }
+.app-header strong { font-size: 1.5rem; letter-spacing: .005em; }
+
+/* --- page titles: big serif over a short copper rule ----------------------- */
+#view h2 { font-size: 2.35rem; }
+#view > div > h2:first-child::after,
+#view > div > .title-row:first-child h2::after,
+.title-text h2::after {
+  content: ""; display: block; width: 2.4rem; height: 2px; background: var(--gw-accent); margin-top: .6rem; }
+.title-text h2::after { margin-bottom: .35rem; }
+#view > div > .title-row:first-child { margin-bottom: .5rem; }
+.back { font-family: var(--serif); font-style: italic; font-size: .95rem; }
+
+/* --- section labels: small caps, then a rule running to the margin --------- */
+.step-title { gap: .65rem; margin-bottom: .7rem; }
+.step-title::after { content: ""; flex: 1; height: 1px; background: var(--pico-muted-border-color); }
+.step-num { border: 0; width: auto; height: auto; font-style: italic; font-size: 1.05rem; line-height: 1; }
+.step.method-step .step-title { justify-content: flex-start; }
+
+/* --- the list reads like a menu ------------------------------------------- */
+#view > div { counter-reset: bag; }
+.coffee-card { gap: .8rem; padding: 1.05rem 0; }
+.coffee-card::before {
+  counter-increment: bag; content: counter(bag, decimal-leading-zero);
+  font-family: var(--serif); font-style: italic; font-size: .85rem; color: var(--pico-muted-color);
+  width: 1.35rem; flex: none; align-self: flex-start; padding-top: .28rem; }
+.coffee-card strong { font-size: 1.32rem; }
+.card-body > small { font-size: .62rem; text-transform: uppercase; letter-spacing: .13em; }
+.card-thumb { border-radius: .12rem; outline: 1px solid rgba(243, 233, 220, .28); outline-offset: 2px; }
+.thumb-btn, .thumb-btn img { border-radius: .12rem; }
+.coffee-card .chev { opacity: .5; }
+.subtitle-row small { font-size: .64rem; text-transform: uppercase; letter-spacing: .13em; }
+.priv-tag { border-radius: .12rem; font-size: .56rem; letter-spacing: .12em; }
+
+/* --- stamped tags instead of pills ---------------------------------------- */
+.method-pills { gap: .4rem; }
+.method-pills button, .toggle-pill {
+  border-radius: .14rem; text-transform: uppercase; letter-spacing: .13em; font-size: .62rem;
+  padding: .46rem .68rem; }
+.method-pills button[aria-current="true"], .toggle-pill[aria-pressed="true"] {
+  background: var(--pico-color); border-color: var(--pico-color); color: var(--pico-background-color); }
+
+/* --- the number, set like a label ----------------------------------------- */
+.rec-wrap { border-top: 1px solid var(--pico-muted-border-color); border-bottom: 1px solid var(--pico-muted-border-color);
+  padding: 1.3rem 0 .9rem; margin: .2rem 0 1.4rem; }
+.rec-number { font-size: 6.6rem; line-height: .95; }
+.rec-why summary, .explain { font-family: var(--serif); font-style: italic; font-size: .9rem; }
+
+/* --- cream ink for primary actions; copper stays for the + ---------------- */
+button { background: var(--pico-color); border-color: var(--pico-color); color: var(--pico-background-color); border-radius: .14rem; }
+.verdict-row button { color: #fff; border-radius: .14rem; }
+.verdict-row .v-gusher { color: #2b2320; }
+.fab { background: var(--gw-accent); border-color: var(--gw-accent); color: #fff;
+  box-shadow: 0 0 0 3px var(--pico-background-color), 0 0 0 4px var(--gw-accent), 0 8px 20px rgba(0,0,0,.4); }
+.fab-filter { background: var(--pico-background-color); color: var(--pico-color); border-color: var(--pico-muted-border-color);
+  box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+.icon-btn { border-radius: .14rem; }
+.link-btn, .danger-link, .compact-btn { border-radius: .14rem; }
+.link-btn { font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; padding: .5rem .8rem; }
+.del-brew { font-size: .9rem; padding: .2rem .5rem; }
+.danger-link { font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; }
+#edit-coffee, #archive-coffee, #restore-coffee { border-radius: .14rem; font-size: .68rem; padding: .5rem .8rem; }
+
+/* --- fields --------------------------------------------------------------- */
+label { font-size: .62rem; text-transform: uppercase; letter-spacing: .13em; }
+label input, label select, label textarea { font-size: 1.05rem; text-transform: none; letter-spacing: 0; }
+summary { font-family: var(--serif); font-style: italic; }
+
+/* --- tables and the log ---------------------------------------------------- */
+.day-head { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem;
+  text-transform: none; letter-spacing: 0; color: var(--pico-color);
+  display: flex; align-items: center; gap: .7rem; margin: 1.4rem 0 .2rem; }
+.day-head::after { content: ""; flex: 1; height: 1px; background: var(--pico-muted-border-color); }
+td.truncate { font-family: var(--serif); font-size: 1.02rem; }
+td.truncate .roaster { font-family: -apple-system, system-ui, sans-serif; font-style: italic; }
+.day-table td { border-bottom: 0; padding-top: .42rem; padding-bottom: .42rem; }
+.chart-stats { font-size: .66rem; text-transform: uppercase; letter-spacing: .1em; }
+.chart-stats strong { font-family: var(--serif); font-size: 1.05rem; letter-spacing: 0; }
+
+/* --- the brew sheet reads like a tasting card ------------------------------ */
+.sheet { border-radius: .14rem; padding: 1.3rem 1.25rem; }
+.sheet h3 { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; text-align: left; }
+.detail-table th, .detail-table td { border-bottom: 1px dotted var(--pico-muted-border-color); padding: .45rem 0; }
+.detail-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .13em; }
+.detail-table td { text-align: right; font-family: var(--serif); font-size: 1rem; }
+
+.bottom-nav { border-top: 3px double var(--pico-muted-border-color); }
+.badge { border-radius: .12rem; text-transform: uppercase; letter-spacing: .1em; font-size: .56rem; padding: .2rem .45rem; }
+
+/* photo sits at the far side like a stamp, so every name starts on one line */
+.coffee-card .card-thumb { order: 3; width: 2.6rem; height: 2.6rem; }
+.coffee-card .star-mark { order: 2; }
+.coffee-card .chev { order: 4; }
+
+.title-text h2 { font-size: 2rem; }
+#view > div > article strong:not(.invite-code) { font-family: var(--serif); font-weight: 500; font-size: 1.12rem; }
+.compact-btn { text-transform: uppercase; letter-spacing: .12em; font-size: .66rem; padding: .55rem .8rem; }
+.center-link a { font-family: var(--serif); font-style: italic; font-size: 1rem; }
+#view .title-text h2 { font-size: 2rem; }
+
+/* --- nothing wraps -------------------------------------------------------- */
+.coffee-card .chev { display: none; }                 /* a menu row needs no arrow */
+.coffee-card strong { font-size: 1.24rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-title { display: grid; grid-template-columns: minmax(0, auto) 1fr; column-gap: .45rem; align-items: baseline; }
+.card-title .priv-tag { justify-self: start; }
+.card-title .roaster { grid-column: 1 / -1; }
+.card-title .roaster, .card-body > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.coffee-card .card-thumb { width: 2.4rem; height: 2.4rem; }
+.title-text { min-width: 0; }
+.detail-table td { white-space: nowrap; }
+.subtitle-row small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- light: ink on cream paper -------------------------------------------- */
+@media not all and (prefers-color-scheme: dark) {
+  :root { --pico-background-color: #f4ecdf; --pico-color: #2a1f18; --pico-muted-color: #7b6a5b;
+          --pico-muted-border-color: #dccfbd; --gw-accent: #b0591a; --pico-primary: #b0591a; }
+  body::after { opacity: .09; mix-blend-mode: multiply; filter: invert(1); }
+  .card-thumb { outline-color: rgba(42, 31, 24, .3); }
+  .badge.ok { color: #2e7d32; border-color: rgba(46, 125, 50, .45); }
+}
+.card-title .roaster { line-height: 1.35; margin-top: .12rem; }
+.card-body > small { line-height: 1.5; margin-top: .3rem; }
+
+/* --- titles stay on one line: app.js shrinks the font to fit, this handles
+       the remainder ---------------------------------------------------------- */
+.title-text h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- boot screen ----------------------------------------------------------- */
+.boot h2 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 2.2rem; }
+.boot h2::after { display: none; }
+#boot-status { font-family: var(--serif); font-style: italic; color: var(--pico-muted-color); }
+
+/* --- the holographic code was tuned for a dark page; on paper its glow layers
+       wash it out, so keep the foil and drop the bloom ----------------------- */
+@media not all and (prefers-color-scheme: dark) {
+  .invite-code::before { display: none; }
+  .invite-code::after { filter: none; opacity: .45; }
+  .invite-code { filter: saturate(1.5) brightness(.8); }
+}

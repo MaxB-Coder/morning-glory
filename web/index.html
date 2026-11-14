@@ -38,15 +38,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <!-- iOS standalone paints the strip BELOW the web viewport (where Safari's
        toolbar would be) from theme-color, read at LAUNCH. No CSS can reach it.
-       DARK: set to #040303 = the dark app background as it appears under the
+       DARK: set to #030202 = the new dark app background #15100c as it appears under the
        photo viewer's 86% scrim, so that overlay needs no band or gradient. The
        strip is then marginally darker than the app in normal use — invisible on
        a dark palette. Recompute if the scrim opacity or dark bg changes.
        LIGHT: left as the app background; a dark strip under a light app would
        be obvious in normal use. -->
-  <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#040303" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#040303" />
+  <meta name="theme-color" content="#f4ecdf" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#030202" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#030202" />
   <title>Morning Glory</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
@@ -56,19 +56,19 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="stylesheet" href="./css/pico.min.css" />
   <link rel="stylesheet" href="./css/app.css" />
+  <link rel="stylesheet" href="./css/theme.css" />
   <!-- Pyodide loader — vendored for offline. Run scripts/fetch_pyodide.sh once. -->
   <script src="./vendor/pyodide/pyodide.js"></script>
 </head>
 <body>
   <div id="boot" class="boot">
-    <div class="boot-logo">☕</div>
     <h2>Morning Glory</h2>
     <p id="boot-status">Warming up the grinder…</p>
     <progress></progress>
   </div>
 
   <header class="app-header" hidden>
-    <strong><span class="logo-mark">☕</span> Morning Glory</strong>
+    <strong>Morning Glory</strong>
   </header>
 
   <main id="view" hidden></main>
