@@ -351,3 +351,64 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
 @media (prefers-color-scheme: dark) {
   .bottom-nav { background: #1c1714; }
 }
+
+/* ===== gold in sunlight =====================================================
+   One glint crossing every favourite in step looked mechanical. Each row now
+   carries two glints of different width and softness, and rows fall into three
+   groups with their own angle, pace and starting point, so no two neighbours
+   catch the light together. The timings are deliberately not multiples of one
+   another, so the pattern takes minutes to repeat. */
+.coffee-card.fav {
+  --g1: 105deg; --g2: 82deg;
+  background-image:
+    linear-gradient(var(--g1), transparent 46%, rgba(255, 244, 200, .34) 50%, transparent 54%),
+    linear-gradient(var(--g2), transparent 38%, rgba(255, 226, 150, .14) 50%, transparent 62%),
+    linear-gradient(90deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .11) 55%, rgba(212, 175, 55, .17));
+  background-size: 340% 100%, 260% 100%, 100% 100%;
+  background-position: 135% 0, 140% 0, 0 0;
+  background-repeat: no-repeat;
+  animation: fav-sun-a 7.3s cubic-bezier(.45, 0, .2, 1) -1.1s infinite;
+}
+.coffee-card.fav:nth-child(3n+1) { --g1: 118deg; --g2: 96deg; animation: fav-sun-b 9.7s cubic-bezier(.3, 0, .25, 1) -4.6s infinite; }
+.coffee-card.fav:nth-child(3n+2) { --g1: 96deg; --g2: 112deg; animation: fav-sun-c 11.9s cubic-bezier(.5, 0, .3, 1) -7.9s infinite; }
+
+/* a: quick bright glint, then the broad one drifts after it, then rest */
+@keyframes fav-sun-a {
+  0%   { background-position: 135% 0, 140% 0, 0 0; }
+  22%  { background-position: -35% 0, 95% 0, 0 0; }
+  58%  { background-position: -35% 0, -40% 0, 0 0; }
+  100% { background-position: -35% 0, -40% 0, 0 0; }
+}
+/* b: the broad glow leads, the sharp glint arrives late and fast */
+@keyframes fav-sun-b {
+  0%   { background-position: 135% 0, 140% 0, 0 0; }
+  40%  { background-position: 135% 0, -40% 0, 0 0; }
+  52%  { background-position: 60% 0, -40% 0, 0 0; }
+  66%  { background-position: -35% 0, -40% 0, 0 0; }
+  100% { background-position: -35% 0, -40% 0, 0 0; }
+}
+/* c: two short flickers part-way, as if the light source moved, then across */
+@keyframes fav-sun-c {
+  0%   { background-position: 135% 0, 140% 0, 0 0; }
+  14%  { background-position: 78% 0, 110% 0, 0 0; }
+  20%  { background-position: 88% 0, 104% 0, 0 0; }
+  30%  { background-position: 70% 0, 80% 0, 0 0; }
+  62%  { background-position: -35% 0, -40% 0, 0 0; }
+  100% { background-position: -35% 0, -40% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coffee-card.fav, .coffee-card.fav:nth-child(3n+1), .coffee-card.fav:nth-child(3n+2) { animation: none; }
+}
+
+/* The bar is lifted above the paper grain. The strip iOS draws beneath the app
+   is a flat colour; a grained bar can never match it exactly. */
+.bottom-nav { position: relative; z-index: 101; }
+
+/* deeper, antique gold for the wash and edge; the glints keep their brightness */
+.coffee-card.fav {
+  background-image:
+    linear-gradient(var(--g1), transparent 46%, rgba(255, 236, 180, .30) 50%, transparent 54%),
+    linear-gradient(var(--g2), transparent 38%, rgba(240, 200, 110, .12) 50%, transparent 62%),
+    linear-gradient(90deg, rgba(170, 130, 30, .24), rgba(170, 130, 30, .14) 55%, rgba(170, 130, 30, .20));
+  box-shadow: inset 2px 0 0 rgba(170, 130, 30, .85);
+}
