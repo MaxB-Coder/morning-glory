@@ -412,3 +412,52 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
     linear-gradient(90deg, rgba(170, 130, 30, .24), rgba(170, 130, 30, .14) 55%, rgba(170, 130, 30, .20));
   box-shadow: inset 2px 0 0 rgba(170, 130, 30, .85);
 }
+
+/* ===== gold that glitters, not a bar that slides ===========================
+   Real gold in sunlight doesn't get swept by a stripe. It sparkles: thousands
+   of tiny facets, each flashing for an instant as the angle changes, in no
+   order. So the sweep is gone. The row keeps a still gold wash, and over it
+   lies a field of pin-point highlights that is only visible through soft
+   patches of light drifting slowly across it. As a patch passes, the points
+   under it flare and die away one by one. Two patch layers move in different
+   directions at speeds that don't divide into each other, so the sparkle never
+   visibly repeats, and neighbouring rows are offset from one another. */
+.coffee-card.fav {
+  position: relative; overflow: hidden; animation: none;
+  background-image: linear-gradient(90deg, rgba(170, 130, 30, .24), rgba(170, 130, 30, .14) 55%, rgba(170, 130, 30, .20));
+  background-size: 100% 100%; background-position: 0 0;
+}
+.coffee-card.fav:nth-child(3n+1), .coffee-card.fav:nth-child(3n+2) { animation: none; }
+.coffee-card.fav::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(255, 250, 225, 1) 0, rgba(255, 250, 225, 1) .55px, transparent 1.5px),
+    radial-gradient(circle, rgba(255, 232, 160, .95) 0, rgba(255, 232, 160, .95) .45px, transparent 1.3px),
+    radial-gradient(circle, rgba(255, 244, 200, .9) 0, rgba(255, 244, 200, .9) .7px, transparent 1.9px),
+    radial-gradient(circle, rgba(255, 220, 130, .8) 0, rgba(255, 220, 130, .8) .4px, transparent 1.1px);
+  background-size: 23px 19px, 31px 27px, 53px 41px, 13px 17px;
+  background-position: 3px 5px, 17px 11px, 29px 7px, 8px 2px;
+  -webkit-mask-image:
+    radial-gradient(ellipse 34px 22px at 50% 50%, #000 0, rgba(0,0,0,.5) 45%, transparent 72%),
+    radial-gradient(ellipse 22px 30px at 50% 50%, #000 0, rgba(0,0,0,.4) 40%, transparent 70%);
+  mask-image:
+    radial-gradient(ellipse 34px 22px at 50% 50%, #000 0, rgba(0,0,0,.5) 45%, transparent 72%),
+    radial-gradient(ellipse 22px 30px at 50% 50%, #000 0, rgba(0,0,0,.4) 40%, transparent 70%);
+  -webkit-mask-size: 150px 96px, 108px 132px; mask-size: 150px 96px, 108px 132px;
+  -webkit-mask-repeat: repeat; mask-repeat: repeat;
+  animation: fav-glitter 23s linear infinite;
+}
+.coffee-card.fav:nth-child(3n+1)::after { animation-duration: 31s; animation-delay: -9s; background-position: 11px 2px, 5px 19px, 40px 20px, 2px 9px; }
+.coffee-card.fav:nth-child(3n+2)::after { animation-duration: 27s; animation-delay: -17s; animation-direction: reverse; background-position: 19px 13px, 2px 4px, 12px 30px, 6px 14px; }
+/* each layer travels a whole number of its own tiles, so the loop has no seam */
+@keyframes fav-glitter {
+  from { -webkit-mask-position: 0 0, 0 0; mask-position: 0 0, 0 0; }
+  to   { -webkit-mask-position: 450px 96px, -216px 264px; mask-position: 450px 96px, -216px 264px; }
+}
+@media (prefers-reduced-motion: reduce) { .coffee-card.fav::after { animation: none; } }
+
+/* The band under the tabs is the PAGE showing through: iOS leaves a strip
+   below an installed app and fills it with the document's own background, not
+   the theme colour. So the bar must be exactly the page colour, flat, with no
+   grain over it. (An earlier rule gave the bar a different brown.) */
+@media (prefers-color-scheme: dark) { .bottom-nav { background: var(--pico-background-color); } }

@@ -36,16 +36,14 @@
   " />
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- iOS standalone paints a strip BELOW the web viewport (where Safari's
-       toolbar would be). No CSS can reach it. Its colour appears to be fixed
-       when the app is added to the home screen, so it must never change: in
-       dark mode it is #1c1714, and the bottom bar is given that same colour in
-       theme.css so the two read as one footer. Changing this value, or the
-       manifest's, strands a mismatched band under the tabs on every existing
-       install. -->
+  <!-- iOS standalone leaves a strip BELOW the web viewport (where Safari's
+       toolbar would be). No CSS can draw in it. Which colour fills it has been
+       hard to pin down, so everything that could is the same value: the page
+       background, these tags, the manifest, and the bottom bar (theme.css). In
+       dark mode that is #15100c; in light, #f4ecdf. Keep them identical. -->
   <meta name="theme-color" content="#f4ecdf" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#1c1714" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#1c1714" />
+  <meta name="theme-color" content="#15100c" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#15100c" />
   <title>Morning Glory</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
