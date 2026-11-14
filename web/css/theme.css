@@ -323,3 +323,31 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
 
 /* home photo a little larger */
 .coffee-card .card-thumb { width: 3rem; height: 3rem; }
+
+/* favourite: gold leaf. A steady gold wash, and a narrow highlight that crosses
+   it now and then and rests in between, the way light catches foil when it
+   moves, rather than a tint pulsing back and forth. */
+.coffee-card.fav {
+  background-image:
+    linear-gradient(105deg, transparent 0%, transparent 44%, rgba(255, 240, 190, .30) 50%, transparent 56%, transparent 100%),
+    linear-gradient(90deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .11) 55%, rgba(212, 175, 55, .17));
+  background-size: 320% 100%, 100% 100%;
+  background-position: 130% 0, 0 0;
+  background-repeat: no-repeat;
+  box-shadow: inset 2px 0 0 rgba(212, 175, 55, .75);
+  animation: fav-glint 6.5s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+@keyframes fav-glint {
+  0%, 62% { background-position: 130% 0, 0 0; }
+  100%    { background-position: -30% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) { .coffee-card.fav { animation: none; } }
+
+/* The bar under the tabs. iOS draws a strip beneath an installed web app in
+   the colour the app was INSTALLED with, and never refreshes it. Every existing
+   install has the old background there, so in dark mode the bar takes that same
+   colour: bar and strip then read as one footer reaching the edge of the
+   screen, whatever the page above it does. */
+@media (prefers-color-scheme: dark) {
+  .bottom-nav { background: #1c1714; }
+}
