@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.12.4";
+export const APP_VERSION = "1.12.5";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -454,7 +454,7 @@ async function renderCoffeeForm(editId) {
           </div>
           ${ex ? "" : `<p class="explain" style="text-align:center">Private coffees stay on your devices only.</p>`}
 
-          <label>Notes <textarea name="notes" rows="3">${val("notes")}</textarea></label>
+          <label>Notes <textarea name="notes" rows="1">${val("notes")}</textarea></label>
         </details>
         <button type="submit">${ex ? "Save changes" : "Save coffee"}</button>
       </form>
@@ -493,6 +493,14 @@ async function renderCoffeeForm(editId) {
   };
   const decafPill = togglePill("#decaf-pill");
   const privatePill = ex ? null : togglePill("#private-pill");
+
+  // Notes are usually empty or a few words, so the box is one line and grows
+  // only as the text wraps (and on open, for a coffee that already has notes).
+  const notes = view.querySelector('#coffee-form [name="notes"]');
+  const fitNotes = () => { notes.style.height = "auto"; notes.style.height = notes.scrollHeight + "px"; };
+  notes.addEventListener("input", fitNotes);
+  const moreDetail = notes.closest("details");
+  if (moreDetail) moreDetail.addEventListener("toggle", fitNotes);
 
   saving = false;
   view.querySelector("#coffee-form").addEventListener("submit", async (e) => {
