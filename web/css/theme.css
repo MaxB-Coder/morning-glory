@@ -303,212 +303,66 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
   display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .roaster-line { line-height: 1.25; }
 .thumb-btn img, .thumb-spacer, .title-row > .icon-btn { width: 4.9rem; height: 4.9rem; }
-
-/* a favourite is a warm wash across its row, not an icon */
-.coffee-card.fav { background: rgba(200, 121, 58, .11); margin: 0 -.6rem; padding-left: .6rem; padding-right: .6rem; }
 .center-row { gap: .5rem; }
-
-/* favourite: a quiet gold with a slow sheen crossing it, instead of copper */
-.coffee-card.fav {
-  background-color: transparent;
-  background-image: linear-gradient(105deg,
-    rgba(214, 180, 92, .055) 0%, rgba(214, 180, 92, .055) 38%,
-    rgba(240, 214, 140, .13) 50%,
-    rgba(214, 180, 92, .055) 62%, rgba(214, 180, 92, .055) 100%);
-  background-size: 260% 100%;
-  animation: fav-sheen 9s ease-in-out infinite;
-}
-@keyframes fav-sheen { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0% 0; } }
-@media (prefers-reduced-motion: reduce) { .coffee-card.fav { animation: none; background-position: 50% 0; } }
 
 /* home photo a little larger */
 .coffee-card .card-thumb { width: 3rem; height: 3rem; }
 
-/* favourite: gold leaf. A steady gold wash, and a narrow highlight that crosses
-   it now and then and rests in between, the way light catches foil when it
-   moves, rather than a tint pulsing back and forth. */
-.coffee-card.fav {
-  background-image:
-    linear-gradient(105deg, transparent 0%, transparent 44%, rgba(255, 240, 190, .30) 50%, transparent 56%, transparent 100%),
-    linear-gradient(90deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .11) 55%, rgba(212, 175, 55, .17));
-  background-size: 320% 100%, 100% 100%;
-  background-position: 130% 0, 0 0;
-  background-repeat: no-repeat;
-  box-shadow: inset 2px 0 0 rgba(212, 175, 55, .75);
-  animation: fav-glint 6.5s cubic-bezier(.4, 0, .2, 1) infinite;
-}
-@keyframes fav-glint {
-  0%, 62% { background-position: 130% 0, 0 0; }
-  100%    { background-position: -30% 0, 0 0; }
-}
-@media (prefers-reduced-motion: reduce) { .coffee-card.fav { animation: none; } }
-
-/* The bar under the tabs. iOS draws a strip beneath an installed web app in
-   the colour the app was INSTALLED with, and never refreshes it. Every existing
-   install has the old background there, so in dark mode the bar takes that same
-   colour: bar and strip then read as one footer reaching the edge of the
-   screen, whatever the page above it does. */
-@media (prefers-color-scheme: dark) {
-  .bottom-nav { background: #1c1714; }
-}
-
-/* ===== gold in sunlight =====================================================
-   One glint crossing every favourite in step looked mechanical. Each row now
-   carries two glints of different width and softness, and rows fall into three
-   groups with their own angle, pace and starting point, so no two neighbours
-   catch the light together. The timings are deliberately not multiples of one
-   another, so the pattern takes minutes to repeat. */
-.coffee-card.fav {
-  --g1: 105deg; --g2: 82deg;
-  background-image:
-    linear-gradient(var(--g1), transparent 46%, rgba(255, 244, 200, .34) 50%, transparent 54%),
-    linear-gradient(var(--g2), transparent 38%, rgba(255, 226, 150, .14) 50%, transparent 62%),
-    linear-gradient(90deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .11) 55%, rgba(212, 175, 55, .17));
-  background-size: 340% 100%, 260% 100%, 100% 100%;
-  background-position: 135% 0, 140% 0, 0 0;
-  background-repeat: no-repeat;
-  animation: fav-sun-a 7.3s cubic-bezier(.45, 0, .2, 1) -1.1s infinite;
-}
-.coffee-card.fav:nth-child(3n+1) { --g1: 118deg; --g2: 96deg; animation: fav-sun-b 9.7s cubic-bezier(.3, 0, .25, 1) -4.6s infinite; }
-.coffee-card.fav:nth-child(3n+2) { --g1: 96deg; --g2: 112deg; animation: fav-sun-c 11.9s cubic-bezier(.5, 0, .3, 1) -7.9s infinite; }
-
-/* a: quick bright glint, then the broad one drifts after it, then rest */
-@keyframes fav-sun-a {
-  0%   { background-position: 135% 0, 140% 0, 0 0; }
-  22%  { background-position: -35% 0, 95% 0, 0 0; }
-  58%  { background-position: -35% 0, -40% 0, 0 0; }
-  100% { background-position: -35% 0, -40% 0, 0 0; }
-}
-/* b: the broad glow leads, the sharp glint arrives late and fast */
-@keyframes fav-sun-b {
-  0%   { background-position: 135% 0, 140% 0, 0 0; }
-  40%  { background-position: 135% 0, -40% 0, 0 0; }
-  52%  { background-position: 60% 0, -40% 0, 0 0; }
-  66%  { background-position: -35% 0, -40% 0, 0 0; }
-  100% { background-position: -35% 0, -40% 0, 0 0; }
-}
-/* c: two short flickers part-way, as if the light source moved, then across */
-@keyframes fav-sun-c {
-  0%   { background-position: 135% 0, 140% 0, 0 0; }
-  14%  { background-position: 78% 0, 110% 0, 0 0; }
-  20%  { background-position: 88% 0, 104% 0, 0 0; }
-  30%  { background-position: 70% 0, 80% 0, 0 0; }
-  62%  { background-position: -35% 0, -40% 0, 0 0; }
-  100% { background-position: -35% 0, -40% 0, 0 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .coffee-card.fav, .coffee-card.fav:nth-child(3n+1), .coffee-card.fav:nth-child(3n+2) { animation: none; }
-}
-
-/* The bar is lifted above the paper grain. The strip iOS draws beneath the app
-   is a flat colour; a grained bar can never match it exactly. */
-.bottom-nav { position: relative; z-index: 101; }
-
-/* deeper, antique gold for the wash and edge; the glints keep their brightness */
-.coffee-card.fav {
-  background-image:
-    linear-gradient(var(--g1), transparent 46%, rgba(255, 236, 180, .30) 50%, transparent 54%),
-    linear-gradient(var(--g2), transparent 38%, rgba(240, 200, 110, .12) 50%, transparent 62%),
-    linear-gradient(90deg, rgba(170, 130, 30, .24), rgba(170, 130, 30, .14) 55%, rgba(170, 130, 30, .20));
-  box-shadow: inset 2px 0 0 rgba(170, 130, 30, .85);
-}
-
-/* ===== gold that glitters, not a bar that slides ===========================
-   Real gold in sunlight doesn't get swept by a stripe. It sparkles: thousands
-   of tiny facets, each flashing for an instant as the angle changes, in no
-   order. So the sweep is gone. The row keeps a still gold wash, and over it
-   lies a field of pin-point highlights that is only visible through soft
-   patches of light drifting slowly across it. As a patch passes, the points
-   under it flare and die away one by one. Two patch layers move in different
-   directions at speeds that don't divide into each other, so the sparkle never
-   visibly repeats, and neighbouring rows are offset from one another. */
-.coffee-card.fav {
-  position: relative; overflow: hidden; animation: none;
-  background-image: linear-gradient(90deg, rgba(170, 130, 30, .24), rgba(170, 130, 30, .14) 55%, rgba(170, 130, 30, .20));
-  background-size: 100% 100%; background-position: 0 0;
-}
-.coffee-card.fav:nth-child(3n+1), .coffee-card.fav:nth-child(3n+2) { animation: none; }
-.coffee-card.fav::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    radial-gradient(circle, rgba(255, 250, 225, 1) 0, rgba(255, 250, 225, 1) .55px, transparent 1.5px),
-    radial-gradient(circle, rgba(255, 232, 160, .95) 0, rgba(255, 232, 160, .95) .45px, transparent 1.3px),
-    radial-gradient(circle, rgba(255, 244, 200, .9) 0, rgba(255, 244, 200, .9) .7px, transparent 1.9px),
-    radial-gradient(circle, rgba(255, 220, 130, .8) 0, rgba(255, 220, 130, .8) .4px, transparent 1.1px);
-  background-size: 23px 19px, 31px 27px, 53px 41px, 13px 17px;
-  background-position: 3px 5px, 17px 11px, 29px 7px, 8px 2px;
-  -webkit-mask-image:
-    radial-gradient(ellipse 34px 22px at 50% 50%, #000 0, rgba(0,0,0,.5) 45%, transparent 72%),
-    radial-gradient(ellipse 22px 30px at 50% 50%, #000 0, rgba(0,0,0,.4) 40%, transparent 70%);
-  mask-image:
-    radial-gradient(ellipse 34px 22px at 50% 50%, #000 0, rgba(0,0,0,.5) 45%, transparent 72%),
-    radial-gradient(ellipse 22px 30px at 50% 50%, #000 0, rgba(0,0,0,.4) 40%, transparent 70%);
-  -webkit-mask-size: 150px 96px, 108px 132px; mask-size: 150px 96px, 108px 132px;
-  -webkit-mask-repeat: repeat; mask-repeat: repeat;
-  animation: fav-glitter 23s linear infinite;
-}
-.coffee-card.fav:nth-child(3n+1)::after { animation-duration: 31s; animation-delay: -9s; background-position: 11px 2px, 5px 19px, 40px 20px, 2px 9px; }
-.coffee-card.fav:nth-child(3n+2)::after { animation-duration: 27s; animation-delay: -17s; animation-direction: reverse; background-position: 19px 13px, 2px 4px, 12px 30px, 6px 14px; }
-/* each layer travels a whole number of its own tiles, so the loop has no seam */
-@keyframes fav-glitter {
-  from { -webkit-mask-position: 0 0, 0 0; mask-position: 0 0, 0 0; }
-  to   { -webkit-mask-position: 450px 96px, -216px 264px; mask-position: 450px 96px, -216px 264px; }
-}
-@media (prefers-reduced-motion: reduce) { .coffee-card.fav::after { animation: none; } }
-
 /* The band under the tabs is the PAGE showing through: iOS leaves a strip
    below an installed app and fills it with the document's own background, not
-   the theme colour. So the bar must be exactly the page colour, flat, with no
-   grain over it. (An earlier rule gave the bar a different brown.) */
+   the theme colour. So the bar must be exactly the page colour, flat, lifted
+   above the paper grain (a grained bar can never match a flat strip). */
+.bottom-nav { position: relative; z-index: 101; }
 @media (prefers-color-scheme: dark) { .bottom-nav { background: var(--pico-background-color); } }
-
-/* ===== softer light on the gold =============================================
-   Pin-points read as glitter, not as sunlight. Light on gold pools: broad,
-   feathered patches of warmth with a few soft blooms inside them. So the
-   points become wide, blurred blooms, and the patches that reveal them are
-   larger and gentler, drifting slowly like light through leaves. */
-.coffee-card.fav::after {
-  background-image:
-    radial-gradient(circle, rgba(255, 244, 205, .55) 0, rgba(255, 240, 195, .28) 4px, transparent 11px),
-    radial-gradient(circle, rgba(255, 232, 165, .42) 0, rgba(255, 228, 160, .2) 6px, transparent 16px),
-    radial-gradient(ellipse 60% 100% at 50% 50%, rgba(255, 236, 180, .2) 0, transparent 70%),
-    radial-gradient(circle, rgba(255, 248, 220, .38) 0, rgba(255, 244, 210, .16) 3px, transparent 8px);
-  background-size: 67px 41px, 113px 59px, 190px 100%, 43px 53px;
-  background-position: 9px 6px, 41px 15px, 0 0, 23px 3px;
-  filter: blur(.7px);
-  -webkit-mask-image:
-    radial-gradient(ellipse 90px 46px at 50% 50%, #000 0, rgba(0,0,0,.55) 40%, transparent 75%),
-    radial-gradient(ellipse 60px 70px at 50% 50%, rgba(0,0,0,.8) 0, rgba(0,0,0,.35) 45%, transparent 75%);
-  mask-image:
-    radial-gradient(ellipse 90px 46px at 50% 50%, #000 0, rgba(0,0,0,.55) 40%, transparent 75%),
-    radial-gradient(ellipse 60px 70px at 50% 50%, rgba(0,0,0,.8) 0, rgba(0,0,0,.35) 45%, transparent 75%);
-  -webkit-mask-size: 260px 120px, 190px 170px; mask-size: 260px 120px, 190px 170px;
-  animation: fav-light 38s linear infinite;
-}
-.coffee-card.fav:nth-child(3n+1)::after { animation-duration: 47s; animation-delay: -13s; background-position: 31px 12px, 5px 30px, 60px 0, 2px 20px; }
-.coffee-card.fav:nth-child(3n+2)::after { animation-duration: 43s; animation-delay: -29s; animation-direction: reverse; background-position: 50px 2px, 80px 8px, 120px 0, 12px 30px; }
-@keyframes fav-light {
-  from { -webkit-mask-position: 0 0, 0 0; mask-position: 0 0, 0 0; }
-  to   { -webkit-mask-position: 520px 120px, -380px 340px; mask-position: 520px 120px, -380px 340px; }
-}
 
 /* notes start as a single line; app.js grows the box as the text wraps */
 textarea[name="notes"] { resize: none; overflow: hidden; min-height: 0; line-height: 1.4; }
 
-/* softer and a little brighter: wider feathering and more blur take the edges
-   off, and the alphas come up so the light still registers once it is spread */
-.coffee-card.fav::after {
+/* ===== favourites: the name is stamped in gold foil =========================
+   Several attempts at laying light over a tinted row all failed the same way:
+   a translucent wash has no edges, so moving light on it reads as a bar or a
+   stain. Metal reads as metal through hard light and dark banding on a small
+   crisp shape. So the row stays plain and the gold lives in the letters of the
+   name, like a foil stamp on a bag label.
+
+   Three background layers, all clipped to the glyphs:
+     1. an idle glint that crosses now and then (--glint-idle, animated here)
+     2. a glint app.js places from the row's position on screen and, when
+        motion access is already granted, the phone's tilt (--glint)
+     3. the gold itself
+   A glint layer is 260% wide with its band in the middle, so a position of
+   about 12% to 88% puts the band on the text and anything beyond parks it off
+   either end. */
+@property --glint-idle { syntax: "<percentage>"; inherits: false; initial-value: 140%; }
+.coffee-card.fav .card-title strong {
+  --band: rgba(255, 250, 228, .95);
+  --band-soft: rgba(255, 244, 205, .78);
+  --gold: linear-gradient(100deg, #8a6a1e 0%, #c9a23a 18%, #f6e7a6 32%, #d4af37 46%, #9a7520 62%, #e9cf7a 80%, #b8922c 100%);
   background-image:
-    radial-gradient(circle, rgba(255, 244, 205, .62) 0, rgba(255, 240, 195, .34) 7px, transparent 22px),
-    radial-gradient(circle, rgba(255, 232, 165, .5) 0, rgba(255, 228, 160, .26) 11px, transparent 30px),
-    radial-gradient(ellipse 60% 110% at 50% 50%, rgba(255, 236, 180, .3) 0, transparent 72%),
-    radial-gradient(circle, rgba(255, 248, 220, .46) 0, rgba(255, 244, 210, .22) 6px, transparent 17px);
-  background-size: 97px 61px, 151px 79px, 230px 100%, 71px 67px;
-  filter: blur(2.4px);
-  -webkit-mask-image:
-    radial-gradient(ellipse 130px 60px at 50% 50%, #000 0, rgba(0,0,0,.6) 35%, transparent 80%),
-    radial-gradient(ellipse 85px 90px at 50% 50%, rgba(0,0,0,.85) 0, rgba(0,0,0,.4) 40%, transparent 80%);
-  mask-image:
-    radial-gradient(ellipse 130px 60px at 50% 50%, #000 0, rgba(0,0,0,.6) 35%, transparent 80%),
-    radial-gradient(ellipse 85px 90px at 50% 50%, rgba(0,0,0,.85) 0, rgba(0,0,0,.4) 40%, transparent 80%);
+    linear-gradient(105deg, transparent 45%, var(--band) 50%, transparent 55%),
+    linear-gradient(105deg, transparent 42%, var(--band-soft) 50%, transparent 58%),
+    var(--gold);
+  background-repeat: no-repeat;
+  background-size: 260% 100%, 260% 100%, 100% 100%;
+  background-position: var(--glint-idle) 0, var(--glint, 140%) 0, 0 0;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+  animation: fav-glint 9s cubic-bezier(.4, 0, .2, 1) infinite;
 }
+/* neighbours must not flash in step */
+.coffee-card.fav:nth-child(3n+1) .card-title strong { animation-duration: 11.5s; animation-delay: -4.1s; }
+.coffee-card.fav:nth-child(3n+2) .card-title strong { animation-duration: 13.7s; animation-delay: -8.3s; }
+@keyframes fav-glint {
+  0%, 70% { --glint-idle: 140%; }
+  92%, 100% { --glint-idle: -40%; }
+}
+/* on cream a pale band would erase the letters: darker gold, and the glint is
+   a brighter gold rather than near-white */
+@media not all and (prefers-color-scheme: dark) {
+  .coffee-card.fav .card-title strong {
+    --band: #d9b445;
+    --band-soft: rgba(201, 162, 58, .9);
+    --gold: linear-gradient(100deg, #6a4f0e 0%, #8f6d17 18%, #b08a26 32%, #86650f 46%, #5e450c 62%, #a37f1f 80%, #7a5a10 100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) { .coffee-card.fav .card-title strong { animation: none; } }

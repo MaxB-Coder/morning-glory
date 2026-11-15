@@ -17,7 +17,7 @@ const METHOD_SHORT = {
 };
 // Bump this with every deploy — shown in Settings so you can confirm which
 // build the browser/service worker is actually running.
-export const APP_VERSION = "1.12.6";
+export const APP_VERSION = "1.12.7";
 
 const view = document.getElementById("view");
 const boot = document.getElementById("boot");
@@ -404,6 +404,7 @@ async function renderHome() {
   if (!FILTERS.archived) enableReorder(view.querySelector(".coffee-card")?.parentElement, all.length);
   addFab("#/coffee/new", "+");
   if (everything.length) addFilterFab(everything);
+  initGlint();
 }
 
 // --- coffee form ------------------------------------------------------------
@@ -1521,6 +1522,92 @@ function initHolo(node) {
       attach();
     });
   }, { once: true });
+}
+
+// --- gold-foil favourite names ------------------------------------------------
+// The CSS gold glint is placed by --glint (a %) on each favourite's name. It
+// slides as the card travels up/down the screen, plus a nudge from phone tilt.
+// Home re-renders on every sync tick, so the previous listeners are detached
+// first. No rAF runs while nothing is changing, and the iOS permission gate is
+// never raised from here (same guard as initHolo).
+let glintDetach = null;
+
+function initGlint() {
+  if (glintDetach) { glintDetach(); glintDetach = null; }
+
+  const targets = [...view.querySelectorAll(".coffee-card.fav .card-title strong")];
+  if (!targets.length) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const raf = (fn) => (window.requestAnimationFrame
+    ? window.requestAnimationFrame(fn) : setTimeout(fn, 16));
+  const caf = (id) => (window.cancelAnimationFrame
+    ? window.cancelAnimationFrame(id) : clearTimeout(id));
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
+  const anyConnected = () => targets.some((t) => t.isConnected);
+
+  let tilt = 0, tiltTarget = 0, baseG = null;
+  let scrollRaf = 0, loopRaf = 0, attached = true;
+
+  const paint = () => {
+    if (!view.clientHeight) return;            // no layout (tests)
+    const viewRect = view.getBoundingClientRect();
+    for (const t of targets) {
+      if (!t.isConnected) continue;
+      const card = t.closest(".coffee-card");
+      if (!card) continue;
+      const r = card.getBoundingClientRect();
+      const y = (r.top + r.height / 2 - viewRect.top) / view.clientHeight;
+      const p = 110 - 120 * y + tilt * 45;
+      t.style.setProperty("--glint", p.toFixed(1) + "%");
+    }
+  };
+
+  // eases tilt toward its target, then stops itself once it has arrived
+  const step = () => {
+    loopRaf = 0;
+    tilt += (tiltTarget - tilt) * 0.075;
+    paint();
+    if (Math.abs(tiltTarget - tilt) >= 0.002) loopRaf = raf(step);
+  };
+
+  const detach = () => {
+    attached = false;
+    view.removeEventListener("scroll", onScroll);
+    window.removeEventListener("deviceorientation", onOrient);
+    if (scrollRaf) { caf(scrollRaf); scrollRaf = 0; }
+    if (loopRaf) { caf(loopRaf); loopRaf = 0; }
+    if (glintDetach === detach) glintDetach = null;
+  };
+
+  function onScroll() {
+    if (!anyConnected()) { glintDetach && glintDetach(); return; }
+    if (scrollRaf) return;
+    scrollRaf = raf(() => { scrollRaf = 0; paint(); });
+  }
+
+  function onOrient(e) {
+    if (!anyConnected()) { glintDetach && glintDetach(); return; }
+    if (e.gamma == null) return;
+    const g = e.gamma;
+    if (baseG === null) baseG = g;
+    baseG += (g - baseG) * 0.004;
+    tiltTarget = clamp((g - baseG) / 32);
+    if (!loopRaf) loopRaf = raf(step);
+  }
+
+  glintDetach = detach;
+  view.addEventListener("scroll", onScroll, { passive: true });
+
+  if (motionPromise || needsNoPermission()) {
+    ensureMotionPermission().then((ok) => {
+      if (ok && attached && anyConnected()) {
+        window.addEventListener("deviceorientation", onOrient);
+      }
+    });
+  }
+
+  paint();
 }
 
 // Compare the running build against version.json on the server (fetched with
