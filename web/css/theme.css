@@ -494,3 +494,21 @@ input:focus, select:focus, textarea:focus { outline: none; border-bottom-color: 
 
 /* notes start as a single line; app.js grows the box as the text wraps */
 textarea[name="notes"] { resize: none; overflow: hidden; min-height: 0; line-height: 1.4; }
+
+/* softer and a little brighter: wider feathering and more blur take the edges
+   off, and the alphas come up so the light still registers once it is spread */
+.coffee-card.fav::after {
+  background-image:
+    radial-gradient(circle, rgba(255, 244, 205, .62) 0, rgba(255, 240, 195, .34) 7px, transparent 22px),
+    radial-gradient(circle, rgba(255, 232, 165, .5) 0, rgba(255, 228, 160, .26) 11px, transparent 30px),
+    radial-gradient(ellipse 60% 110% at 50% 50%, rgba(255, 236, 180, .3) 0, transparent 72%),
+    radial-gradient(circle, rgba(255, 248, 220, .46) 0, rgba(255, 244, 210, .22) 6px, transparent 17px);
+  background-size: 97px 61px, 151px 79px, 230px 100%, 71px 67px;
+  filter: blur(2.4px);
+  -webkit-mask-image:
+    radial-gradient(ellipse 130px 60px at 50% 50%, #000 0, rgba(0,0,0,.6) 35%, transparent 80%),
+    radial-gradient(ellipse 85px 90px at 50% 50%, rgba(0,0,0,.85) 0, rgba(0,0,0,.4) 40%, transparent 80%);
+  mask-image:
+    radial-gradient(ellipse 130px 60px at 50% 50%, #000 0, rgba(0,0,0,.6) 35%, transparent 80%),
+    radial-gradient(ellipse 85px 90px at 50% 50%, rgba(0,0,0,.85) 0, rgba(0,0,0,.4) 40%, transparent 80%);
+}
